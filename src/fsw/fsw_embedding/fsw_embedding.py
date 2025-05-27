@@ -94,12 +94,15 @@ import time
 
 import ctypes
 
-# Load the segcumsum shared library from the same directory as the current file
-mydir = os.path.dirname(os.path.abspath(__file__))
-libfsw_embedding_path = os.path.join(mydir, "libfsw_embedding.so")
-# This library will be loaded at FSW_embedding.__init__()
-libfsw_embedding = None
-#libfsw_embedding = ctypes.CDLL(libfsw_embedding_path)
+# Internal state for CUDA backend
+# The library will be loaded at FSWEmbedding.__init__()
+_lib_loaded = False
+_lib_handle = None
+_warned_about_failure = False
+
+# Path to the compiled backend (.so/.dll).
+# Should be at the same directory as this script file.
+_lib_path = os.path.join(os.path.dirname(__file__), "libfsw_embedding.so")
 
 
 # Turn this on to run some verifications and sanity checks during runtime.
@@ -194,18 +197,19 @@ class FSWEmbedding(nn.Module):
 
         self.user_warnings = user_warnings
 
+        # TODO: Handle this
         # Load custom CUDA library
-        global libfsw_embedding
-        if load_custom_cuda_lib and (libfsw_embedding is None):            
-            try:
-                libfsw_embedding = ctypes.CDLL(libfsw_embedding_path)
-                qprintln(report, 'Loaded custom CUDA library \'%s\'' % libfsw_embedding_path)
-            except OSError as e: # TODO: Handle this failure properly
-                if fsw_embedding_produce_error_on_custom_library_loading_failure:
-                    raise RuntimeError('Error loading custom CUDA library \'%s\'. Try rebuilding it by running the script file \'build_fsw_embedding\' found at the same directory. If this doesn\'t help, this error can be circumvented by setting load_custom_cuda_lib=False at FSW_embedding() init, or setting fsw_embedding_produce_error_on_custom_library_loading_failure=False at FSW_embedding.py code. This will use pure PyTorch code instead of the custom CUDA library, which is a bit slower.' % libfsw_embedding_path)
-                elif self.user_warnings:
-                    warnings.warn('Could not load custom CUDA library \'%s\'. Using pure torch implementation, which is a bit slower. (To silence, set user_warnings=False at FSW_embedding() init)' % libfsw_embedding_path, UserWarning)
-                libfsw_embedding = None
+        # global libfsw_embedding
+        # if load_custom_cuda_lib and (libfsw_embedding is None):
+        #     try:
+        #         libfsw_embedding = ctypes.CDLL(_lib_fsw_embedding_path)
+        #         qprintln(report, 'Loaded custom CUDA library \'%s\'' % _lib_fsw_embedding_path)
+        #     except OSError as e: # TODO: Handle this failure properly
+        #         if fsw_embedding_produce_error_on_custom_library_loading_failure:
+        #             raise RuntimeError('Error loading custom CUDA library \'%s\'. Try rebuilding it by running the script file \'build_fsw_embedding\' found at the same directory. If this doesn\'t help, this error can be circumvented by setting load_custom_cuda_lib=False at FSW_embedding() init, or setting fsw_embedding_produce_error_on_custom_library_loading_failure=False at FSW_embedding.py code. This will use pure PyTorch code instead of the custom CUDA library, which is a bit slower.' % _lib_fsw_embedding_path)
+        #         elif self.user_warnings:
+        #             warnings.warn('Could not load custom CUDA library \'%s\'. Using pure torch implementation, which is a bit slower. (To silence, set user_warnings=False at FSW_embedding() init)' % _lib_fsw_embedding_path, UserWarning)
+        #         libfsw_embedding = None
 
         # Process sizes
         assert d_in >= 0, 'd_in must be nonnegative'
@@ -2830,6 +2834,48 @@ class sp:
             return dy
 
 
+#############################################################################################################
+##                                            Custom CUDA backend                                          ##
+#############################################################################################################
+
+def _load_custom_cuda_backend(report=None, user_warnings=True):
+    """
+    Attempts to load the custom CUDA backend (libfsw_embedding.so).
+    Emits a warning if loading fails, or raises an error depending on config.
+    """
+    global _lib_loaded, _lib_handle, _warned_about_failure
+
+    if _lib_loaded:
+        return _lib_handle
+
+    try:
+        _lib_handle = ctypes.CDLL(_lib_path)
+        _lib_loaded = True
+        if report:
+            qprintln(report, f"Loaded custom CUDA backend from '{_lib_path}'")
+    except OSError as e:
+        msg = (
+            f"Could not load custom CUDA backend from '{_lib_path}'. "
+            "Falling back to the pure PyTorch implementation."
+        )
+
+        if fsw_embedding_produce_error_on_custom_library_loading_failure:
+            raise RuntimeError(
+                msg + "\n\n"
+                "Try rebuilding it using `fsw-build`. Or, disable this error by setting:\n"
+                "- `load_custom_cuda_lib=False` (in the FSWEmbedding constructor), or\n"
+                "- `fsw_embedding_produce_error_on_custom_library_loading_failure = False`"
+            ) from e
+
+        if user_warnings and not _warned_about_failure:
+            _warned_about_failure = True
+            warnings.warn(msg, UserWarning, stacklevel=2)
+
+        _lib_handle = None  # ensure it's explicitly unset
+
+    return _lib_handle
+
+
 
 #############################################################################################################
 ##                                            Segmented Cumsum                                             ##
@@ -2902,10 +2948,13 @@ def segcumsum(values: torch.Tensor,
         assert not torch.isinf(values).any(), "Found infs in ''values''"
         assert not torch.isnan(values).any(), "Found nans in ''values''"
 
-    # Calculate and return the segmented cumsum
-    global libfsw_embedding
+    global _lib_loaded
 
-    if (values.device.type == 'cuda') and (not always_use_pure_torch) and (libfsw_embedding is not None):
+    if not _lib_loaded:
+        _load_custom_cuda_backend(report=False, user_warnings=None)
+
+    # Calculate and return the segmented cumsum
+    if (values.device.type == 'cuda') and (not always_use_pure_torch) and (_lib_loaded):
         return segcumsum_cuda(values, segment_ids, max_seg_size, in_place)
     else:
         return segcumsum_torch(values, segment_ids, max_seg_size, in_place)
@@ -2941,6 +2990,9 @@ def segcumsum_cuda(values, segment_ids, max_seg_size, in_place):
     # Note: This is automatically capped by the maximal number supported by the architecture.
     # Set to an arbitrarily large number (e.g. 1e6) to determine automatically.
     max_num_threads_per_block = int(1e6)
+
+    global _lib_handle
+    libfsw_embedding = _lib_handle
 
     assert libfsw_embedding is not None, 'libfsw_embedding library is not loaded'
     assert isinstance(libfsw_embedding, ctypes.CDLL) # to silence PyCharm warning
