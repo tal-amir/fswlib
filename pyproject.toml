@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fsw"
+version = "0.1"
+description = "Fourier Sliced-Wasserstein (FSW) Embedding Library"
+authors = [{name = "Tal Amir", email = "talamir@technion.ac.il"}, {name = "Nadav Dym", email = "nadavdym@technion.ac.il"}]
+maintainers = [{name = "Tal Amir", email = "talamir@technion.ac.il"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy >= 1.24.4",
+    "torch >= 2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourname/fsw"
+Repository = "https://github.com/yourname/fsw"
+Documentation = "https://yourdocs.io/fsw"  # Optional
+
+keywords = ["Wasserstein", "sliced Wasserstein", "FSW Embedding", "multiset embedding", "embedding", "multiset", "measure", "deep learning", "graph", "PyTorch"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+fsw-build = "fsw.build:main"
