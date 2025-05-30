@@ -5,9 +5,15 @@ import os
 import platform
 import shutil
 
+if platform.system() == "Windows":
+    bin_file_name = "fsw_embedding.dll"
+elif platform.system() == "Darwin":  # macOS
+    bin_file_name = "libfsw_embedding.dylib"
+else:  # Linux and others
+    bin_file_name = "libfsw_embedding.so"
+
 def main(nvcc_path=None, verbose=False):
     cu_file_name = "fsw_embedding.cu"
-    so_file_name = "libfsw_embedding.so"
 
     nvcc_at_search_path = shutil.which("nvcc")
 
@@ -31,7 +37,7 @@ def main(nvcc_path=None, verbose=False):
         )
 
     cu_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), cu_file_name))
-    so_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), so_file_name))
+    so_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), bin_file_name))
 
     if not os.path.isfile(cu_file_path):
         raise FileNotFoundError(f"CUDA source file not found: {cu_file_path}")
@@ -69,7 +75,7 @@ def main(nvcc_path=None, verbose=False):
 
     cmd = [nvcc] + base_flags + platform_specific_flags + ["-o", so_file_path, cu_file_path] + arch_flags
 
-    #print(f"Building {so_file_name} ... ", end="")
+    #print(f"Building {bin_file_name} ... ", end="")
 
     try:
         cmd = cmd
