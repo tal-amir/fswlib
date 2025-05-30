@@ -1,18 +1,24 @@
-# TODO:
-# - Support detection of default device for all python versions (if the function is not available, generate a dummy tensor and get its device)
-# - Add smart loading of the fswlib module
-# - Consult ChatGPT about naming the repository fsw-embedding or fsw
-# - Consult PyThrch how to handle different versions of different components, and how to handle the package version in the fule
-# - Fix the memory waste thing (code line from Yonatan)
-# - Think carefully about input/output argument names
-# - Create examples and tests
+"""
+fsw_embedding.py
+
+Main Python module for computing the Fourier Sliced-Wasserstein (FSW) embedding.
+
+Authors:
+    Tal Amir, Nadav Dym
+    Technion – Israel Institute of Technology
+
+This code is based on our paper:
+    "Fourier Sliced-Wasserstein Embedding for Multisets and Measures"
+    Tal Amir, Nadav Dym
+    International Conference on Learning Representations (ICLR), 2025
+
+Paper URL:   https://iclr.cc/virtual/2025/poster/30562
+Project URL: https://github.com/tal-amir/fswlib
+"""
 
 
-# Part of the anonymous ICLR 2025 submission titled "Fourier Sliced-Wasserstein Embedding for Multisets and Measures"
-# This is the main python file that computes the FSW embedding.
-
-version = '2.12'
-version_date = '2024-00-04'
+version = '2.2'
+version_date = '2025-05-30'
 
 # Edge features:
 # - Do not split self.projVecs. Do self.projVecs.shape[1] == d_in + d_edge.
@@ -2956,11 +2962,11 @@ def load_custom_cuda_library(fail_if_cuda_library_load_fails: bool,
         msg += '\n'
 
         if fail_if_cuda_library_load_fails:
-            msg += "Try rebuilding the custom CUDA library using command fsw-build, or allow pure-torch fallback code by setting fail_if_cuda_library_load_fails=False"
+            msg += "Try rebuilding the custom CUDA library using command fswlib-build, or allow pure-torch fallback code by setting fail_if_cuda_library_load_fails=False"
             raise FSWCustomCudaLibraryLoadError(msg)
         else:
             msg += "Falling back to the pure PyTorch implementation (roughly ~2x slower)."
-            msg += "\nTry rebuilding the custom CUDA library using the command fsw-build, or always use fallback code by setting "\
+            msg += "\nTry rebuilding the custom CUDA library using the command fswlib-build, or always use fallback code by setting "\
                    "`use_custom_cuda_library_if_available=False`."
             warnings.warn(msg, FSWCustomCudaLibraryLoadWarning, stacklevel=2)
             return None
@@ -2970,11 +2976,11 @@ def load_custom_cuda_library(fail_if_cuda_library_load_fails: bool,
         msg = f'Could not load custom CUDA library "{_lib_path}".\nTrying to load produced an exception: \n{e}\n'
 
         if fail_if_cuda_library_load_fails:
-            msg += "Try rebuilding the custom CUDA library using command fsw-build. Alternatively, allow using the pure-torch fallback code by setting fail_if_cuda_library_load_fails=False"
+            msg += "Try rebuilding the custom CUDA library using command fswlib-build. Alternatively, allow using the pure-torch fallback code by setting fail_if_cuda_library_load_fails=False"
             raise FSWCustomCudaLibraryLoadError(msg)
         else:
             msg += "Falling back to the pure PyTorch implementation (roughly ~2x slower)."
-            msg += " Try rebuilding the custom CUDA library using the command fsw-build. Alternatively, always use the fallback code by setting "\
+            msg += " Try rebuilding the custom CUDA library using the command fswlib-build. Alternatively, always use the fallback code by setting "\
                    "`use_custom_cuda_library_if_available=False`."
             warnings.warn(msg, FSWCustomCudaLibraryLoadWarning, stacklevel=2)
             return None
@@ -3251,10 +3257,12 @@ def segcumsum_slow(x, segment_ids):
 # Returns the maximal number of threads per block supported by the CUDA device with the given index
 # Note: This function may take ~0.7 seconds to run
 def get_max_threads_per_block(device_index):
-    assert isinstance(libfsw_embedding, ctypes.CDLL) # to silence PyCharm warning
-    libfsw_embedding.get_max_threads_per_block.argtypes = [ ctypes.c_int ]
-    libfsw_embedding.get_max_threads_per_block.restype = ctypes.c_int
-    out = libfsw_embedding.get_max_threads_per_block(ctypes.c_int(device_index))
+    global _lib_handle
+    assert _lib_handle is not None
+    assert isinstance(_lib_handle, ctypes.CDLL) # to silence PyCharm warning
+    _lib_handle.get_max_threads_per_block.argtypes = [ ctypes.c_int ]
+    _lib_handle.get_max_threads_per_block.restype = ctypes.c_int
+    out = _lib_handle.get_max_threads_per_block(ctypes.c_int(device_index))
     return out
 
 

@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 
 # FSW Embedding
-from fsw import FSWEmbedding
+from fswlib import FSWEmbedding
 
 
 import time

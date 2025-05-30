@@ -13,21 +13,21 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-# Import the fsw namespace.
+# Import the fswlib namespace.
 # This is not required once you run:
 #   pip install -e .
 # from the project root directory (the parent of src directory).
 
 # FSW Embedding
-# To run this example, first install the fsw package by running
+# To run this example, first install the fswlib package by running
 # pip install -e .
 # from the project root directory (the parent of src directory),
 # or, alternatively, uncomment the command below:
 #
-# import the fsw namespace (required if the fsw package is not installed)
-#from setup_fsw_import import fsw
+# import the fswlib namespace (required if the fswlib package is not installed)
+#from setup_fsw_import import fswlib
 
-from fsw import FSWEmbedding
+from fswlib import FSWEmbedding
 
 import time
 

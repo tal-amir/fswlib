@@ -1,4 +1,4 @@
-# src/fsw/fsw_embedding/build_fsw_embedding.py
+# src/fswlib/fsw_embedding/build_fsw_embedding.py
 
 import subprocess
 import os
@@ -69,7 +69,7 @@ def main(nvcc_path=None, verbose=False):
                 supported_archs.append(int(current_arch))
 
     except Exception as e:
-        print(f"[fsw-build] Warning: could not determine current CUDA device architecture: {e}")
+        print(f"[fswlib-build] Warning: could not determine current CUDA device architecture: {e}")
 
     arch_flags = [f"-gencode=arch=compute_{sm},code=sm_{sm}" for sm in supported_archs]
 
@@ -81,7 +81,7 @@ def main(nvcc_path=None, verbose=False):
         cmd = cmd
         subprocess.check_call(cmd)
     except Exception as e:
-        print(f"[fsw-build] Error: failed to execute compilation command: {cmd}\n")
+        print(f"[fswlib-build] Error: failed to execute compilation command: {cmd}\n")
         raise e
 
     #print("Done.")

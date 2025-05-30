@@ -1,0 +1,2 @@
+# Include all CUDA source files
+recursive-include src *.cu

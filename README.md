@@ -1,31 +1,54 @@
-# Fourier Sliced-Wasserstein (FSW) Embedding
+# Fourier Sliced-Wasserstein (FSW) embedding — a PyTorch-based library
 
-This package provides an implementation of the **Fourier Sliced-Wasserstein (FSW) embedding** for multisets and measures, as introduced in our [ICLR 2025 paper](https://iclr.cc/virtual/2025/poster/30562):
+This package provides an implementation of the **Fourier Sliced-Wasserstein (FSW) embedding** for multisets and measures, introduced in our [ICLR 2025 paper](https://iclr.cc/virtual/2025/poster/30562):
 
 > **Fourier Sliced-Wasserstein Embedding for Multisets and Measures**  
 > Tal Amir, Nadav Dym  
 > *International Conference on Learning Representations (ICLR), 2025*
 
-It is designed for integration with PyTorch-based pipelines and supports optional modules such as FSW-GNN.
-
-- 🔍 FSW embedding for learning from unordered sets and distributions  
-- 🧩 Modular design with optional submodules (e.g., FSW-GNN)  
-- ⚡ Optional CUDA acceleration  
-- 🔬 Designed for reproducible research  
-
 ---
 
-## Installation
-
-### 🔧 Basic installation
+## 🔧 Installation
 
 To install the package:
 
 ```bash
-pip install fsw
+pip install fswlib
 ```
 
-This module includes an optional custom CUDA backend, which is ~2× faster than the pure PyTorch version when used on sparse graphs/weights. To compile the backend, run
+This package includes an optional custom CUDA implementation. When working with sparse weight matrices (e.g., sparse graphs), it can be approximately 2× faster than the pure-PyTorch implementation.  
+To compile it, run:
+
 ```bash
-fsw-build
+fswlib-build
 ```
+
+---
+
+## 👨🏻‍🔧 Maintainer
+
+This library is maintained by [**Tal Amir**](https://tal-amir.github.io)  
+Contact: [talamir@technion.ac.il](mailto:talamir@technion.ac.il)
+
+
+---
+
+## 📄 Citation
+
+If you use this library in your research, please cite our paper:
+
+```bibtex
+@inproceedings{amir2025fsw,
+  title={Fourier Sliced-{W}asserstein Embedding for Multisets and Measures},
+  author={Tal Amir and Nadav Dym},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2025}
+}
+```
+
+---
+
+## 🔗 Links
+
+- **Paper**: [ICLR 2025](https://iclr.cc/virtual/2025/poster/30562)  
+- **Code**: [GitHub repository](https://github.com/tal-amir/fswlib)

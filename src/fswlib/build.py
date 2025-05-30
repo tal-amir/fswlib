@@ -1,4 +1,4 @@
-# src/fsw/build.py
+# src/fswlib/build.py
 
 import sys
 
@@ -65,12 +65,12 @@ def is_valid_nvcc(path: str) -> bool:
 
 
 def build_fsw_embedding(nvcc_path: str, verbose: bool):
-    from fsw.fsw_embedding import build_fsw_embedding
+    from fswlib.fsw_embedding import build_fsw_embedding
 
     if verbose:
-        print("[fsw-build] Building fsw_embedding: ", flush=True)
+        print("[fswlib-build] Building fsw_embedding: ", flush=True)
     else:
-        print("[fsw-build] Building fsw_embedding... ", end="", flush=True)
+        print("[fswlib-build] Building fsw_embedding... ", end="", flush=True)
 
     build_fsw_embedding.main(nvcc_path=nvcc_path, verbose=verbose)
 

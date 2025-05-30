@@ -10,6 +10,6 @@ src_dir = project_root / "src"
 if str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
-# Explicitly import fsw so it’s exposed to users of this module
-import fsw
-_ = fsw.__name__  # To avoid an "unused import" warning
+# Explicitly import fswlib so it’s exposed to users of this module
+import fswlib
+_ = fswlib.__name__  # To avoid an "unused import" warning
