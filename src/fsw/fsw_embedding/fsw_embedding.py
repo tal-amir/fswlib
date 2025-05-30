@@ -788,8 +788,8 @@ class FSWEmbedding(nn.Module):
 
         # Calculate W_sum, which contains the total mass of the input measures
         if W.is_sparse:
-            slice_info_W = sp.get_slice_info(W, -1)
-            W_sum = ag.sum_sparseToDense.apply(W, -1, slice_info_W)
+            slice_info_W = sp.get_slice_info(W, -1, use_custom_cuda_library_if_available=self.use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails=self.fail_if_cuda_library_load_fails)
+            W_sum = ag.sum_sparseToDense.apply(W, -1, slice_info_W, self.use_custom_cuda_library_if_available, self.fail_if_cuda_library_load_fails)
         
         else:
             W_sum = torch.sum(W, dim=-1, keepdim=True)            
@@ -807,7 +807,7 @@ class FSWEmbedding(nn.Module):
                 # Make sure this works
                 W_pad = sp.to_sparse_full(W_pad)
                 W = ag.concat_sparse.apply(W, W_pad)
-                slice_info_W = sp.get_slice_info(W, -1)
+                slice_info_W = sp.get_slice_info(W, -1, use_custom_cuda_library_if_available=self.use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails=self.fail_if_cuda_library_load_fails)
 
                 if X_edge is not None:
                     X_edge_pad_inds = W_pad.indices()
@@ -833,7 +833,9 @@ class FSWEmbedding(nn.Module):
 
         # Normalize W according to W_sum_padded
         if W.is_sparse:
-            W = ag.div_sparse_dense.apply(W, W_sum_padded, slice_info_W)          
+            W = ag.div_sparse_dense.apply(W, W_sum_padded, slice_info_W,
+                                          self.use_custom_cuda_library_if_available,
+                                          self.fail_if_cuda_library_load_fails)
             del slice_info_W, W_sum_padded
         else:
             W = W / W_sum_padded
@@ -844,7 +846,9 @@ class FSWEmbedding(nn.Module):
             X_emb = torch.zeros(size=output_shape_before_collapse_and_totmass_augmentation, dtype=self.get_dtype(), device=self.get_device())
 
         elif (serialize_num_slices is None) or (serialize_num_slices >= self.nSlices):
-            X_emb = FSWEmbedding.forward_helper(X, W, self.projVecs, self.freqs, graph_mode, X_edge, self.cartesian_mode, batch_dims)
+            X_emb = FSWEmbedding.forward_helper(X, W, self.projVecs, self.freqs, graph_mode, X_edge, self.cartesian_mode, batch_dims,
+                                                use_custom_cuda_library_if_available = self.use_custom_cuda_library_if_available,
+                                                fail_if_cuda_library_load_fails = self.fail_if_cuda_library_load_fails)
 
         else:
             assert isinstance(serialize_num_slices, int) and (serialize_num_slices >= 1), 'serialize_num_slices must be None or a positive integer'
@@ -858,7 +862,10 @@ class FSWEmbedding(nn.Module):
                 projVecs_curr = self.projVecs[inds_curr,:]
                 freqs_curr = self.freqs if self.cartesian_mode else self.freqs[inds_curr]
                 
-                out_curr = FSWEmbedding.forward_helper(X, W, projVecs_curr, freqs_curr, graph_mode, X_edge, self.cartesian_mode, batch_dims)
+                out_curr = FSWEmbedding.forward_helper(X, W, projVecs_curr, freqs_curr, graph_mode, X_edge, self.cartesian_mode, batch_dims,
+                                                use_custom_cuda_library_if_available = self.use_custom_cuda_library_if_available,
+                                                fail_if_cuda_library_load_fails = self.fail_if_cuda_library_load_fails)
+
                 assign_at(X_emb, out_curr, output_proj_axis, inds_curr)
 
         if self.cartesian_mode and self.collapse_freqs:
@@ -901,7 +908,9 @@ class FSWEmbedding(nn.Module):
 
 
     @staticmethod
-    def forward_helper(X, W, projVecs, freqs, graph_mode, X_edge, cartesian_mode, batch_dims):
+    def forward_helper(X, W, projVecs, freqs, graph_mode, X_edge, cartesian_mode, batch_dims,
+                       use_custom_cuda_library_if_available,
+                       fail_if_cuda_library_load_fails):
         # This function computes the embedding of (X,W) for a subset of the projections and frequencies.
         # projVecs should be of size (num_projections x d_in), and freqs should be of size nFreqs (not nFreqs x 1).
 
@@ -1042,8 +1051,10 @@ class FSWEmbedding(nn.Module):
             del W_big
 
             # 2.6 seconds
-            slice_info_elements = sp.get_slice_info(Wps, element_axis)
-            Wps_sum = ag.cumsum_sparse.apply(Wps, element_axis, slice_info_elements)
+            slice_info_elements = sp.get_slice_info(Wps, element_axis, use_custom_cuda_library_if_available=use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails)
+            Wps_sum = ag.cumsum_sparse.apply(Wps, element_axis, slice_info_elements,
+                                             use_custom_cuda_library_if_available,
+                                             fail_if_cuda_library_load_fails)
 
             sp.verify_coalescence(Wps)
             sp.verify_coalescence(Wps_sum)
@@ -1073,12 +1084,16 @@ class FSWEmbedding(nn.Module):
                 arg2 = ag.add_same_pattern.apply(Wps, Wps_sum, -1, 2)
                 del Wps_sum
                 # 1.22 seconds
-                slice_info_freqs = sp.get_slice_info(arg2, sp.get_broadcast_dims_B_to_A(arg2, freqs))
+                slice_info_freqs = sp.get_slice_info(arg2, sp.get_broadcast_dims_B_to_A(arg2, freqs), use_custom_cuda_library_if_available=use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails)
                 # 0.15 seconds
-                arg2 = ag.mul_sparse_dense.apply(arg2, np.pi*freqs, slice_info_freqs)
+                arg2 = ag.mul_sparse_dense.apply(arg2, np.pi*freqs, slice_info_freqs,
+                                                 use_custom_cuda_library_if_available,
+                                                 fail_if_cuda_library_load_fails)
 
             # 0.14 seconds
-            arg1 = ag.mul_sparse_dense.apply(Wps, freqs, slice_info_freqs)
+            arg1 = ag.mul_sparse_dense.apply(Wps, freqs, slice_info_freqs,
+                                             use_custom_cuda_library_if_available,
+                                             fail_if_cuda_library_load_fails)
 
             sp.verify_coalescence(arg1)
             sp.verify_coalescence(arg2)
@@ -1098,9 +1113,11 @@ class FSWEmbedding(nn.Module):
         if sparse_mode:
             if d_edge == 0:
                 # 1.4 seconds
-                slice_info_Xps = sp.get_slice_info(sinc_diffs, sp.get_broadcast_dims_B_to_A(sinc_diffs, Xps))
+                slice_info_Xps = sp.get_slice_info(sinc_diffs, sp.get_broadcast_dims_B_to_A(sinc_diffs, Xps), use_custom_cuda_library_if_available=use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails)
                 # 0.26 seconds
-                products = ag.mul_sparse_dense.apply(sinc_diffs, Xps, slice_info_Xps)
+                products = ag.mul_sparse_dense.apply(sinc_diffs, Xps, slice_info_Xps,
+                                                     use_custom_cuda_library_if_available,
+                                                     fail_if_cuda_library_load_fails)
                 del sinc_diffs, Xps, slice_info_Xps
                 sp.verify_coalescence(products)
             else:
@@ -1108,7 +1125,9 @@ class FSWEmbedding(nn.Module):
                 del sinc_diffs, Xeps
 
             # 0.49 seconds
-            product_sums = ag.sum_sparseToDense.apply(products, element_axis, slice_info_elements)
+            product_sums = ag.sum_sparseToDense.apply(products, element_axis, slice_info_elements,
+                                                      use_custom_cuda_library_if_available,
+                                                      fail_if_cuda_library_load_fails)
             del products, slice_info_elements
             
         else: # not sparse
@@ -1419,11 +1438,13 @@ class ag:
     class sum_sparseToDense(torch.autograd.Function):
         # noinspection PyMethodOverriding
         @staticmethod
-        def forward(ctx, A: torch.Tensor, dim, slice_info):
+        def forward(ctx, A: torch.Tensor, dim, slice_info, use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails):
             assert A.is_sparse, 'A must be sparse'
             assert A.is_coalesced(), 'A must be coalesced'
 
-            out = sp.sum_sparse(A, dim=dim, slice_info=slice_info).to_dense()
+            out = sp.sum_sparse(A, dim=dim, slice_info=slice_info,
+                                use_custom_cuda_library_if_available=use_custom_cuda_library_if_available,
+                                fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails).to_dense()
 
             if ctx.needs_input_grad[0]:
                 ctx.dim = dim if dim >= 0 else ( dim + A.dim() )
@@ -1446,7 +1467,7 @@ class ag:
             grad_input = sp.sparse_coo_tensor_coalesced(indices=A_inds, values=vals, size=shape)
 
             sp.verify_coalescence(grad_input)
-            return grad_input, None, None
+            return grad_input, None, None, None, None
 
 
 
@@ -1567,7 +1588,7 @@ class ag:
     class mul_sparse_dense(torch.autograd.Function):
         # noinspection PyMethodOverriding
         @staticmethod
-        def forward(ctx, A: torch.Tensor, B: torch.Tensor, slice_info):
+        def forward(ctx, A: torch.Tensor, B: torch.Tensor, slice_info, use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails):
 
             assert A.is_sparse, 'A must be sparse'
             assert not B.is_sparse, 'B cannot be sparse'
@@ -1588,7 +1609,9 @@ class ag:
             if True in ctx.needs_input_grad:
                 ctx.save_for_backward(A_save, B_save)
                 ctx.broadcast_dims = broadcast_dims
-                ctx.slice_info = slice_info if ctx.needs_input_grad[1] else None 
+                ctx.slice_info = slice_info if ctx.needs_input_grad[1] else None
+                ctx.use_custom_cuda_library_if_available = use_custom_cuda_library_if_available
+                ctx.fail_if_cuda_library_load_fails = fail_if_cuda_library_load_fails
 
             sp.verify_coalescence(out)
             return out
@@ -1620,14 +1643,16 @@ class ag:
                     # 0.04 seconds
                     out_B = sp.same_shape_prod(A, grad_output)
                         
-                    out_B = sp.sum_sparse(out_B, dim=broadcast_dims, slice_info=slice_info).to_dense()
+                    out_B = sp.sum_sparse(out_B, dim=broadcast_dims, slice_info=slice_info,
+                                use_custom_cuda_library_if_available=ctx.use_custom_cuda_library_if_available,
+                                fail_if_cuda_library_load_fails=ctx.fail_if_cuda_library_load_fails).to_dense()
                 else:
                     # 0 seconds
                     # In this case, B didn't need to be broadcast to A, so all of A,B,grad_output have the same shape and are not huge
                     out_B = sp.same_shape_prod(A, grad_output).to_dense()
 
             sp.verify_coalescence(out_A)
-            return out_A, out_B, None
+            return out_A, out_B, None, None, None
 
 
 
@@ -1635,7 +1660,7 @@ class ag:
     class div_sparse_dense(torch.autograd.Function):
         # noinspection PyMethodOverriding
         @staticmethod
-        def forward(ctx, A, B, slice_info): # 0.06 seconds
+        def forward(ctx, A, B, slice_info, use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails): # 0.06 seconds
             assert A.is_sparse, 'A must be sparse'
             assert not B.is_sparse, 'B cannot be sparse'
             assert (torch.logical_or(torch.tensor(A.shape) == torch.tensor(B.shape), torch.tensor(B.shape) == 1)).all(), "B must be of size that allows broadcasting to A"
@@ -1659,6 +1684,8 @@ class ag:
                 ctx.save_for_backward(A_save, B_save)
                 ctx.broadcast_dims = broadcast_dims
                 ctx.slice_info = slice_info
+                ctx.use_custom_cuda_library_if_available = use_custom_cuda_library_if_available
+                ctx.fail_if_cuda_library_load_fails = fail_if_cuda_library_load_fails
 
             sp.verify_coalescence(out)
             return out
@@ -1684,7 +1711,9 @@ class ag:
                 if len(broadcast_dims) > 0:
                     # 0 seconds
                     out_B = sp.same_shape_prod(A, grad_output) # This is still sparse and can be huge
-                    out_B = sp.sum_sparse(out_B, dim=broadcast_dims, slice_info=slice_info).to_dense()
+                    out_B = sp.sum_sparse(out_B, dim=broadcast_dims, slice_info=slice_info,
+                                use_custom_cuda_library_if_available=ctx.use_custom_cuda_library_if_available,
+                                fail_if_cuda_library_load_fails=ctx.fail_if_cuda_library_load_fails).to_dense()
                     out_B = -out_B / torch.square(B)
                 else:
                     # In this case, B didn't need to be broadcast to A, so all of A,B,grad_output have the same shape and are not huge
@@ -1693,14 +1722,14 @@ class ag:
                     assert False, "Did not test this case. Make sure this works correctly"
 
             sp.verify_coalescence(out_A)
-            return out_A, out_B, None
+            return out_A, out_B, None, None, None
 
 
 
     class add_sparse_dense(torch.autograd.Function):
         # noinspection PyMethodOverriding
         @staticmethod
-        def forward(ctx, A: torch.Tensor, B: torch.Tensor, slice_info):
+        def forward(ctx, A: torch.Tensor, B: torch.Tensor, slice_info, use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails):
             assert A.is_sparse, 'A must be sparse'
             assert not B.is_sparse, 'B cannot be sparse'
             assert (torch.logical_or(torch.tensor(A.shape) == torch.tensor(B.shape), torch.tensor(B.shape) == 1)).all(), "B must be of size that allows broadcasting to A"
@@ -1717,7 +1746,9 @@ class ag:
 
             if True in ctx.needs_input_grad:
                 ctx.broadcast_dims = broadcast_dims
-                ctx.slice_info = slice_info if ctx.needs_input_grad[1] else None 
+                ctx.slice_info = slice_info if ctx.needs_input_grad[1] else None
+                ctx.use_custom_cuda_library_if_available = use_custom_cuda_library_if_available
+                ctx.fail_if_cuda_library_load_fails = fail_if_cuda_library_load_fails
 
             return out
 
@@ -1737,13 +1768,15 @@ class ag:
                 # Gradient with respect to the dense tensor B
                 if len(broadcast_dims) > 0:
                     # If broadcasting happened, we need to sum over the broadcast dimensions
-                    out_B = sp.sum_sparse(grad_output, dim=broadcast_dims, slice_info=slice_info).to_dense()
+                    out_B = sp.sum_sparse(grad_output, dim=broadcast_dims, slice_info=slice_info,
+                                use_custom_cuda_library_if_available=ctx.use_custom_cuda_library_if_available,
+                                fail_if_cuda_library_load_fails=ctx.fail_if_cuda_library_load_fails ).to_dense()
                 else:
                     # No broadcasting needed, so just convert to dense
                     out_B = grad_output.to_dense()
 
             sp.verify_coalescence(out_A)
-            return out_A, out_B, None
+            return out_A, out_B, None, None, None
 
 
     # Calculates the function f(x) = max(x, thresh), but with grad f(thresh) = 1
@@ -2179,16 +2212,18 @@ class ag:
     class cumsum_sparse(torch.autograd.Function):
         # noinspection PyMethodOverriding
         @staticmethod
-        def forward(ctx, X: torch.Tensor, dim, slice_info):
+        def forward(ctx, X: torch.Tensor, dim, slice_info, use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails):
             assert X.is_coalesced(), 'X must be coalesced'
 
             sp.verify_coalescence(X)
 
-            out = sp.cumsum_sparse(X, dim=dim, slice_info=slice_info)            
+            out = sp.cumsum_sparse(X, dim=dim, slice_info=slice_info, use_custom_cuda_library_if_available=use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails)
 
             if ctx.needs_input_grad[0]:
                 ctx.dim = dim
                 ctx.slice_info = slice_info
+                ctx.use_custom_cuda_library_if_available=use_custom_cuda_library_if_available
+                ctx.fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails
 
             sp.verify_coalescence(out)
             return out
@@ -2204,11 +2239,11 @@ class ag:
 
             dim = ctx.dim
             slice_info = ctx.slice_info
-            grad_input = sp.cumsum_sparse(grad_output, dim=dim, slice_info=slice_info, reverse=True) 
+            grad_input = sp.cumsum_sparse(grad_output, dim=dim, slice_info=slice_info, reverse=True, use_custom_cuda_library_if_available=ctx.use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails=ctx.fail_if_cuda_library_load_fails)
 
             sp.verify_coalescence(grad_input)
 
-            return grad_input, None, None
+            return grad_input, None, None, None, None
 
 
 
@@ -2501,7 +2536,7 @@ class sp:
 
 
     @staticmethod
-    def sum_sparse(A, dim, slice_info=None):
+    def sum_sparse(A, dim, slice_info=None, use_custom_cuda_library_if_available=True, fail_if_cuda_library_load_fails=False):
 
         assert A.is_sparse, "input tensor must be sparse"
         assert_coalesced(A)
@@ -2514,7 +2549,7 @@ class sp:
         dim = sp.dim_to_list(shape, dim)
 
         if slice_info is None:
-            slice_info = sp.get_slice_info(A, dim)            
+            slice_info = sp.get_slice_info(A, dim, use_custom_cuda_library_if_available=use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails)
 
         # Verify slice info matches the input tensor
         sp.verify_slice_info(A, dim, slice_info)        
@@ -2535,8 +2570,8 @@ class sp:
                                            in_place=True,
                                            max_seg_size=si['max_slice_nonzeros'],
                                            thorough_verify_input=fsw_embedding_debug_mode,
-                                           use_custom_cuda_library_if_available = True, # TODO: Extract these two arguments
-                                           fail_if_cuda_library_load_fails = False)
+                                           use_custom_cuda_library_if_available=use_custom_cuda_library_if_available,
+                                           fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails)
         else:
             # If there is only one slice, we don't need to use segmented cumsum
             vals_sorted_cumsum = torch.cumsum(vals_sorted, dim=0, out=vals_sorted)
@@ -2567,7 +2602,7 @@ class sp:
     # Computes the cumsum on the nonzero entries of a sparse tensor A along dimension dim
     # max_slice_nonzers: An upper bound on the maximal number of nonzeros of A along dimension dim, taken over all slices of A along dim
     @staticmethod
-    def cumsum_sparse(A, dim, slice_info=None, reverse=False):
+    def cumsum_sparse(A, dim, slice_info=None, reverse=False, use_custom_cuda_library_if_available=True, fail_if_cuda_library_load_fails=False):
         assert A.is_sparse, "input tensor must be sparse"        
         assert_coalesced(A)
         
@@ -2588,7 +2623,7 @@ class sp:
         # shape2 = [shape[d] for d in range(len(shape)) if d != dim]
 
         if slice_info is None:
-            slice_info = sp.get_slice_info(A, dim)
+            slice_info = sp.get_slice_info(A, dim, use_custom_cuda_library_if_available=use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails)
         
         # Verify slice info matches the input tensor
         sp.verify_slice_info(A, dim, slice_info)        
@@ -2612,8 +2647,8 @@ class sp:
                                            in_place=True,
                                            max_seg_size=max_slice_nonzeros,
                                            thorough_verify_input=fsw_embedding_debug_mode,
-                                           use_custom_cuda_library_if_available = True, # TODO: Extract these two arguments
-                                           fail_if_cuda_library_load_fails = False)
+                                           use_custom_cuda_library_if_available=use_custom_cuda_library_if_available,
+                                           fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails)
         else:
             # If there is only one slice, we don't need to use segmented cumsum
             vals_sorted_cumsum = torch.cumsum(vals_sorted, dim=0, out=vals_sorted)
@@ -2647,7 +2682,7 @@ class sp:
 
 
     @staticmethod
-    def get_slice_info(A, dim, calc_nnz_per_slice=False):
+    def get_slice_info(A, dim, calc_nnz_per_slice=False, use_custom_cuda_library_if_available=True, fail_if_cuda_library_load_fails=False):
         # We run with no gradients to ensure speed
         with torch.no_grad():
             assert A.is_sparse, "input tensor must be sparse"
@@ -2734,7 +2769,9 @@ class sp:
                 one = torch.ones(1, device=inds.device, dtype=torch.float64)
                 vals = one.repeat(A.values().numel())
                 A_mask = sp.sparse_coo_tensor_coalesced(indices=inds, values=vals, size=A.shape)
-                nnz_per_slice = sp.sum_sparse(A_mask, dim, slice_info=slice_info).to_dense().to(torch.int64)
+                nnz_per_slice = sp.sum_sparse(A_mask, dim, slice_info=slice_info,
+                                use_custom_cuda_library_if_available=use_custom_cuda_library_if_available,
+                                fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails ).to_dense().to(torch.int64)
                 del A_mask
                 
                 slice_info['nnz_per_slice'] = nnz_per_slice
