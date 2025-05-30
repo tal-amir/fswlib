@@ -95,8 +95,8 @@ import time
 import ctypes
 
 # Internal state for CUDA backend
-# The library will be loaded at FSWEmbedding.__init__()
-_lib_loaded = False
+# The library will be loaded the first time it is required
+_tried_to_load_lib = False
 _lib_handle = None
 _warned_about_failure = False
 
@@ -119,7 +119,8 @@ fsw_embedding_basic_safety_checks = True
 fsw_embedding_high_precision = False
 
 # Produce a runtime error (rather than a warning) when failing to load the custom CUDA library
-fsw_embedding_produce_error_on_custom_library_loading_failure = True
+# TODO: Handle this
+#fsw_embedding_produce_error_on_custom_library_loading_failure = True
 
 tal_global_timer = 0
 tal_global_timer_start = 0
@@ -175,41 +176,29 @@ tal_global_timer_start = 0
 class FSWEmbedding(nn.Module):
     
     #@type_enforced.Enforcer(enabled=True)
-    def __init__(self, 
-                 d_in: int, # ambient dimension of input multisets / measures
-                 d_out: int | None = None, # embedding output dimension
+    def __init__(self,
+                 d_in: int,  # ambient dimension of input multisets / measures
+                 d_out: int | None = None,  # embedding output dimension
                  nSlices: int | None = None, nFreqs: int | None = None, collapse_freqs: bool = False,
-                 d_edge: int = 0, # dimension of edge feature vectors. requires calling forward() with graph_mode=True
-                 encode_total_mass: bool = False, # Tells whether to encode the input multiset sizes (a.k.a. total mass) in the embedding
-                 total_mass_encoding_function: str = 'identity', # 'identity': f(x)=x, 'sqrt': f(x) = sqrt(1+x)-1, 'log': log(1+x)
-                 total_mass_encoding_method: str = 'plain', # 'plain' / 'homog' / 'homog_alt'
-                 total_mass_pad_thresh: float | int = 1.0, # Multisets/mesaures with a total mass below that threshold get padded with the complementary mass placed at x=0
+                 d_edge: int = 0,  # dimension of edge feature vectors. requires calling forward() with graph_mode=True
+                 encode_total_mass: bool = False,  # Tells whether to encode the input multiset sizes (a.k.a. total mass) in the embedding
+                 total_mass_encoding_function: str = 'identity',  # 'identity': f(x)=x, 'sqrt': f(x) = sqrt(1+x)-1, 'log': log(1+x)
+                 total_mass_encoding_method: str = 'plain',  # 'plain' / 'homog' / 'homog_alt'
+                 total_mass_pad_thresh: float | int = 1.0,  # Multisets/mesaures with a total mass below that threshold get padded with the complementary mass placed at x=0
                  learnable_slices: bool = False, learnable_freqs: bool = False, learnable_powers: bool = False,
                  freqs_init: float | int | str | tuple[float,float] = 'random',
                  minimize_slice_coherence: bool = False,
                  enable_bias: bool = True,
-                 device: torch.device | int | str | None = None, dtype: torch.dtype = torch.float32,
-                 load_custom_cuda_lib = True,
+                 device: torch.device | int | str | None = None,
+                 dtype: torch.dtype = torch.float32,
+                 use_custom_cuda_library_if_available: bool = True,
+                 fail_if_cuda_library_load_fails: bool = False,
                  report: bool = False, user_warnings: bool = True,
                  report_on_coherence_minimization: bool = False):
 
         super().__init__()
 
         self.user_warnings = user_warnings
-
-        # TODO: Handle this
-        # Load custom CUDA library
-        # global libfsw_embedding
-        # if load_custom_cuda_lib and (libfsw_embedding is None):
-        #     try:
-        #         libfsw_embedding = ctypes.CDLL(_lib_fsw_embedding_path)
-        #         qprintln(report, 'Loaded custom CUDA library \'%s\'' % _lib_fsw_embedding_path)
-        #     except OSError as e: # TODO: Handle this failure properly
-        #         if fsw_embedding_produce_error_on_custom_library_loading_failure:
-        #             raise RuntimeError('Error loading custom CUDA library \'%s\'. Try rebuilding it by running the script file \'build_fsw_embedding\' found at the same directory. If this doesn\'t help, this error can be circumvented by setting load_custom_cuda_lib=False at FSW_embedding() init, or setting fsw_embedding_produce_error_on_custom_library_loading_failure=False at FSW_embedding.py code. This will use pure PyTorch code instead of the custom CUDA library, which is a bit slower.' % _lib_fsw_embedding_path)
-        #         elif self.user_warnings:
-        #             warnings.warn('Could not load custom CUDA library \'%s\'. Using pure torch implementation, which is a bit slower. (To silence, set user_warnings=False at FSW_embedding() init)' % _lib_fsw_embedding_path, UserWarning)
-        #         libfsw_embedding = None
 
         # Process sizes
         assert d_in >= 0, 'd_in must be nonnegative'
@@ -284,12 +273,21 @@ class FSWEmbedding(nn.Module):
 
         # device_new and dtype_new are only defined here on __init__ and passed on to reset_parameters(), which then deletes them
         if device is None:
-            pass
+            # Use get_default_device if available (PyTorch 2.3+)
+            if hasattr(torch, "get_default_device"):
+                self.device_new = torch.get_default_device()
+            else:
+                # Fallback: infer from a dummy tensor
+                self.device_new = torch.tensor([]).device
         else:
             self.device_new = device
 
+
         assert dtype.is_floating_point and (not dtype.is_complex), 'dtype must be real floating-point; instead got dtype=%s' % dtype
         self.dtype_new = dtype
+
+        self.use_custom_cuda_library_if_available = use_custom_cuda_library_if_available
+        self.fail_if_cuda_library_load_fails = fail_if_cuda_library_load_fails
 
         self.report = report
         self.report_on_coherence_minimization = report_on_coherence_minimization
@@ -2533,7 +2531,12 @@ class sp:
         # slice_ends = counts_consecutive.cumsum(dim=0)-1
 
         if si['num_slices'] > 1:
-            vals_sorted_cumsum = segcumsum(vals_sorted, si['keys_sorted'], in_place=True, max_seg_size=si['max_slice_nonzeros'], thorough_verify_input=fsw_embedding_debug_mode)
+            vals_sorted_cumsum = segcumsum(vals_sorted, si['keys_sorted'],
+                                           in_place=True,
+                                           max_seg_size=si['max_slice_nonzeros'],
+                                           thorough_verify_input=fsw_embedding_debug_mode,
+                                           use_custom_cuda_library_if_available = True, # TODO: Extract these two arguments
+                                           fail_if_cuda_library_load_fails = False)
         else:
             # If there is only one slice, we don't need to use segmented cumsum
             vals_sorted_cumsum = torch.cumsum(vals_sorted, dim=0, out=vals_sorted)
@@ -2604,8 +2607,13 @@ class sp:
         vals_sorted = vals[sort_inds]
 
         if slice_info['num_slices'] > 1:
-            vals_sorted_cumsum = segcumsum(vals_sorted, keys_sorted, in_place=True, max_seg_size=max_slice_nonzeros,
-                                       thorough_verify_input=fsw_embedding_debug_mode)
+            vals_sorted_cumsum = segcumsum(vals_sorted,
+                                           keys_sorted,
+                                           in_place=True,
+                                           max_seg_size=max_slice_nonzeros,
+                                           thorough_verify_input=fsw_embedding_debug_mode,
+                                           use_custom_cuda_library_if_available = True, # TODO: Extract these two arguments
+                                           fail_if_cuda_library_load_fails = False)
         else:
             # If there is only one slice, we don't need to use segmented cumsum
             vals_sorted_cumsum = torch.cumsum(vals_sorted, dim=0, out=vals_sorted)
@@ -2838,42 +2846,77 @@ class sp:
 ##                                            Custom CUDA backend                                          ##
 #############################################################################################################
 
-def _load_custom_cuda_backend(report=None, user_warnings=True):
+
+class FSWCustomCudaLibraryLoadWarning(UserWarning):
+    """Raised when the custom CUDA library could not be loaded and the fallback torch code is used."""
+    pass
+
+class FSWCustomCudaLibraryLoadError(RuntimeError):
+    """Raised when the custom CUDA library could not be loaded and fallback behavior is disabled."""
+    pass
+
+
+def load_custom_cuda_library(fail_if_cuda_library_load_fails: bool,
+                             report: bool = None):
     """
-    Attempts to load the custom CUDA backend (libfsw_embedding.so).
+    Attempts to load the custom CUDA library (libfsw_embedding.so).
     Emits a warning if loading fails, or raises an error depending on config.
     """
-    global _lib_loaded, _lib_handle, _warned_about_failure
+    global _tried_to_load_lib, _lib_handle, _lib_path
 
-    if _lib_loaded:
+    if _tried_to_load_lib:
         return _lib_handle
+
+    _tried_to_load_lib = True
+    _lib_handle = None
+
+    if not torch.cuda.is_available():
+        return None
 
     try:
         _lib_handle = ctypes.CDLL(_lib_path)
-        _lib_loaded = True
-        if report:
-            qprintln(report, f"Loaded custom CUDA backend from '{_lib_path}'")
+
+        if not os.path.isfile(_lib_path):
+            msg = f'Could not find custom CUDA library "{_lib_path}"'
+        elif _lib_handle is None:
+            msg = f'Could not load custom CUDA library "{_lib_path}"'
+        elif not hasattr(_lib_handle, "segcumsum_wrapper"):
+            msg = f'Invalid custom CUDA library "{_lib_path}"'
+        else:
+            # Successfully loaded
+            if report:
+                qprintln(report, f'Loaded custom CUDA library "{_lib_path}"')
+
+            return _lib_handle
+
+        # If we got here, something went wrong
+        _lib_handle = None
+
+        msg += '\n'
+
+        if fail_if_cuda_library_load_fails:
+            msg += "Try rebuilding the custom CUDA library using command fsw-build, or allow pure-torch fallback code by setting fail_if_cuda_library_load_fails=False"
+            raise FSWCustomCudaLibraryLoadError(msg)
+        else:
+            msg += "Falling back to the pure PyTorch implementation (roughly ~2x slower)."
+            msg += "\nTry rebuilding the custom CUDA library using the command fsw-build, or always use fallback code by setting "\
+                   "`use_custom_cuda_library_if_available=False`."
+            warnings.warn(msg, FSWCustomCudaLibraryLoadWarning, stacklevel=2)
+            return None
+
+    # Repeat the same warning/raising behavior if trying to load the library produced a runtime error:
     except OSError as e:
-        msg = (
-            f"Could not load custom CUDA backend from '{_lib_path}'. "
-            "Falling back to the pure PyTorch implementation."
-        )
+        msg = f'Could not load custom CUDA library "{_lib_path}".\nTrying to load produced an exception: \n{e}\n'
 
-        if fsw_embedding_produce_error_on_custom_library_loading_failure:
-            raise RuntimeError(
-                msg + "\n\n"
-                "Try rebuilding it using `fsw-build`. Or, disable this error by setting:\n"
-                "- `load_custom_cuda_lib=False` (in the FSWEmbedding constructor), or\n"
-                "- `fsw_embedding_produce_error_on_custom_library_loading_failure = False`"
-            ) from e
-
-        if user_warnings and not _warned_about_failure:
-            _warned_about_failure = True
-            warnings.warn(msg, UserWarning, stacklevel=2)
-
-        _lib_handle = None  # ensure it's explicitly unset
-
-    return _lib_handle
+        if fail_if_cuda_library_load_fails:
+            msg += "Try rebuilding the custom CUDA library using command fsw-build. Alternatively, allow using the pure-torch fallback code by setting fail_if_cuda_library_load_fails=False"
+            raise FSWCustomCudaLibraryLoadError(msg)
+        else:
+            msg += "Falling back to the pure PyTorch implementation (roughly ~2x slower)."
+            msg += " Try rebuilding the custom CUDA library using the command fsw-build. Alternatively, always use the fallback code by setting "\
+                   "`use_custom_cuda_library_if_available=False`."
+            warnings.warn(msg, FSWCustomCudaLibraryLoadWarning, stacklevel=2)
+            return None
 
 
 
@@ -2899,7 +2942,9 @@ def segcumsum(values: torch.Tensor,
               max_seg_size: int | None = None,
               in_place: bool = False,
               thorough_verify_input : bool = False,
-              always_use_pure_torch = False):
+              use_custom_cuda_library_if_available : bool = True,
+              fail_if_cuda_library_load_fails: bool = False):
+
     # Verify input device, dtypes and shapes
     assert values.dim() == 1, 'values must be a 1-dimensional tensor'
     assert segment_ids.dim() == 1, 'segment_ids must be a 1-dimensional tensor'
@@ -2948,13 +2993,14 @@ def segcumsum(values: torch.Tensor,
         assert not torch.isinf(values).any(), "Found infs in ''values''"
         assert not torch.isnan(values).any(), "Found nans in ''values''"
 
-    global _lib_loaded
-
-    if not _lib_loaded:
-        _load_custom_cuda_backend(report=False, user_warnings=None)
+    if (values.device.type == 'cuda') and use_custom_cuda_library_if_available:
+        lib_handle = load_custom_cuda_library(fail_if_cuda_library_load_fails = fail_if_cuda_library_load_fails,
+                                              report=False)
+    else:
+        lib_handle = None
 
     # Calculate and return the segmented cumsum
-    if (values.device.type == 'cuda') and (not always_use_pure_torch) and (_lib_loaded):
+    if lib_handle is not None:
         return segcumsum_cuda(values, segment_ids, max_seg_size, in_place)
     else:
         return segcumsum_torch(values, segment_ids, max_seg_size, in_place)

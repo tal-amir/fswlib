@@ -48,12 +48,36 @@ def main(nvcc_path=None, verbose=False):
     else:
         platform_specific_flags = ["--compiler-options", "-O3 -fPIC"]
 
+
+    # Try to detect the current architecture and add it to supported_archs
+    try:
+        import torch
+        if torch.cuda.is_available():
+            major, minor = torch.cuda.get_device_capability()
+            current_arch = f"{major}{minor}"
+
+            if verbose:
+                print('Current architecture: ', current_arch)
+
+            if int(current_arch) not in supported_archs:
+                supported_archs.append(int(current_arch))
+
+    except Exception as e:
+        print(f"[fsw-build] Warning: could not determine current CUDA device architecture: {e}")
+
     arch_flags = [f"-gencode=arch=compute_{sm},code=sm_{sm}" for sm in supported_archs]
 
     cmd = [nvcc] + base_flags + platform_specific_flags + ["-o", so_file_path, cu_file_path] + arch_flags
 
     #print(f"Building {so_file_name} ... ", end="")
-    subprocess.check_call(cmd)
+
+    try:
+        cmd = cmd
+        subprocess.check_call(cmd)
+    except Exception as e:
+        print(f"[fsw-build] Error: failed to execute compilation command: {cmd}\n")
+        raise e
+
     #print("Done.")
 
 if __name__ == "__main__":
