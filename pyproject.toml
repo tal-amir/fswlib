@@ -1,6 +1,12 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+
+[tool.setuptools_scm]
+version_file = "src/fswlib/version.py"
+
 [project]
 name = "fswlib"
-version = "0.1.7"
+version = "0.1.11"
 description = "Fourier Sliced-Wasserstein (FSW) embedding — a PyTorch-based library"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -42,6 +48,9 @@ Documentation = "https://github.com/tal-amir/fswlib"
 
 [project.scripts]
 fswlib-build = "fswlib.build:main"
+fswlib-test = "fswlib.test:main"
+fswlib-versions = "fswlib.versions:main"
+fswlib-clean = "fswlib.build:clean_entrypoint"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

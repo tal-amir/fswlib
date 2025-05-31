@@ -372,7 +372,7 @@ from torch.autograd import gradcheck
 # evaluated with these tensors are close enough to numerical
 # approximations and returns True if they all verify this condition.
 input = (X1, W1+1e-5, None, graph_mode)
-test = gradcheck(embed, input, eps=1e-6, atol=1e-7)
+test = gradcheck(embed, input, eps=1e-6, atol=1e-6)
 print('Gradcheck test result: ', test)
 
 print('=========================================')

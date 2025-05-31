@@ -2,6 +2,6 @@
 # - Think carefully about input/output argument names
 # - Create examples and tests
 
- Try with Torch 2.0 and CUDA 1.8 and pycharm 1.24.4
+ Try with Torch 2.0 and CUDA 1.8 and python 1.24.4
  Try on Windows and Mac
 

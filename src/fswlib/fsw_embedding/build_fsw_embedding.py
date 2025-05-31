@@ -4,16 +4,45 @@ import subprocess
 import os
 import platform
 import shutil
+from contextlib import suppress
 
-if platform.system() == "Windows":
-    bin_file_name = "fsw_embedding.dll"
-elif platform.system() == "Darwin":  # macOS
-    bin_file_name = "libfsw_embedding.dylib"
-else:  # Linux and others
-    bin_file_name = "libfsw_embedding.so"
+bin_filename_by_platform = {
+    'Windows': "fsw_embedding.dll",
+    'Darwin': "libfsw_embedding.dylib",
+    'other': "libfsw_embedding.so" # Linux and others
+}
 
-def main(nvcc_path=None, verbose=False):
+if platform.system() in {"Windows", "Darwin"}:
+    bin_file_name = bin_filename_by_platform[platform.system()]
+else:
+    bin_file_name = bin_filename_by_platform['other']
+
+all_bin_filenames = bin_filename_by_platform.values()
+
+
+def main(nvcc_path=None, verbose=False, dummy=False, clean=False):
     cu_file_name = "fsw_embedding.cu"
+
+    cu_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), cu_file_name))
+    bin_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), bin_file_name))
+
+    if clean:
+        with suppress(FileNotFoundError):
+            for fn in all_bin_filenames:
+                fp = os.path.abspath(os.path.join(os.path.dirname(__file__), fn))
+                os.remove(fp)
+        return
+
+    if dummy:
+        with suppress(FileNotFoundError):
+            for fn in all_bin_filenames:
+                fp = os.path.abspath(os.path.join(os.path.dirname(__file__), fn))
+                with open(fp, "w"):
+                    pass
+        return
+
+    if not os.path.isfile(cu_file_path):
+        raise FileNotFoundError(f"CUDA source file not found: {cu_file_path}")
 
     nvcc_at_search_path = shutil.which("nvcc")
 
@@ -35,12 +64,6 @@ def main(nvcc_path=None, verbose=False):
             "- or `CUDA_HOME` is set\n"
             "- or it exists at /usr/local/cuda/bin/nvcc"
         )
-
-    cu_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), cu_file_name))
-    so_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), bin_file_name))
-
-    if not os.path.isfile(cu_file_path):
-        raise FileNotFoundError(f"CUDA source file not found: {cu_file_path}")
 
     supported_archs = [60, 61, 70, 75, 80, 86]
 
@@ -73,7 +96,7 @@ def main(nvcc_path=None, verbose=False):
 
     arch_flags = [f"-gencode=arch=compute_{sm},code=sm_{sm}" for sm in supported_archs]
 
-    cmd = [nvcc] + base_flags + platform_specific_flags + ["-o", so_file_path, cu_file_path] + arch_flags
+    cmd = [nvcc] + base_flags + platform_specific_flags + ["-o", bin_file_path, cu_file_path] + arch_flags
 
     #print(f"Building {bin_file_name} ... ", end="")
 

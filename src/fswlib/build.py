@@ -64,20 +64,35 @@ def is_valid_nvcc(path: str) -> bool:
         return False
 
 
-def build_fsw_embedding(nvcc_path: str, verbose: bool):
+def build_fsw_embedding(nvcc_path: str, verbose: bool, dummy: bool, clean: bool):
     from fswlib.fsw_embedding import build_fsw_embedding
 
-    if verbose:
-        print("[fswlib-build] Building fsw_embedding: ", flush=True)
+    module_name = "fsw_embedding"
+
+    if clean:
+        msg = f"[fswlib-build] Deleting {module_name} binaries"
     else:
-        print("[fswlib-build] Building fsw_embedding... ", end="", flush=True)
-
-    build_fsw_embedding.main(nvcc_path=nvcc_path, verbose=verbose)
+        msg = f"[fswlib-build] Building {module_name}"
 
     if verbose:
+        print(f"{msg}: ", flush=True)
+    else:
+        print(f"{msg}... ", end="", flush=True)
+
+    build_fsw_embedding.main(nvcc_path=nvcc_path, verbose=verbose, dummy=dummy, clean=clean)
+
+    if verbose and clean:
+        print('done cleaning fsw_embedding')
+    elif verbose:
         print('done building fsw_embedding')
     else:
         print('done')
+
+
+def clean_entrypoint():
+    import sys
+    sys.argv = [sys.argv[0], "--clean"]
+    main()
 
 
 def main(argv=None):
@@ -91,11 +106,14 @@ def main(argv=None):
         ),
         default=None    )
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output", default=False)
+    parser.add_argument("--dummy", action="store_true", help="Generate dummy binaries instead of compiling", default=False)
+    parser.add_argument("--clean", action="store_true", help="Instead of building, delete previously compiled binaries", default=False)
     args = parser.parse_args(argv)
 
     nvcc_path = find_nvcc(args.nvcc)
 
-    build_fsw_embedding(nvcc_path=nvcc_path, verbose=args.verbose)
+    build_fsw_embedding(nvcc_path=nvcc_path, verbose=args.verbose, dummy=args.dummy, clean=args.clean)
+
 
 if __name__ == "__main__":
     main()

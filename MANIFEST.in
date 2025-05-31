@@ -1,2 +1,8 @@
 # Include all CUDA source files
 recursive-include src *.cu
+
+# Include dummy binary files
+recursive-include src *.so
+recursive-include src *.dylib
+recursive-include src *.dll
+

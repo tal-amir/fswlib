@@ -199,7 +199,7 @@ class FSWEmbedding(nn.Module):
                  minimize_slice_coherence: bool = False,
                  enable_bias: bool = True,
                  device: torch.device | int | str | None = None,
-                 dtype: torch.dtype = torch.float32,
+                 dtype: torch.dtype | None = None,
                  use_custom_cuda_library_if_available: bool = True,
                  fail_if_cuda_library_load_fails: bool = False, # Produce a runtime error (rather than a warning) when failing to load the custom CUDA library
                  report: bool = False, user_warnings: bool = True,
@@ -284,15 +284,23 @@ class FSWEmbedding(nn.Module):
         if device is None:
             # Use get_default_device if available (PyTorch 2.3+)
             if hasattr(torch, "get_default_device"):
-                self.device_new = torch.get_default_device()
+                device = torch.get_default_device()
             else:
                 # Fallback: infer from a dummy tensor
-                self.device_new = torch.tensor([]).device
-        else:
-            self.device_new = device
+                device = torch.tensor([]).device
 
+
+        if dtype is None:
+            # Use get_default_dtype if available
+            if hasattr(torch, "get_default_dtype"):
+                dtype = torch.get_default_dtype()
+            else:
+                # Fallback: infer from a dummy tensor
+                dtype = torch.tensor([]).dtype
 
         assert dtype.is_floating_point and (not dtype.is_complex), 'dtype must be real floating-point; instead got dtype=%s' % dtype
+
+        self.device_new = device
         self.dtype_new = dtype
 
         self.use_custom_cuda_library_if_available = use_custom_cuda_library_if_available
@@ -306,7 +314,7 @@ class FSWEmbedding(nn.Module):
         qprintln(report, 'version %s, %s' % (version, version_date))
 
         qprintln(report)
-        qprintln(report, 'Based on our paper titled "Fourier Sliced-Wasserstrin Embedding for Multisets and Measures", 2024')
+        qprintln(report, 'Based on our paper titled "Fourier Sliced-Wasserstrin Embedding for Multisets and Measures", ICLR 2025')
 
         qprintln(report)
         qprintln(report, 'Constructing embedding for sets in %s into %s  ' % (input_space_name, output_space_name))
@@ -2481,17 +2489,28 @@ class sp:
         weights = shape.reshape([nd,1]).flip(dims=(0,))[0:-1].cumprod(dim=0).flip(dims=(0,))
         weights = torch.cat((weights, torch.ones(size=(1,1), device=weights.device, dtype=weights.dtype)), dim=0)
 
-        # Variants 2 and 3 use torch matrix/tensor multiplication, but they return the error:
-        # RuntimeError: "addmm_cuda" not implemented for 'Long'        
+        # Variant 1 works in all cases, but it is not the most memory-efficient one, due to broadcasting
+        # Variants 2 and 3 use torch matrix/tensor multiplication, but when called with Long inputs, they return the error:
+        # RuntimeError: "addmm_cuda" not implemented for 'Long'
+        # I thought Variant 4 would work well in that case as well, but it doesn't support some other operation on Longs.
+        # Therefore sticking with variant 1.
+        #
+        # Alternatively, to save memory, just iterate over the dimension and compute the product explicitly. It shouldn't take that long.
+
         variant = 1
 
         if variant == 1:
             # 0.7 seconds, but no better way to do it
-            out = torch.sum(indices*weights, dim=0) 
+            out = torch.sum(indices*weights, dim=0)
         elif variant == 2:
             out = ( weights.transpose(0,1) @ indices ).view(-1)
         elif variant == 3:
             out = torch.tensordot(indices, weights, dims=([0,],[0,])).view(-1)
+        elif variant == 4:
+            out = torch.einsum('nd,nd->d', indices, weights)
+        elif variant == 5:
+            # not sure this one works
+            out = weights.transpose(0,1) @ indices
 
         return out
 
