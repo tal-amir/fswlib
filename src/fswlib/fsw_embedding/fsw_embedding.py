@@ -477,16 +477,16 @@ class FSWEmbedding(nn.Module):
 
         # Generate projection vectors and frequencies
         # We always generate (and optimize) them in float64 and then convert to the desired dtype.
-        projVecs, freqs, bias = FSWEmbedding.generate_embedding_parameters(d_in=self.d_in + self.d_edge,
-                                                                           nSlices=self.nSlices, nFreqs=self.nFreqs,
-                                                                           cartesian_mode=self.cartesian_mode,
-                                                                           collapse_freqs=self.collapse_freqs,
-                                                                           total_mass_encoding_dim=self.total_mass_encoding_dim,
-                                                                           freqs_init=self.freqs_init,
-                                                                           minimize_slice_coherence=self.minimize_slice_coherence,
-                                                                           device=device,
-                                                                           report = self.report,
-                                                                           report_on_coherence_minimization = self.report_on_coherence_minimization)
+        projVecs, freqs, bias = FSWEmbedding._generate_embedding_parameters(d_in=self.d_in + self.d_edge,
+                                                                            nSlices=self.nSlices, nFreqs=self.nFreqs,
+                                                                            cartesian_mode=self.cartesian_mode,
+                                                                            collapse_freqs=self.collapse_freqs,
+                                                                            total_mass_encoding_dim=self.total_mass_encoding_dim,
+                                                                            freqs_init=self.freqs_init,
+                                                                            minimize_slice_coherence=self.minimize_slice_coherence,
+                                                                            device=device,
+                                                                            report = self.report,
+                                                                            report_on_coherence_minimization = self.report_on_coherence_minimization)
 
         projVecs = projVecs.to(dtype=dtype, device=device)
         freqs = freqs.to(dtype=dtype, device=device)
@@ -539,17 +539,17 @@ class FSWEmbedding(nn.Module):
     
 
     @staticmethod
-    def generate_embedding_parameters(d_in: int,
-                                      nSlices: int,
-                                      nFreqs: int,
-                                      cartesian_mode: bool,
-                                      collapse_freqs: bool,
-                                      total_mass_encoding_dim: int,
-                                      freqs_init: float | int | str | tuple[float,float],
-                                      minimize_slice_coherence: bool,
-                                      device: torch.device | int | str | None,
-                                      report: bool,
-                                      report_on_coherence_minimization: bool):
+    def _generate_embedding_parameters(d_in: int,
+                                       nSlices: int,
+                                       nFreqs: int,
+                                       cartesian_mode: bool,
+                                       collapse_freqs: bool,
+                                       total_mass_encoding_dim: int,
+                                       freqs_init: float | int | str | tuple[float,float],
+                                       minimize_slice_coherence: bool,
+                                       device: torch.device | int | str | None,
+                                       report: bool,
+                                       report_on_coherence_minimization: bool):
         dtype_init = torch.float64
 
         # Axis number for the ambient space R^d_in
@@ -666,7 +666,7 @@ class FSWEmbedding(nn.Module):
     # projection vectors already determines the effective frequency, and having a very high max-frequency-to-low-frequency ratio
     # may impede the optimization due to ill conditioning.
     
-    def spread_freqs_at_interval(self, center: float | int, radius: float | int):
+    def _spread_freqs_at_interval(self, center: float | int, radius: float | int):
         assert radius >= 0
 
         if (self.nFreqs == 1) or (radius == 0):
@@ -983,9 +983,9 @@ class FSWEmbedding(nn.Module):
             X_emb = torch.zeros(size=output_shape_before_collapse_and_totmass_augmentation, dtype=self.get_dtype(), device=self.get_device())
 
         elif (serialize_num_slices is None) or (serialize_num_slices >= self.nSlices):
-            X_emb = FSWEmbedding.forward_helper(X, W, self.projVecs, self.freqs, graph_mode, X_edge, self.cartesian_mode, batch_dims,
-                                                use_custom_cuda_extension_if_available = self.use_custom_cuda_extension_if_available,
-                                                fail_if_cuda_extension_load_fails = self.fail_if_cuda_extension_load_fails)
+            X_emb = FSWEmbedding._forward_helper(X, W, self.projVecs, self.freqs, graph_mode, X_edge, self.cartesian_mode, batch_dims,
+                                                 use_custom_cuda_extension_if_available = self.use_custom_cuda_extension_if_available,
+                                                 fail_if_cuda_extension_load_fails = self.fail_if_cuda_extension_load_fails)
 
         else:
             assert isinstance(serialize_num_slices, int) and (serialize_num_slices >= 1), 'serialize_num_slices must be None or a positive integer'
@@ -999,9 +999,9 @@ class FSWEmbedding(nn.Module):
                 projVecs_curr = self.projVecs[inds_curr,:]
                 freqs_curr = self.freqs if self.cartesian_mode else self.freqs[inds_curr]
                 
-                out_curr = FSWEmbedding.forward_helper(X, W, projVecs_curr, freqs_curr, graph_mode, X_edge, self.cartesian_mode, batch_dims,
-                                                use_custom_cuda_extension_if_available = self.use_custom_cuda_extension_if_available,
-                                                fail_if_cuda_extension_load_fails = self.fail_if_cuda_extension_load_fails)
+                out_curr = FSWEmbedding._forward_helper(X, W, projVecs_curr, freqs_curr, graph_mode, X_edge, self.cartesian_mode, batch_dims,
+                                                        use_custom_cuda_extension_if_available = self.use_custom_cuda_extension_if_available,
+                                                        fail_if_cuda_extension_load_fails = self.fail_if_cuda_extension_load_fails)
 
                 assign_at(X_emb, out_curr, output_proj_axis, inds_curr)
 
@@ -1032,8 +1032,8 @@ class FSWEmbedding(nn.Module):
                 X_emb = torch.cat( (total_mass * X_emb_norm, X_emb), dim=-1)
             elif self.total_mass_encoding_method == 'homog_alt':
                 X_emb_norm = torch.mean(X_emb.abs(), dim=-1, keepdim=True)
-                X_emb = torch.cat((FSWEmbedding.total_mass_homog_alt_encoding_part1(total_mass) * X_emb_norm,
-                                   FSWEmbedding.total_mass_homog_alt_encoding_part2(total_mass) * X_emb), dim=-1)
+                X_emb = torch.cat((FSWEmbedding._total_mass_homog_alt_encoding_part1(total_mass) * X_emb_norm,
+                                   FSWEmbedding._total_mass_homog_alt_encoding_part2(total_mass) * X_emb), dim=-1)
             else:
                 raise RuntimeError('This should not happen')
 
@@ -1045,9 +1045,9 @@ class FSWEmbedding(nn.Module):
 
 
     @staticmethod
-    def forward_helper(X, W, projVecs, freqs, graph_mode, X_edge, cartesian_mode, batch_dims,
-                       use_custom_cuda_extension_if_available,
-                       fail_if_cuda_extension_load_fails):
+    def _forward_helper(X, W, projVecs, freqs, graph_mode, X_edge, cartesian_mode, batch_dims,
+                        use_custom_cuda_extension_if_available,
+                        fail_if_cuda_extension_load_fails):
         # This function computes the embedding of (X,W) for a subset of the projections and frequencies.
         # projVecs should be of size (num_projections x d_in), and freqs should be of size nFreqs (not nFreqs x 1).
 
@@ -1290,7 +1290,7 @@ class FSWEmbedding(nn.Module):
 
 
 
-    def get_mutual_coherence(self):
+    def _get_mutual_coherence(self):
         gram = self.projVecs @ self.projVecs.transpose(0,1)
         inds = range(self.d_out)
         gram[inds,inds] = 0
@@ -1300,12 +1300,12 @@ class FSWEmbedding(nn.Module):
 
 
     @staticmethod
-    def total_mass_homog_alt_encoding_part1(totmass: torch.Tensor):
+    def _total_mass_homog_alt_encoding_part1(totmass: torch.Tensor):
         out = torch.where(totmass <= 1, totmass*(2-totmass), 1)
         return out
 
     @staticmethod
-    def total_mass_homog_alt_encoding_part2(totmass: torch.Tensor):
+    def _total_mass_homog_alt_encoding_part2(totmass: torch.Tensor):
         out = torch.where(totmass <= 1, totmass.square(), 2*totmass-1)
         return out
 
