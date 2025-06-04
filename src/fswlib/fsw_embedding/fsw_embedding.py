@@ -287,7 +287,7 @@ class FSWEmbedding(nn.Module):
             # If the output should be empty, we force encode_total_mass to be False
             encode_total_mass = 0
 
-        self.d_in = d_in
+        self._d_in = d_in
         self.d_edge = d_edge
 
         self.encode_total_mass = encode_total_mass
@@ -307,17 +307,17 @@ class FSWEmbedding(nn.Module):
         self.total_mass_encoding_function = total_mass_encoding_function        
 
         if self.d_edge == 0:
-            input_space_name = 'R^%d' % self.d_in
+            input_space_name = 'R^%d' % self._d_in
         else:
-            input_space_name = 'R^(%d+%d)' % (self.d_in, self.d_edge)
+            input_space_name = 'R^(%d+%d)' % (self._d_in, self.d_edge)
 
         if (d_out is not None) and (nSlices is None) and (nFreqs is None):
             self.cartesian_mode = False            
             self.collapse_freqs = False
-            self.d_out = d_out
+            self._d_out = d_out
             self.nSlices = d_out - self.total_mass_encoding_dim
             self.nFreqs = d_out - self.total_mass_encoding_dim
-            output_space_name = 'R^%d' % self.d_out
+            output_space_name = 'R^%d' % self._d_out
 
         elif (d_out is None) and (nSlices is not None) and (nFreqs is not None):
             assert collapse_freqs or (not encode_total_mass), 'Cartesian mode with collapse_freqs=False is not supported when encode_total_mass=True'
@@ -326,13 +326,13 @@ class FSWEmbedding(nn.Module):
             self.collapse_freqs = collapse_freqs
             self.nSlices = nSlices
             self.nFreqs = nFreqs
-            self.d_out = nSlices * nFreqs + self.total_mass_encoding_dim
-            output_space_name = ('R^%d' % self.d_out) if self.collapse_freqs else ('R^(%d\u00d7%d)' % (self.nSlices, self.nFreqs))
+            self._d_out = nSlices * nFreqs + self.total_mass_encoding_dim
+            output_space_name = ('R^%d' % self._d_out) if self.collapse_freqs else ('R^(%d\u00d7%d)' % (self.nSlices, self.nFreqs))
 
         else:
             assert False, "Expected exactly one of (d_out != None) or (nSlices != None and nFreqs != None)"
 
-        assert self.d_out >= 0, 'd_out must be nonnegative'
+        assert self._d_out >= 0, 'd_out must be nonnegative'
 
         #d_out = self.d_out
         nSlices = self.nSlices
@@ -477,7 +477,7 @@ class FSWEmbedding(nn.Module):
 
         # Generate projection vectors and frequencies
         # We always generate (and optimize) them in float64 and then convert to the desired dtype.
-        projVecs, freqs, bias = FSWEmbedding._generate_embedding_parameters(d_in=self.d_in + self.d_edge,
+        projVecs, freqs, bias = FSWEmbedding._generate_embedding_parameters(d_in=self._d_in + self.d_edge,
                                                                             nSlices=self.nSlices, nFreqs=self.nFreqs,
                                                                             cartesian_mode=self.cartesian_mode,
                                                                             collapse_freqs=self.collapse_freqs,
@@ -529,12 +529,81 @@ class FSWEmbedding(nn.Module):
 
 
     @property
+    def d_in(self) -> int:
+        """int: Ambient dimension of the input elements.
+
+        Returns
+        -------
+        int
+            The input dimensionality of the multiset elements (i.e., the last dimension of the input tensors).
+
+        Notes
+        -----
+        This value is set at initialization and determines the expected feature dimension of input points.
+
+        See Also
+        --------
+        __init__ : The `d_in` argument specifies this value at initialization.
+        """
+        return self._d_in
+
+
+    @property
+    def d_out(self) -> int:
+        """int: Dimensionality of the embedding output.
+    
+        Returns
+        -------
+        int
+            The dimension of the vector produced by the embedding for each multiset or distribution.
+    
+        Notes
+        -----
+        This value is set at initialization and governs the size of the embedding output.
+    
+        See Also
+        --------
+        __init__ : The `d_out` argument specifies this value at initialization.
+        """
+        return self._d_out
+
+    @property
     def device(self):
+        """torch.device: The device on which the module's parameters and buffers are stored.
+
+        Returns
+        -------
+        torch.device
+            The PyTorch device (`'cpu'`, `'cuda'`, etc.) where the embedding computations will take place.
+
+        Notes
+        -----
+        This behaves like the `device` property in standard PyTorch modules.
+
+        See Also
+        --------
+        __init__ : The `device` can be specified at initialization.
+        """
         return self.projVecs.device
 
 
     @property
     def dtype(self):
+        """torch.dtype: The default data type used by the module.
+
+        Returns
+        -------
+        torch.dtype
+            The data type (`torch.float32`, `torch.float64`, etc.) of the module’s parameters and buffers.
+
+        Notes
+        -----
+        This behaves like the `dtype` property in standard PyTorch modules.
+
+        See Also
+        --------
+        __init__ : The `dtype` can be specified at initialization.
+        """
         return self.projVecs.dtype
 
 
@@ -851,7 +920,7 @@ class FSWEmbedding(nn.Module):
         ### B. Verify input sizes
             
         assert len(X.shape) >= 2, "X must be a tensor of order at least 2"
-        assert X.shape[-1] == self.d_in, "The last dimension of X must equal d_in=%d. Instead got %d" % (self.d_in, X.shape[-1])        
+        assert X.shape[-1] == self._d_in, "The last dimension of X must equal d_in=%d. Instead got %d" % (self._d_in, X.shape[-1])
 
         if not graph_mode:
             # batch_dims contains everything that precedes (n,d_in) in X.shape
@@ -979,7 +1048,7 @@ class FSWEmbedding(nn.Module):
             del W_sum_padded
 
         # For compatibility reasons, we support the case of zero-dimensional output tensor
-        if self.d_out == 0:
+        if self._d_out == 0:
             X_emb = torch.zeros(size=output_shape_before_collapse_and_totmass_augmentation, dtype=self.dtype, device=self.device)
 
         elif (serialize_num_slices is None) or (serialize_num_slices >= self.nSlices):
@@ -1292,7 +1361,7 @@ class FSWEmbedding(nn.Module):
 
     def _get_mutual_coherence(self):
         gram = self.projVecs @ self.projVecs.transpose(0,1)
-        inds = range(self.d_out)
+        inds = range(self._d_out)
         gram[inds,inds] = 0
 
         mu = torch.max(torch.abs(gram))

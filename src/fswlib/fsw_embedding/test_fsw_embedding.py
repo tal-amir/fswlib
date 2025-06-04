@@ -127,7 +127,7 @@ def main():
 
         # Monte-carlo estimation of the SW distance.
         est1 = ot.sliced.sliced_wasserstein_distance(X1, X2, a=W1, b=W2, n_projections=50000, p=2, projections=None, seed=None, log=False)
-        est2 = ( torch.norm(X1_emb-X2_emb) / np.sqrt(float(embed.d_out)) )
+        est2 = (torch.norm(X1_emb-X2_emb) / np.sqrt(float(embed._d_out)))
 
         rel_diff = reldiff(est1, est2)
         print()
@@ -139,8 +139,8 @@ def main():
 
     ## Comparison between two independent embeddings
 
-    est1 = ( torch.norm(X1_emb-X2_emb) / np.sqrt(float(embed.d_out)) )
-    est2 = ( torch.norm(X1_emb2-X2_emb2) / np.sqrt(float(embed.d_out)) )
+    est1 = (torch.norm(X1_emb-X2_emb) / np.sqrt(float(embed._d_out)))
+    est2 = (torch.norm(X1_emb2-X2_emb2) / np.sqrt(float(embed._d_out)))
 
     rel_diff = reldiff(est1, est2)
 
@@ -149,7 +149,7 @@ def main():
 
     ## Comparison with ground truth
 
-    SWass_est = torch.norm(X1_emb) / np.sqrt(float(embed.d_out))
+    SWass_est = torch.norm(X1_emb) / np.sqrt(float(embed._d_out))
     SWass_true = torch.norm(X1 * torch.sqrt(W1.reshape((n,1)))) / np.sqrt(d)
     rel_err = rel_diff = reldiff(SWass_est, SWass_true)
 

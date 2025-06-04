@@ -143,8 +143,8 @@ else:
 
 ## Comparison between two independent embeddings
 
-est1 = ( torch.norm(X1_emb-X2_emb) / np.sqrt(float(embed.d_out)) )
-est2 = ( torch.norm(X1_emb2-X2_emb2) / np.sqrt(float(embed.d_out)) )
+est1 = (torch.norm(X1_emb-X2_emb) / np.sqrt(float(embed._d_out)))
+est2 = (torch.norm(X1_emb2-X2_emb2) / np.sqrt(float(embed._d_out)))
 
 rel_diff = reldiff(est1.cpu().numpy(), est2.cpu().numpy())
 
@@ -153,7 +153,7 @@ print('Sliced Wasserstein of (X1,W1), (X2,W2) estimates:  Embedding 1: %.5g\t Em
 
 ## Comparison with ground truth
 
-SWass_est = torch.norm(X1_emb) / np.sqrt(float(embed.d_out))
+SWass_est = torch.norm(X1_emb) / np.sqrt(float(embed._d_out))
 SWass_true = torch.norm(X1 * torch.sqrt(W1.reshape((n,1)))) / np.sqrt(d)
 rel_err = rel_diff = reldiff(SWass_est.cpu().numpy(), SWass_true.cpu().numpy())
 
