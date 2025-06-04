@@ -183,8 +183,22 @@ tal_global_timer_start = 0
 '''
 
 class FSWEmbedding(nn.Module):
+    """
+    Embedding module implementing the Fourier Sliced-Wasserstein (FSW) embedding.
+
+    This module computes a fixed-length representation of input multisets or measures
+    by projecting them onto random (or learned) one-dimensional slices, applying
+    a variant of the Sliced Wasserstein transform in the Fourier domain.
+
+    Designed for use with PyTorch, and optionally supports a custom CUDA extension
+    for faster computation on sparse inputs.
+
+    See the ICLR 2025 paper "Fourier Sliced-Wasserstein Embedding for Multisets and Measures"
+    by Tal Amir and Nadav Dym for details.
+    """
+
+
     
-    #@type_enforced.Enforcer(enabled=True)
     def __init__(self,
                  d_in: int,  # ambient dimension of input multisets / measures
                  d_out: int | None = None,  # embedding output dimension
@@ -204,6 +218,59 @@ class FSWEmbedding(nn.Module):
                  fail_if_cuda_extension_load_fails: bool = False,  # Produce a runtime error (rather than a warning) when failing to load the custom CUDA extension
                  report: bool = False, user_warnings: bool = True,
                  report_on_coherence_minimization: bool = False):
+        """
+        Initialize the FSWEmbedding module.
+
+        Parameters
+        ----------
+        d_in : int
+            Dimensionality of input multiset elements (ambient dimension).
+        d_out : int or None, optional
+            Output embedding dimension. If None, defaults to `nSlices * nFreqs`.
+        nSlices : int or None, optional
+            Number of projection directions. Required if `d_out` is not specified.
+        nFreqs : int or None, optional
+            Number of Fourier frequencies per slice. Required if `d_out` is not specified.
+        collapse_freqs : bool, default=False
+            If True, aggregates over frequencies within each slice instead of flattening them.
+        d_edge : int, default=0
+            Dimensionality of edge features (used only when `graph_mode=True` in forward).
+        encode_total_mass : bool, default=False
+            If True, encodes the total mass (multiset size) into the embedding.
+        total_mass_encoding_function : {'identity', 'sqrt', 'log'}, default='identity'
+            Function used to encode the total mass.
+        total_mass_encoding_method : {'plain', 'homog', 'homog_alt'}, default='plain'
+            Method for incorporating total mass information into the embedding.
+        total_mass_pad_thresh : float, default=1.0
+            Threshold below which mass is padded with a point mass at the origin.
+        learnable_slices : bool, default=False
+            If True, the projection directions are learned during training.
+        learnable_freqs : bool, default=False
+            If True, the Fourier frequencies are learned during training.
+        learnable_powers : bool, default=False
+            If True, learns power parameters applied to slice outputs.
+        freqs_init : float, int, str, or tuple, default='random'
+            Initialization scheme for frequencies. Can be a fixed value, range, or strategy.
+        minimize_slice_coherence : bool, default=False
+            If True, encourages slice directions to be mutually incoherent.
+        enable_bias : bool, default=True
+            If True, adds a bias term to the final embedding.
+        device : torch.device, int, str, or None, optional
+            Device to place all module parameters and buffers on.
+        dtype : torch.dtype or None, optional
+            Data type for computations (e.g., torch.float32 or torch.float64).
+        use_custom_cuda_extension_if_available : bool or None, optional
+            If True, uses the custom CUDA extension if available and supported.
+        fail_if_cuda_extension_load_fails : bool, default=False
+            If True, raises a RuntimeError if the CUDA extension cannot be loaded.
+        report : bool, default=False
+            If True, prints internal details during initialization.
+        user_warnings : bool, default=True
+            If True, shows warnings to the user (e.g., fallback from CUDA extension).
+        report_on_coherence_minimization : bool, default=False
+            If True, logs progress during slice coherence minimization.
+        """
+
 
         super().__init__()
 
@@ -368,7 +435,7 @@ class FSWEmbedding(nn.Module):
 
 
     # Resets the model parameters (projection vectors and frequencies) and updates the model settings.
-    #@type_enforced.Enforcer(enabled=True)
+    
     def reset_parameters(self,
                          freqs_init: float | int | str | None | tuple[float,float] = None,
                          minimize_slice_coherence: bool | None = None,
@@ -596,7 +663,7 @@ class FSWEmbedding(nn.Module):
     # This might be useful when using the embedding for graph message passing with learnable_projs=True, as the magnitude of the
     # projection vectors already determines the effective frequency, and having a very high max-frequency-to-low-frequency ratio
     # may impede the optimization due to ill conditioning.
-    #@type_enforced.Enforcer(enabled=True)
+    
     def spread_freqs_at_interval(self, center: float | int, radius: float | int):
         assert radius >= 0
 
@@ -617,6 +684,49 @@ class FSWEmbedding(nn.Module):
     # noinspection PyTypeHints
     def forward(self, X: torch.Tensor, W: torch.Tensor | str = 'unit', X_edge: torch.Tensor | None = None,
                 graph_mode: bool = False, serialize_num_slices: int | None = None):
+        """
+        Compute the Fourier Sliced-Wasserstein embedding of input multisets, measures, or graphs.
+
+        Parameters
+        ----------
+        X : torch.Tensor
+            Input tensor of shape `(n, d_in)` representing a multiset of `n` points in `ℝ^{d_in}`, or
+            of shape `(<batch_dims>, n, d_in)` for a batch of input multisets.
+            In `graph_mode=True`, may also be of shape `(<batch_dims[:-1]>, d_in)` to share input points across the last batch dimension.
+
+        W : torch.Tensor or str, default='unit'
+            Weights tensor of shape `(n,)` or `(<batch_dims>, n)`, assigning non-negative weights to input points.
+            If set to `'unit'`, the input is treated as a uniform distribution over its elements.
+            Must contain at least one non-zero weight per multiset.
+
+        X_edge : torch.Tensor or None, optional
+            Optional tensor of edge features. Currently unused.
+
+        graph_mode : bool, default=False
+            If True, interprets the input as a graph structure.
+            Each distribution is computed using a shared set of points `X`, with weights drawn from corresponding rows of `W`.
+            Allows efficient application to graphs, e.g., computing an embedding of the neighborhood of each node.
+
+        serialize_num_slices : int or None, optional
+            If set to an integer `t`, serializes the computation over projection slices in batches of size `t`.
+            This reduces memory usage by a factor of `<num_slices> / t` without changing the result.
+
+        Returns
+        -------
+        X_emb : torch.Tensor
+            Output tensor of shape:
+              - `(<batch_dims>, d_out)` if `collapse_freqs=True`, or
+              - `(<batch_dims>, nSlices, nFreqs)` if `collapse_freqs=False`.
+
+            If `graph_mode=True`, the output shape becomes `(n, d_out)` or `(<batch_dims>, n, d_out)`, depending on input shape.
+
+        Notes
+        -----
+        - Input points `X` and weights `W` can be batched across any number of leading dimensions.
+        - In `graph_mode`, `X` is shared across the last batch dimension, allowing efficient graph neighborhood embeddings.
+        - If `X_edge` is used, it must be compatible with the weight structure of `W` (not yet implemented).
+        """
+
         # Simple use:
         # X sized (n,d_in) represents a multiset of n points in R^d_in.
         # If W sized (n,) is provided, then (X,W) represents a distribution, with each point X[i,:]
@@ -1240,7 +1350,7 @@ def replace_in_tuple(T, index, value):
 
 
 
-#@type_enforced.Enforcer(enabled=True)
+
 def qprint(q: bool, s: str =''):
     assert type(q) == type(True)
 
@@ -1249,7 +1359,7 @@ def qprint(q: bool, s: str =''):
 
 
 
-#@type_enforced.Enforcer(enabled=True)
+
 def qprintln(q: bool, s: str =''):
     qprint(q, s+'\n')
 

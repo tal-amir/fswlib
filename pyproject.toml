@@ -6,7 +6,7 @@ name = "fswlib"
 version = "0.1.23"
 description = "Fourier Sliced-Wasserstein (FSW) embedding — a PyTorch-based library"
 requires-python = ">=3.10.3"
-readme = "README_PyPI.md"
+readme = "dev/README_PyPI.md"
 
 dependencies = [
   "numpy >= 1.24.4",
