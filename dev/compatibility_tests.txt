@@ -1,0 +1,32 @@
+Installation commands
+=====================
+
+* New setup (Linux and Windows):
+conda create -n fswnew python=3.12.9
+pip install torch numpy --index-url https://download.pytorch.org/whl/cu128
+
+* Old setup (Linux and Windows):
+conda create -n fswold python=3.10.3
+pip install numpy==1.24.4 torch==2.1.0+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
+
+
+
+Results
+=======
+
+Does not work on Python 3.8 due to type hinting with | operator
+Does not work on Torch 2.0.0 due to sparse_coo_tensor() with argument is_coalesced
+
+
+fswlib v0.1.23:
+---------------
+Linux: Works (including compilation) on Python 3.12.9, Torch 2.7.0 with CUDA 12.8, NumPy 2.1.2
+Linux: Works (including compilation) on Python 3.10.3, Torch 2.1.0 with CUDA 11.8, NumPy 1.24.4
+
+Windows: Works on Python 3.10.3, Torch 2.1.0 with CUDA 11.8, NumPy 1.24.4
+Windows: Works on Python 3.12.9, Torch 2.7.0 with CUDA 12.8, NumPy 2.1.2
+
+Also tested older beta versions on the intermediate setup:
+Linux: Works (including compilation) on Python 3.12.2, Torch 2.2.2 with CUDA 12.1, NumPy 1.26.4
+
+

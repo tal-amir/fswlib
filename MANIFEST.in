@@ -2,7 +2,15 @@
 recursive-include src *.cu
 
 # Include dummy binary files
+
+# Linux dummy binary
 recursive-include src *.so
+
+# MacOS dummy binary
 recursive-include src *.dylib
+
+# Windows dummy binaries
 recursive-include src *.dll
+recursive-include src *.lib
+recursive-include src *.exp
 

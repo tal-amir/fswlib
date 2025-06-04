@@ -1,6 +1,6 @@
 #! /bin/bash
 # Part of the anonymous ICLR 2025 submission titled "Fourier Sliced-Wasserstein Embedding for Multisets and Measures"
-# This bash script builds the fsw_embedding.so CUDA library accompanying the main python library fsw_embedding.py
+# This bash script builds the fsw_embedding.so CUDA extension accompanying the main python library fsw_embedding.py
 
 CUDA_HOME=/usr/local/cuda
 

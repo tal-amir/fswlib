@@ -1,3 +1,2 @@
 numpy>=1.24.4
-torch>=2.3.1
-type_enforced>=1.10.2
+torch>=2.1.0

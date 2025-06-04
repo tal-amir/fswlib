@@ -1,0 +1,21 @@
+Reorder the sections in the README
+
+On Windows, set the use_custom_cuda_library_when_needed default to False
+Add a requirements section to readme
+Make the "create dummy bins" command available standalone
+Add that dummy creation command and a cleanup to the prepare_for_upload script
+
+Fix pycharm's undos - make them less aggressive
+
+Make sure all relevant files are included in github
+Merge with main branch
+
+# - Fix the memory waste thing
+# - Think carefully about input/output argument names
+# - Create examples and tests
+- In "Try rebuilding the custom CUDA extension using command fswlib-build...", make fswlib-build bold
+- Make "custom CUDA extension" bold in the README.md, and say it is only supported on Linux
+
+ Try with Torch 2.0 and CUDA 1.8 and python 1.24.4
+ Try on Windows and Mac
+

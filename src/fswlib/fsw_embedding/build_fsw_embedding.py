@@ -8,6 +8,8 @@ from contextlib import suppress
 
 bin_filename_by_platform = {
     'Windows': "fsw_embedding.dll",
+    'Windows_xxx1': "fsw_embedding.exp", # Used only for the creation of a dummy file
+    'Windows_xxx2': "fsw_embedding.lib", # Used only for the creation of a dummy file
     'Darwin': "libfsw_embedding.dylib",
     'other': "libfsw_embedding.so" # Linux and others
 }

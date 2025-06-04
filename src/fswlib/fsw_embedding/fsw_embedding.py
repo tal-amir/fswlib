@@ -49,7 +49,7 @@ version_date = '2025-05-30'
 # 2.11    fixed sparse padding bug
 # 2.1     added full edge-feature support
 # 2.09a   edge feature support is working (beta)
-# 2.03a   can handle failed loading of custom CUDA library
+# 2.03a   can handle failed loading of custom CUDA extension
 # 2.02a   more efficient gradient handling in permute_sparse; renamed dimension variable names d, m to d_in, d_out
 # 2.01a   added safety mechanisms to detect uncoanesced tensors
 # 2.0a    low total-mass padding; total-mass encoding
@@ -112,7 +112,7 @@ else:  # Linux and others
 # Should be at the same directory as this script file.
 _lib_path = os.path.join(os.path.dirname(__file__), _lib_name)
 
-# Internal state for custom CUDA library
+# Internal state for custom CUDA extension
 # The library will be loaded on the first time it is used
 _tried_to_load_lib = False
 _lib_handle = None
@@ -200,8 +200,8 @@ class FSWEmbedding(nn.Module):
                  enable_bias: bool = True,
                  device: torch.device | int | str | None = None,
                  dtype: torch.dtype | None = None,
-                 use_custom_cuda_library_if_available: bool = True,
-                 fail_if_cuda_library_load_fails: bool = False, # Produce a runtime error (rather than a warning) when failing to load the custom CUDA library
+                 use_custom_cuda_extension_if_available: bool | None = None,
+                 fail_if_cuda_extension_load_fails: bool = False,  # Produce a runtime error (rather than a warning) when failing to load the custom CUDA extension
                  report: bool = False, user_warnings: bool = True,
                  report_on_coherence_minimization: bool = False):
 
@@ -303,8 +303,14 @@ class FSWEmbedding(nn.Module):
         self.device_new = device
         self.dtype_new = dtype
 
-        self.use_custom_cuda_library_if_available = use_custom_cuda_library_if_available
-        self.fail_if_cuda_library_load_fails = fail_if_cuda_library_load_fails
+        if use_custom_cuda_extension_if_available is None:
+            if platform.system() in {'Windows', 'Darwin'}:
+                use_custom_cuda_extension_if_available = False
+            else:
+                use_custom_cuda_extension_if_available = True
+        
+        self.use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
+        self.fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
 
         self.report = report
         self.report_on_coherence_minimization = report_on_coherence_minimization
@@ -806,8 +812,8 @@ class FSWEmbedding(nn.Module):
         # Calculate W_sum, which contains the total mass of the input measures
         if W.is_sparse:
             slice_info_W = sp.get_slice_info(W, -1, calc_nnz_per_slice=False,
-                                             use_custom_cuda_library_if_available=self.use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails=self.fail_if_cuda_library_load_fails)
-            W_sum = ag.sum_sparseToDense.apply(W, -1, slice_info_W, self.use_custom_cuda_library_if_available, self.fail_if_cuda_library_load_fails)
+                                             use_custom_cuda_extension_if_available=self.use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails=self.fail_if_cuda_extension_load_fails)
+            W_sum = ag.sum_sparseToDense.apply(W, -1, slice_info_W, self.use_custom_cuda_extension_if_available, self.fail_if_cuda_extension_load_fails)
         
         else:
             W_sum = torch.sum(W, dim=-1, keepdim=True)            
@@ -826,7 +832,7 @@ class FSWEmbedding(nn.Module):
                 W_pad = sp.to_sparse_full(W_pad)
                 W = ag.concat_sparse.apply(W, W_pad)
                 slice_info_W = sp.get_slice_info(W, -1, calc_nnz_per_slice=False,
-                                                 use_custom_cuda_library_if_available=self.use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails=self.fail_if_cuda_library_load_fails)
+                                                 use_custom_cuda_extension_if_available=self.use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails=self.fail_if_cuda_extension_load_fails)
 
                 if X_edge is not None:
                     X_edge_pad_inds = W_pad.indices()
@@ -853,8 +859,8 @@ class FSWEmbedding(nn.Module):
         # Normalize W according to W_sum_padded
         if W.is_sparse:
             W = ag.div_sparse_dense.apply(W, W_sum_padded, slice_info_W,
-                                          self.use_custom_cuda_library_if_available,
-                                          self.fail_if_cuda_library_load_fails)
+                                          self.use_custom_cuda_extension_if_available,
+                                          self.fail_if_cuda_extension_load_fails)
             del slice_info_W, W_sum_padded
         else:
             W = W / W_sum_padded
@@ -866,8 +872,8 @@ class FSWEmbedding(nn.Module):
 
         elif (serialize_num_slices is None) or (serialize_num_slices >= self.nSlices):
             X_emb = FSWEmbedding.forward_helper(X, W, self.projVecs, self.freqs, graph_mode, X_edge, self.cartesian_mode, batch_dims,
-                                                use_custom_cuda_library_if_available = self.use_custom_cuda_library_if_available,
-                                                fail_if_cuda_library_load_fails = self.fail_if_cuda_library_load_fails)
+                                                use_custom_cuda_extension_if_available = self.use_custom_cuda_extension_if_available,
+                                                fail_if_cuda_extension_load_fails = self.fail_if_cuda_extension_load_fails)
 
         else:
             assert isinstance(serialize_num_slices, int) and (serialize_num_slices >= 1), 'serialize_num_slices must be None or a positive integer'
@@ -882,8 +888,8 @@ class FSWEmbedding(nn.Module):
                 freqs_curr = self.freqs if self.cartesian_mode else self.freqs[inds_curr]
                 
                 out_curr = FSWEmbedding.forward_helper(X, W, projVecs_curr, freqs_curr, graph_mode, X_edge, self.cartesian_mode, batch_dims,
-                                                use_custom_cuda_library_if_available = self.use_custom_cuda_library_if_available,
-                                                fail_if_cuda_library_load_fails = self.fail_if_cuda_library_load_fails)
+                                                use_custom_cuda_extension_if_available = self.use_custom_cuda_extension_if_available,
+                                                fail_if_cuda_extension_load_fails = self.fail_if_cuda_extension_load_fails)
 
                 assign_at(X_emb, out_curr, output_proj_axis, inds_curr)
 
@@ -928,8 +934,8 @@ class FSWEmbedding(nn.Module):
 
     @staticmethod
     def forward_helper(X, W, projVecs, freqs, graph_mode, X_edge, cartesian_mode, batch_dims,
-                       use_custom_cuda_library_if_available,
-                       fail_if_cuda_library_load_fails):
+                       use_custom_cuda_extension_if_available,
+                       fail_if_cuda_extension_load_fails):
         # This function computes the embedding of (X,W) for a subset of the projections and frequencies.
         # projVecs should be of size (num_projections x d_in), and freqs should be of size nFreqs (not nFreqs x 1).
 
@@ -1071,10 +1077,10 @@ class FSWEmbedding(nn.Module):
 
             # 2.6 seconds
             slice_info_elements = sp.get_slice_info(Wps, element_axis, calc_nnz_per_slice=False,
-                                                    use_custom_cuda_library_if_available=use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails)
+                                                    use_custom_cuda_extension_if_available=use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails=fail_if_cuda_extension_load_fails)
             Wps_sum = ag.cumsum_sparse.apply(Wps, element_axis, slice_info_elements,
-                                             use_custom_cuda_library_if_available,
-                                             fail_if_cuda_library_load_fails)
+                                             use_custom_cuda_extension_if_available,
+                                             fail_if_cuda_extension_load_fails)
 
             sp.verify_coalescence(Wps)
             sp.verify_coalescence(Wps_sum)
@@ -1106,17 +1112,17 @@ class FSWEmbedding(nn.Module):
                 # 1.22 seconds
                 slice_info_freqs = sp.get_slice_info(arg2, sp.get_broadcast_dims_B_to_A(arg2, freqs),
                                                      calc_nnz_per_slice=False,
-                                                     use_custom_cuda_library_if_available=use_custom_cuda_library_if_available,
-                                                     fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails)
+                                                     use_custom_cuda_extension_if_available=use_custom_cuda_extension_if_available,
+                                                     fail_if_cuda_extension_load_fails=fail_if_cuda_extension_load_fails)
                 # 0.15 seconds
                 arg2 = ag.mul_sparse_dense.apply(arg2, np.pi*freqs, slice_info_freqs,
-                                                 use_custom_cuda_library_if_available,
-                                                 fail_if_cuda_library_load_fails)
+                                                 use_custom_cuda_extension_if_available,
+                                                 fail_if_cuda_extension_load_fails)
 
             # 0.14 seconds
             arg1 = ag.mul_sparse_dense.apply(Wps, freqs, slice_info_freqs,
-                                             use_custom_cuda_library_if_available,
-                                             fail_if_cuda_library_load_fails)
+                                             use_custom_cuda_extension_if_available,
+                                             fail_if_cuda_extension_load_fails)
 
             sp.verify_coalescence(arg1)
             sp.verify_coalescence(arg2)
@@ -1138,12 +1144,12 @@ class FSWEmbedding(nn.Module):
                 # 1.4 seconds
                 slice_info_Xps = sp.get_slice_info(sinc_diffs, sp.get_broadcast_dims_B_to_A(sinc_diffs, Xps),
                                                    calc_nnz_per_slice=False,
-                                                   use_custom_cuda_library_if_available=use_custom_cuda_library_if_available,
-                                                   fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails)
+                                                   use_custom_cuda_extension_if_available=use_custom_cuda_extension_if_available,
+                                                   fail_if_cuda_extension_load_fails=fail_if_cuda_extension_load_fails)
                 # 0.26 seconds
                 products = ag.mul_sparse_dense.apply(sinc_diffs, Xps, slice_info_Xps,
-                                                     use_custom_cuda_library_if_available,
-                                                     fail_if_cuda_library_load_fails)
+                                                     use_custom_cuda_extension_if_available,
+                                                     fail_if_cuda_extension_load_fails)
                 del sinc_diffs, Xps, slice_info_Xps
                 sp.verify_coalescence(products)
             else:
@@ -1152,8 +1158,8 @@ class FSWEmbedding(nn.Module):
 
             # 0.49 seconds
             product_sums = ag.sum_sparseToDense.apply(products, element_axis, slice_info_elements,
-                                                      use_custom_cuda_library_if_available,
-                                                      fail_if_cuda_library_load_fails)
+                                                      use_custom_cuda_extension_if_available,
+                                                      fail_if_cuda_extension_load_fails)
             del products, slice_info_elements
             
         else: # not sparse
@@ -1464,13 +1470,13 @@ class ag:
     class sum_sparseToDense(torch.autograd.Function):
         # noinspection PyMethodOverriding
         @staticmethod
-        def forward(ctx, A: torch.Tensor, dim, slice_info, use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails):
+        def forward(ctx, A: torch.Tensor, dim, slice_info, use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails):
             assert A.is_sparse, 'A must be sparse'
             assert A.is_coalesced(), 'A must be coalesced'
 
             out = sp.sum_sparse(A, dim=dim, slice_info=slice_info,
-                                use_custom_cuda_library_if_available=use_custom_cuda_library_if_available,
-                                fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails).to_dense()
+                                use_custom_cuda_extension_if_available=use_custom_cuda_extension_if_available,
+                                fail_if_cuda_extension_load_fails=fail_if_cuda_extension_load_fails).to_dense()
 
             if ctx.needs_input_grad[0]:
                 ctx.dim = dim if dim >= 0 else ( dim + A.dim() )
@@ -1614,7 +1620,7 @@ class ag:
     class mul_sparse_dense(torch.autograd.Function):
         # noinspection PyMethodOverriding
         @staticmethod
-        def forward(ctx, A: torch.Tensor, B: torch.Tensor, slice_info, use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails):
+        def forward(ctx, A: torch.Tensor, B: torch.Tensor, slice_info, use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails):
 
             assert A.is_sparse, 'A must be sparse'
             assert not B.is_sparse, 'B cannot be sparse'
@@ -1636,8 +1642,8 @@ class ag:
                 ctx.save_for_backward(A_save, B_save)
                 ctx.broadcast_dims = broadcast_dims
                 ctx.slice_info = slice_info if ctx.needs_input_grad[1] else None
-                ctx.use_custom_cuda_library_if_available = use_custom_cuda_library_if_available
-                ctx.fail_if_cuda_library_load_fails = fail_if_cuda_library_load_fails
+                ctx.use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
+                ctx.fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
 
             sp.verify_coalescence(out)
             return out
@@ -1670,8 +1676,8 @@ class ag:
                     out_B = sp.same_shape_prod(A, grad_output)
                         
                     out_B = sp.sum_sparse(out_B, dim=broadcast_dims, slice_info=slice_info,
-                                use_custom_cuda_library_if_available=ctx.use_custom_cuda_library_if_available,
-                                fail_if_cuda_library_load_fails=ctx.fail_if_cuda_library_load_fails).to_dense()
+                                use_custom_cuda_extension_if_available=ctx.use_custom_cuda_extension_if_available,
+                                fail_if_cuda_extension_load_fails=ctx.fail_if_cuda_extension_load_fails).to_dense()
                 else:
                     # 0 seconds
                     # In this case, B didn't need to be broadcast to A, so all of A,B,grad_output have the same shape and are not huge
@@ -1686,7 +1692,7 @@ class ag:
     class div_sparse_dense(torch.autograd.Function):
         # noinspection PyMethodOverriding
         @staticmethod
-        def forward(ctx, A, B, slice_info, use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails): # 0.06 seconds
+        def forward(ctx, A, B, slice_info, use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails): # 0.06 seconds
             assert A.is_sparse, 'A must be sparse'
             assert not B.is_sparse, 'B cannot be sparse'
             assert (torch.logical_or(torch.tensor(A.shape) == torch.tensor(B.shape), torch.tensor(B.shape) == 1)).all(), "B must be of size that allows broadcasting to A"
@@ -1710,8 +1716,8 @@ class ag:
                 ctx.save_for_backward(A_save, B_save)
                 ctx.broadcast_dims = broadcast_dims
                 ctx.slice_info = slice_info
-                ctx.use_custom_cuda_library_if_available = use_custom_cuda_library_if_available
-                ctx.fail_if_cuda_library_load_fails = fail_if_cuda_library_load_fails
+                ctx.use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
+                ctx.fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
 
             sp.verify_coalescence(out)
             return out
@@ -1738,8 +1744,8 @@ class ag:
                     # 0 seconds
                     out_B = sp.same_shape_prod(A, grad_output) # This is still sparse and can be huge
                     out_B = sp.sum_sparse(out_B, dim=broadcast_dims, slice_info=slice_info,
-                                use_custom_cuda_library_if_available=ctx.use_custom_cuda_library_if_available,
-                                fail_if_cuda_library_load_fails=ctx.fail_if_cuda_library_load_fails).to_dense()
+                                use_custom_cuda_extension_if_available=ctx.use_custom_cuda_extension_if_available,
+                                fail_if_cuda_extension_load_fails=ctx.fail_if_cuda_extension_load_fails).to_dense()
                     out_B = -out_B / torch.square(B)
                 else:
                     # In this case, B didn't need to be broadcast to A, so all of A,B,grad_output have the same shape and are not huge
@@ -1755,7 +1761,7 @@ class ag:
     class add_sparse_dense(torch.autograd.Function):
         # noinspection PyMethodOverriding
         @staticmethod
-        def forward(ctx, A: torch.Tensor, B: torch.Tensor, slice_info, use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails):
+        def forward(ctx, A: torch.Tensor, B: torch.Tensor, slice_info, use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails):
             assert A.is_sparse, 'A must be sparse'
             assert not B.is_sparse, 'B cannot be sparse'
             assert (torch.logical_or(torch.tensor(A.shape) == torch.tensor(B.shape), torch.tensor(B.shape) == 1)).all(), "B must be of size that allows broadcasting to A"
@@ -1773,8 +1779,8 @@ class ag:
             if True in ctx.needs_input_grad:
                 ctx.broadcast_dims = broadcast_dims
                 ctx.slice_info = slice_info if ctx.needs_input_grad[1] else None
-                ctx.use_custom_cuda_library_if_available = use_custom_cuda_library_if_available
-                ctx.fail_if_cuda_library_load_fails = fail_if_cuda_library_load_fails
+                ctx.use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
+                ctx.fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
 
             return out
 
@@ -1795,8 +1801,8 @@ class ag:
                 if len(broadcast_dims) > 0:
                     # If broadcasting happened, we need to sum over the broadcast dimensions
                     out_B = sp.sum_sparse(grad_output, dim=broadcast_dims, slice_info=slice_info,
-                                use_custom_cuda_library_if_available=ctx.use_custom_cuda_library_if_available,
-                                fail_if_cuda_library_load_fails=ctx.fail_if_cuda_library_load_fails ).to_dense()
+                                use_custom_cuda_extension_if_available=ctx.use_custom_cuda_extension_if_available,
+                                fail_if_cuda_extension_load_fails=ctx.fail_if_cuda_extension_load_fails ).to_dense()
                 else:
                     # No broadcasting needed, so just convert to dense
                     out_B = grad_output.to_dense()
@@ -2238,20 +2244,20 @@ class ag:
     class cumsum_sparse(torch.autograd.Function):
         # noinspection PyMethodOverriding
         @staticmethod
-        def forward(ctx, X: torch.Tensor, dim, slice_info, use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails):
+        def forward(ctx, X: torch.Tensor, dim, slice_info, use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails):
             assert X.is_coalesced(), 'X must be coalesced'
 
             sp.verify_coalescence(X)
 
             out = sp.cumsum_sparse(X, dim=dim, slice_info=slice_info, reverse=False,
-                                   use_custom_cuda_library_if_available=use_custom_cuda_library_if_available,
-                                   fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails)
+                                   use_custom_cuda_extension_if_available=use_custom_cuda_extension_if_available,
+                                   fail_if_cuda_extension_load_fails=fail_if_cuda_extension_load_fails)
 
             if ctx.needs_input_grad[0]:
                 ctx.dim = dim
                 ctx.slice_info = slice_info
-                ctx.use_custom_cuda_library_if_available=use_custom_cuda_library_if_available
-                ctx.fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails
+                ctx.use_custom_cuda_extension_if_available=use_custom_cuda_extension_if_available
+                ctx.fail_if_cuda_extension_load_fails=fail_if_cuda_extension_load_fails
 
             sp.verify_coalescence(out)
             return out
@@ -2268,8 +2274,8 @@ class ag:
             dim = ctx.dim
             slice_info = ctx.slice_info
             grad_input = sp.cumsum_sparse(grad_output, dim=dim, slice_info=slice_info, reverse=True,
-                                          use_custom_cuda_library_if_available=ctx.use_custom_cuda_library_if_available,
-                                          fail_if_cuda_library_load_fails=ctx.fail_if_cuda_library_load_fails)
+                                          use_custom_cuda_extension_if_available=ctx.use_custom_cuda_extension_if_available,
+                                          fail_if_cuda_extension_load_fails=ctx.fail_if_cuda_extension_load_fails)
 
             sp.verify_coalescence(grad_input)
 
@@ -2577,7 +2583,7 @@ class sp:
 
 
     @staticmethod
-    def sum_sparse(A, dim, slice_info, use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails):
+    def sum_sparse(A, dim, slice_info, use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails):
 
         assert A.is_sparse, "input tensor must be sparse"
         assert_coalesced(A)
@@ -2592,8 +2598,8 @@ class sp:
         if slice_info is None:
             slice_info = sp.get_slice_info(A, dim,
                                            calc_nnz_per_slice=False,
-                                           use_custom_cuda_library_if_available=use_custom_cuda_library_if_available,
-                                           fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails)
+                                           use_custom_cuda_extension_if_available=use_custom_cuda_extension_if_available,
+                                           fail_if_cuda_extension_load_fails=fail_if_cuda_extension_load_fails)
 
         # Verify slice info matches the input tensor
         sp.verify_slice_info(A, dim, slice_info)        
@@ -2614,8 +2620,8 @@ class sp:
                                            in_place=True,
                                            max_seg_size=si['max_slice_nonzeros'],
                                            thorough_verify_input=fsw_embedding_debug_mode,
-                                           use_custom_cuda_library_if_available=use_custom_cuda_library_if_available,
-                                           fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails)
+                                           use_custom_cuda_extension_if_available=use_custom_cuda_extension_if_available,
+                                           fail_if_cuda_extension_load_fails=fail_if_cuda_extension_load_fails)
         else:
             # If there is only one slice, we don't need to use segmented cumsum
             vals_sorted_cumsum = torch.cumsum(vals_sorted, dim=0, out=vals_sorted)
@@ -2646,7 +2652,7 @@ class sp:
     # Computes the cumsum on the nonzero entries of a sparse tensor A along dimension dim
     # max_slice_nonzers: An upper bound on the maximal number of nonzeros of A along dimension dim, taken over all slices of A along dim
     @staticmethod
-    def cumsum_sparse(A, dim, slice_info, reverse, use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails):
+    def cumsum_sparse(A, dim, slice_info, reverse, use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails):
         assert A.is_sparse, "input tensor must be sparse"        
         assert_coalesced(A)
         
@@ -2669,8 +2675,8 @@ class sp:
         if slice_info is None:
             slice_info = sp.get_slice_info(A, dim,
                                            calc_nnz_per_slice=False,
-                                           use_custom_cuda_library_if_available=use_custom_cuda_library_if_available,
-                                           fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails)
+                                           use_custom_cuda_extension_if_available=use_custom_cuda_extension_if_available,
+                                           fail_if_cuda_extension_load_fails=fail_if_cuda_extension_load_fails)
         
         # Verify slice info matches the input tensor
         sp.verify_slice_info(A, dim, slice_info)        
@@ -2694,8 +2700,8 @@ class sp:
                                            in_place=True,
                                            max_seg_size=max_slice_nonzeros,
                                            thorough_verify_input=fsw_embedding_debug_mode,
-                                           use_custom_cuda_library_if_available=use_custom_cuda_library_if_available,
-                                           fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails)
+                                           use_custom_cuda_extension_if_available=use_custom_cuda_extension_if_available,
+                                           fail_if_cuda_extension_load_fails=fail_if_cuda_extension_load_fails)
         else:
             # If there is only one slice, we don't need to use segmented cumsum
             vals_sorted_cumsum = torch.cumsum(vals_sorted, dim=0, out=vals_sorted)
@@ -2729,7 +2735,7 @@ class sp:
 
 
     @staticmethod
-    def get_slice_info(A, dim, calc_nnz_per_slice, use_custom_cuda_library_if_available, fail_if_cuda_library_load_fails):
+    def get_slice_info(A, dim, calc_nnz_per_slice, use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails):
         # Note: calc_nnz_per_slice by default should be False
 
         # We run with no gradients to ensure speed
@@ -2819,8 +2825,8 @@ class sp:
                 vals = one.repeat(A.values().numel())
                 A_mask = sp.sparse_coo_tensor_coalesced(indices=inds, values=vals, size=A.shape)
                 nnz_per_slice = sp.sum_sparse(A_mask, dim, slice_info=slice_info,
-                                use_custom_cuda_library_if_available=use_custom_cuda_library_if_available,
-                                fail_if_cuda_library_load_fails=fail_if_cuda_library_load_fails ).to_dense().to(torch.int64)
+                                use_custom_cuda_extension_if_available=use_custom_cuda_extension_if_available,
+                                fail_if_cuda_extension_load_fails=fail_if_cuda_extension_load_fails ).to_dense().to(torch.int64)
                 del A_mask
                 
                 slice_info['nnz_per_slice'] = nnz_per_slice
@@ -2933,19 +2939,19 @@ class sp:
 #############################################################################################################
 
 
-class FSWCustomCudaLibraryLoadWarning(UserWarning):
-    """Raised when the custom CUDA library could not be loaded and the fallback torch code is used."""
+class FSWCustomCudaExtensionLoadWarning(UserWarning):
+    """Raised when the custom CUDA extension could not be loaded and the fallback torch code is used."""
     pass
 
-class FSWCustomCudaLibraryLoadError(RuntimeError):
-    """Raised when the custom CUDA library could not be loaded and fallback behavior is disabled."""
+class FSWCustomCudaExtensionLoadError(RuntimeError):
+    """Raised when the custom CUDA extension could not be loaded and fallback behavior is disabled."""
     pass
 
 
-def load_custom_cuda_library(fail_if_cuda_library_load_fails: bool,
-                             report: bool = None):
+def load_custom_cuda_extension(fail_if_cuda_extension_load_fails: bool,
+                               report: bool = None):
     """
-    Attempts to load the custom CUDA library (libfsw_embedding.so).
+    Attempts to load the custom CUDA extension (libfsw_embedding.so).
     Emits a warning if loading fails, or raises an error depending on config.
     """
     global _tried_to_load_lib, _lib_handle, _lib_path
@@ -2960,48 +2966,54 @@ def load_custom_cuda_library(fail_if_cuda_library_load_fails: bool,
         return None
 
     try:
-        _lib_handle = ctypes.CDLL(_lib_path)
-
         if not os.path.isfile(_lib_path):
-            msg = f'Could not find custom CUDA library "{_lib_path}"'
-        elif _lib_handle is None:
-            msg = f'Could not load custom CUDA library "{_lib_path}"'
-        elif not hasattr(_lib_handle, "segcumsum_wrapper"):
-            msg = f'Invalid custom CUDA library "{_lib_path}"'
+            msg = f'Could not find custom CUDA extension "{_lib_path}"'
+        elif os.path.getsize(_lib_path) == 0:
+            # The package comes with a dummy placeholder bin file of size 0.
+            # Here we handle this case.
+            msg = f'Custom CUDA extension not compiled'
         else:
-            # Successfully loaded
-            if report:
-                qprintln(report, f'Loaded custom CUDA library "{_lib_path}"')
+            _lib_handle = ctypes.CDLL(_lib_path)
 
-            return _lib_handle
+            if _lib_handle is None:
+                msg = f'Could not load custom CUDA extension "{_lib_path}"'
+            elif not hasattr(_lib_handle, "segcumsum_wrapper"):
+                msg = f'Invalid custom CUDA extension "{_lib_path}"'
+            else:
+                # Successfully loaded
+                if report:
+                    qprintln(report, f'Loaded custom CUDA extension "{_lib_path}"')
+                return _lib_handle
 
         # If we got here, something went wrong
         _lib_handle = None
 
         msg += '\n'
 
-        if fail_if_cuda_library_load_fails:
-            msg += "Try rebuilding the custom CUDA library using command fswlib-build, or allow pure-torch fallback code by setting fail_if_cuda_library_load_fails=False"
-            raise FSWCustomCudaLibraryLoadError(msg)
+        if fail_if_cuda_extension_load_fails:
+            msg += "Try rebuilding the custom CUDA extension using command fswlib-build, or allow pure-torch fallback code by setting fail_if_cuda_extension_load_fails=False"
+            raise FSWCustomCudaExtensionLoadError(msg)
         else:
             msg += "Falling back to the pure PyTorch implementation (roughly ~2x slower)."
-            msg += "\nTry rebuilding the custom CUDA library using the command fswlib-build, or always use fallback code by setting "\
-                   "`use_custom_cuda_library_if_available=False`."
-            warnings.warn(msg, FSWCustomCudaLibraryLoadWarning, stacklevel=2)
+            msg += "\nTry rebuilding the custom CUDA extension using the command `fswlib-build`, or always use fallback code by setting "\
+                   "`use_custom_cuda_extension_if_available=False`."
+            warnings.warn(msg, FSWCustomCudaExtensionLoadWarning, stacklevel=2)
             return None
 
     # Repeat the same warning/raising behavior if trying to load the library produced a runtime error:
     except OSError as e:
-        msg = f'Could not load custom CUDA library "{_lib_path}".\nTrying to load produced an exception: \n{e}\n'
+        msg = f'Could not load custom CUDA extension "{_lib_path}".\nTrying to load produced an exception: \n{e}\n'
 
-        if fail_if_cuda_library_load_fails:
-            msg += "Try rebuilding the custom CUDA library using command fswlib-build. Alternatively, allow using the pure-torch fallback code by setting fail_if_cuda_library_load_fails=False"
-            raise FSWCustomCudaLibraryLoadError(msg)
+        if fail_if_cuda_extension_load_fails:
+            msg += "Try rebuilding the custom CUDA extension using command fswlib-build."
+            msg += " Alternatively, allow using the pure-torch fallback code by setting fail_if_cuda_extension_load_fails=False"
+            raise FSWCustomCudaExtensionLoadError(msg)
         else:
             msg += "Falling back to the pure PyTorch implementation (roughly ~2x slower)."
-            msg += " Try rebuilding the custom CUDA library using the command fswlib-build. Alternatively, always use the fallback code by setting "\
-                   "`use_custom_cuda_library_if_available=False`."
-            warnings.warn(msg, FSWCustomCudaLibraryLoadWarning, stacklevel=2)
+            msg += " Try rebuilding the custom CUDA extension using the command `fswlib-build`."\
+                   " Alternatively, always use the fallback code by setting "\
+                   "`use_custom_cuda_extension_if_available=False`."
+            warnings.warn(msg, FSWCustomCudaExtensionLoadWarning, stacklevel=2)
             return None
 
 
@@ -3028,8 +3040,8 @@ def segcumsum(values: torch.Tensor,
               max_seg_size: int | None, # default: None
               in_place: bool, # default: False
               thorough_verify_input : bool, # default: False
-              use_custom_cuda_library_if_available : bool,
-              fail_if_cuda_library_load_fails: bool):
+              use_custom_cuda_extension_if_available : bool,
+              fail_if_cuda_extension_load_fails: bool):
 
     # Verify input device, dtypes and shapes
     assert values.dim() == 1, 'values must be a 1-dimensional tensor'
@@ -3079,9 +3091,9 @@ def segcumsum(values: torch.Tensor,
         assert not torch.isinf(values).any(), "Found infs in ''values''"
         assert not torch.isnan(values).any(), "Found nans in ''values''"
 
-    if (values.device.type == 'cuda') and use_custom_cuda_library_if_available:
-        lib_handle = load_custom_cuda_library(fail_if_cuda_library_load_fails = fail_if_cuda_library_load_fails,
-                                              report=False)
+    if (values.device.type == 'cuda') and use_custom_cuda_extension_if_available:
+        lib_handle = load_custom_cuda_extension(fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails,
+                                                report=False)
     else:
         lib_handle = None
 
