@@ -44,8 +44,11 @@ fswlib-build
 
 ## 📘 Basic Usage Example
 
-For more usage examples, see the `examples/` directory on [GitHub](https://github.com/tal-amir/fswlib).
-For full API documentation, see [docs](https://github.com/tal-amir/fswlib/blob/b9c40b6c62e1f9bb897122242170525da0b01820/tests/fsw_embedding/test_graph.py).
+Below is a minimal example using `FSWEmbedding`.
+
+For more examples, see the [`examples/`](https://github.com/tal-amir/fswlib/tree/main/examples) directory.
+Full API documentation is available at [https://tal-amir.github.io/fswlib](https://tal-amir.github.io/fswlib).
+
 
 ```python
 import torch
