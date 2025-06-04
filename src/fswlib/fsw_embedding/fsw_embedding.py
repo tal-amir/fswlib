@@ -101,6 +101,8 @@ import time
 import ctypes
 import platform
 
+__all__ = ["FSWEmbedding"]
+
 if platform.system() == "Windows":
     _lib_name = "fsw_embedding.dll"
 elif platform.system() == "Darwin":  # macOS

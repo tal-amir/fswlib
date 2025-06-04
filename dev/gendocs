@@ -1,0 +1,1 @@
+pdoc -o ./docs -d numpy ./src/fswlib/fsw_embedding/fsw_embedding.py

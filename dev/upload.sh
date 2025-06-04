@@ -10,7 +10,7 @@ if [[ "$1" == "--real" ]]; then
 fi
 
 # Print target and ask for confirmation
-echo "Code will be uploaded to: $REPO_URL"
+echo "Code will be uploaded to: $REPO"
 read -p "Type 'yes' to proceed: " CONFIRM
 
 if [[ "$CONFIRM" == "yes" ]]; then
