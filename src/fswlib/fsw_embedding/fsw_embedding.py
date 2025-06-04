@@ -467,13 +467,13 @@ class FSWEmbedding(nn.Module):
             device = self.device_new
             delattr(self, 'device_new')
         else:
-            device = self.get_device()
+            device = self.device
 
         if hasattr(self, 'dtype_new'):
             dtype = self.dtype_new
             delattr(self, 'dtype_new')
         else:
-            dtype = self.get_dtype()
+            dtype = self.dtype
 
         # Generate projection vectors and frequencies
         # We always generate (and optimize) them in float64 and then convert to the desired dtype.
@@ -506,7 +506,7 @@ class FSWEmbedding(nn.Module):
             self.bias = None
 
         # This also initializes the .device and .dtype fields
-        self.to(device=self.get_device(), dtype=self.get_dtype())
+        self.to(device=self.device, dtype=self.dtype)
 
         return self
 
@@ -528,15 +528,15 @@ class FSWEmbedding(nn.Module):
         return self
 
 
-
-    def get_device(self):
+    @property
+    def device(self):
         return self.projVecs.device
 
 
-
-    def get_dtype(self):
+    @property
+    def dtype(self):
         return self.projVecs.dtype
-    
+
 
     @staticmethod
     def _generate_embedding_parameters(d_in: int,
@@ -672,7 +672,7 @@ class FSWEmbedding(nn.Module):
         if (self.nFreqs == 1) or (radius == 0):
             freqs_new = center * torch.ones_like(self.freqs)
         else:
-            spread = 2 * (0.5 + torch.arange(self.nFreqs, dtype=self.get_dtype(), device=self.get_device()).reshape(self.freqs.shape) ) / self.nFreqs - 1
+            spread = 2 * (0.5 + torch.arange(self.nFreqs, dtype=self.dtype, device=self.device).reshape(self.freqs.shape) ) / self.nFreqs - 1
             spread = spread * 1/(1 - 1/self.nFreqs)
             freqs_new = center + radius * spread
 
@@ -789,16 +789,16 @@ class FSWEmbedding(nn.Module):
 
         assert torch.is_tensor(X), 'X must be a pytorch tensor. Instead got type %s' % (type(X))
         assert torch.is_tensor(W) or W in {'unit', 'uniform'}, 'W must be a pytorch tensor, \'unit\' or \'uniform\''
-        assert X.dtype == self.get_dtype(), ( "X has the wrong dtype. Expected %s, got %s" % (self.get_dtype(), X.dtype) )
-        assert X.device == self.get_device(), ( "X is on the wrong device. Expected %s, got %s" % (self.get_device(), X.device) )
+        assert X.dtype == self.dtype, ( "X has the wrong dtype. Expected %s, got %s" % (self.dtype, X.dtype) )
+        assert X.device == self.device, ( "X is on the wrong device. Expected %s, got %s" % (self.device, X.device) )
 
         if fsw_embedding_basic_safety_checks:
             assert not torch.isnan(X).any(), "The entries of X cannot contain NaNs"
             assert not torch.isinf(X).any(), "All entries of X must be finite"
 
         if torch.is_tensor(W):
-            assert W.dtype == self.get_dtype(), ( "W has the wrong dtype. Expected %s, got %s" % (self.get_dtype(), W.dtype) )
-            assert W.device == self.get_device(), ( "W is on the wrong device. Expected %s, got %s" % (self.get_device(), W.device) )
+            assert W.dtype == self.dtype, ( "W has the wrong dtype. Expected %s, got %s" % (self.dtype, W.dtype) )
+            assert W.device == self.device, ( "W is on the wrong device. Expected %s, got %s" % (self.device, W.device) )
 
             # Check if W is sparse. If so, ensure that W is of the correct layout.            
             # Note: Strangely enough, sparse tensors of layouts other than COO (e.g. CSR) may have is_sparse=False.
@@ -824,8 +824,8 @@ class FSWEmbedding(nn.Module):
 
         if X_edge is not None:
             assert torch.is_tensor(W), 'When X_edge is provided, W must be provided explicitly'
-            assert (X_edge.device == self.get_device()), ( "X_edge is on the wrong device. Expected %s, got %s" % (self.get_device(), X_edge.device) )
-            assert (X_edge.dtype == self.get_dtype()), ( "X_edge has the wrong dtype. Expected %s, got %s" % (self.get_dtype(), X_edge.dtype) )        
+            assert (X_edge.device == self.device), ( "X_edge is on the wrong device. Expected %s, got %s" % (self.device, X_edge.device) )
+            assert (X_edge.dtype == self.dtype), ( "X_edge has the wrong dtype. Expected %s, got %s" % (self.dtype, X_edge.dtype) )
 
             if X_edge.is_sparse or X_edge.layout != torch.strided:
                 assert X_edge.layout == torch.sparse_coo, ( "Sparse X_edge has an unsupported sparsity layout '%s'. Only the COO layout (torch.sparse_coo) is currently supported." % X_edge.layout )
@@ -868,11 +868,11 @@ class FSWEmbedding(nn.Module):
 
             elif W == 'unit':
                 # Initialize with unit weights
-                W = torch.ones(batch_dims + (n,), dtype=self.get_dtype(), device=self.get_device())
+                W = torch.ones(batch_dims + (n,), dtype=self.dtype, device=self.device)
 
             elif W == 'uniform':
                 # Initialize with uniform weights
-                W = torch.full(batch_dims + (n,), 1.0/n, dtype=self.get_dtype(), device=self.get_device())
+                W = torch.full(batch_dims + (n,), 1.0/n, dtype=self.dtype, device=self.device)
 
         elif graph_mode:
             assert torch.is_tensor(W), 'W must be explicitly provided when graph_mode=True'
@@ -980,7 +980,7 @@ class FSWEmbedding(nn.Module):
 
         # For compatibility reasons, we support the case of zero-dimensional output tensor
         if self.d_out == 0:
-            X_emb = torch.zeros(size=output_shape_before_collapse_and_totmass_augmentation, dtype=self.get_dtype(), device=self.get_device())
+            X_emb = torch.zeros(size=output_shape_before_collapse_and_totmass_augmentation, dtype=self.dtype, device=self.device)
 
         elif (serialize_num_slices is None) or (serialize_num_slices >= self.nSlices):
             X_emb = FSWEmbedding._forward_helper(X, W, self.projVecs, self.freqs, graph_mode, X_edge, self.cartesian_mode, batch_dims,
@@ -992,10 +992,10 @@ class FSWEmbedding(nn.Module):
 
             nIter = (self.nSlices // serialize_num_slices) if (self.nSlices % serialize_num_slices == 0) else (1 + self.nSlices // serialize_num_slices)
 
-            X_emb = torch.empty(size=output_shape_before_collapse_and_totmass_augmentation, dtype=self.get_dtype(), device=self.get_device())
+            X_emb = torch.empty(size=output_shape_before_collapse_and_totmass_augmentation, dtype=self.dtype, device=self.device)
 
             for iIter in range(nIter):
-                inds_curr = torch.arange(iIter*serialize_num_slices, min( self.nSlices, (iIter+1)*serialize_num_slices), dtype=torch.int64, device=self.get_device())
+                inds_curr = torch.arange(iIter*serialize_num_slices, min( self.nSlices, (iIter+1)*serialize_num_slices), dtype=torch.int64, device=self.device)
                 projVecs_curr = self.projVecs[inds_curr,:]
                 freqs_curr = self.freqs if self.cartesian_mode else self.freqs[inds_curr]
                 
