@@ -218,7 +218,7 @@ class FSWEmbedding(nn.Module):
                  dtype: torch.dtype | None = None,
                  use_custom_cuda_extension_if_available: bool | None = None,
                  fail_if_cuda_extension_load_fails: bool = False,  # Produce a runtime error (rather than a warning) when failing to load the custom CUDA extension
-                 report: bool = False,
+                 report: bool = False, user_warnings: bool = True,
                  report_on_coherence_minimization: bool = False):
         """
         Initialize the FSWEmbedding module.
@@ -347,7 +347,7 @@ class FSWEmbedding(nn.Module):
 
         self.enable_bias = enable_bias
 
-        # device_new and dtype_new are only defined here on __init__ and passed on to reset_parameters(), which then deletes them
+        # _device_new and _dtype_new are only defined here on __init__ and passed on to reset_parameters(), which then deletes them
         if device is None:
             # Use get_default_device if available (PyTorch 2.3+)
             if hasattr(torch, "get_default_device"):
@@ -453,7 +453,7 @@ class FSWEmbedding(nn.Module):
 
         qprintln(self._report)
 
-        if hasattr(self, 'device_new'):
+        if hasattr(self, '_device_new'):
             qprintln(self._report, 'Generating embedding parameters:')
         else:
             qprintln(self._report, 'Resetting embedding parameters:')
@@ -461,15 +461,15 @@ class FSWEmbedding(nn.Module):
 
         # If we're running for the first time, get the device and dtype that were set in the __init__ method;
         # otherwise use the current device and dtype.
-        if hasattr(self, 'device_new'):
+        if hasattr(self, '_device_new'):
             device = self._device_new
-            delattr(self, 'device_new')
+            delattr(self, '_device_new')
         else:
             device = self.device
 
-        if hasattr(self, 'dtype_new'):
+        if hasattr(self, '_dtype_new'):
             dtype = self._dtype_new
-            delattr(self, 'dtype_new')
+            delattr(self, '_dtype_new')
         else:
             dtype = self.dtype
 
