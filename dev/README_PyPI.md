@@ -44,7 +44,7 @@ fswlib-build
 
 ## 📘 Usage Example
 
-Below is a minimal example using `FSWEmbedding`.  
+Below is a basic usage example of the `FSWEmbedding` class.  
 
 For more examples, see the [`examples/`](https://github.com/tal-amir/fswlib/tree/main/examples) directory.  
 Full API documentation is available at [https://tal-amir.github.io/fswlib](https://tal-amir.github.io/fswlib).
