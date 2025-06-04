@@ -218,7 +218,7 @@ class FSWEmbedding(nn.Module):
                  dtype: torch.dtype | None = None,
                  use_custom_cuda_extension_if_available: bool | None = None,
                  fail_if_cuda_extension_load_fails: bool = False,  # Produce a runtime error (rather than a warning) when failing to load the custom CUDA extension
-                 report: bool = False, user_warnings: bool = True,
+                 report: bool = False,
                  report_on_coherence_minimization: bool = False):
         """
         Initialize the FSWEmbedding module.
@@ -275,8 +275,6 @@ class FSWEmbedding(nn.Module):
 
 
         super().__init__()
-
-        self.user_warnings = user_warnings
 
         # Process sizes
         assert d_in >= 0, 'd_in must be nonnegative'
@@ -369,8 +367,8 @@ class FSWEmbedding(nn.Module):
 
         assert dtype.is_floating_point and (not dtype.is_complex), 'dtype must be real floating-point; instead got dtype=%s' % dtype
 
-        self.device_new = device
-        self.dtype_new = dtype
+        self._device_new = device
+        self._dtype_new = dtype
 
         if use_custom_cuda_extension_if_available is None:
             if platform.system() in {'Windows', 'Darwin'}:
@@ -378,11 +376,11 @@ class FSWEmbedding(nn.Module):
             else:
                 use_custom_cuda_extension_if_available = True
         
-        self.use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
-        self.fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
+        self._use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
+        self._fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
 
-        self.report = report
-        self.report_on_coherence_minimization = report_on_coherence_minimization
+        self._report = report
+        self._report_on_coherence_minimization = report_on_coherence_minimization
 
         qprintln(report)
         qprintln(report, 'Fourier Sliced-Wasserstein Embedding')
@@ -426,7 +424,7 @@ class FSWEmbedding(nn.Module):
 
         qprintln(report, learnable_str)
 
-        qprintln(report, 'device: %s    dtype: %s' % (self.device_new, self.dtype_new))
+        qprintln(report, 'device: %s    dtype: %s' % (self._device_new, self._dtype_new))
 
         self.projVecs = None
         self.freqs = None
@@ -447,30 +445,30 @@ class FSWEmbedding(nn.Module):
         # Apply user updates for these parameters
         self.freqs_init = ifnone(freqs_init, self.freqs_init)
         self.minimize_slice_coherence = ifnone(minimize_slice_coherence, self.minimize_slice_coherence)
-        self.report = ifnone(report, self.report)
-        self.report_on_coherence_minimization = ifnone(report_on_coherence_minimization, self.report_on_coherence_minimization)
+        self._report = ifnone(report, self._report)
+        self._report_on_coherence_minimization = ifnone(report_on_coherence_minimization, self._report_on_coherence_minimization)
 
         # To make sure we don't use these values inside the function; if any of then is None, we must use its self. counterpart.
         del minimize_slice_coherence, freqs_init, report, report_on_coherence_minimization
 
-        qprintln(self.report)
+        qprintln(self._report)
 
         if hasattr(self, 'device_new'):
-            qprintln(self.report, 'Generating embedding parameters:')
+            qprintln(self._report, 'Generating embedding parameters:')
         else:
-            qprintln(self.report, 'Resetting embedding parameters:')
+            qprintln(self._report, 'Resetting embedding parameters:')
 
 
         # If we're running for the first time, get the device and dtype that were set in the __init__ method;
         # otherwise use the current device and dtype.
         if hasattr(self, 'device_new'):
-            device = self.device_new
+            device = self._device_new
             delattr(self, 'device_new')
         else:
             device = self.device
 
         if hasattr(self, 'dtype_new'):
-            dtype = self.dtype_new
+            dtype = self._dtype_new
             delattr(self, 'dtype_new')
         else:
             dtype = self.dtype
@@ -485,8 +483,8 @@ class FSWEmbedding(nn.Module):
                                                                             freqs_init=self.freqs_init,
                                                                             minimize_slice_coherence=self.minimize_slice_coherence,
                                                                             device=device,
-                                                                            report = self.report,
-                                                                            report_on_coherence_minimization = self.report_on_coherence_minimization)
+                                                                            report = self._report,
+                                                                            report_on_coherence_minimization = self._report_on_coherence_minimization)
 
         projVecs = projVecs.to(dtype=dtype, device=device)
         freqs = freqs.to(dtype=dtype, device=device)
@@ -993,8 +991,8 @@ class FSWEmbedding(nn.Module):
         # Calculate W_sum, which contains the total mass of the input measures
         if W.is_sparse:
             slice_info_W = sp.get_slice_info(W, -1, calc_nnz_per_slice=False,
-                                             use_custom_cuda_extension_if_available=self.use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails=self.fail_if_cuda_extension_load_fails)
-            W_sum = ag.sum_sparseToDense.apply(W, -1, slice_info_W, self.use_custom_cuda_extension_if_available, self.fail_if_cuda_extension_load_fails)
+                                             use_custom_cuda_extension_if_available=self._use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails=self._fail_if_cuda_extension_load_fails)
+            W_sum = ag.sum_sparseToDense.apply(W, -1, slice_info_W, self._use_custom_cuda_extension_if_available, self._fail_if_cuda_extension_load_fails)
         
         else:
             W_sum = torch.sum(W, dim=-1, keepdim=True)            
@@ -1013,7 +1011,7 @@ class FSWEmbedding(nn.Module):
                 W_pad = sp.to_sparse_full(W_pad)
                 W = ag.concat_sparse.apply(W, W_pad)
                 slice_info_W = sp.get_slice_info(W, -1, calc_nnz_per_slice=False,
-                                                 use_custom_cuda_extension_if_available=self.use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails=self.fail_if_cuda_extension_load_fails)
+                                                 use_custom_cuda_extension_if_available=self._use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails=self._fail_if_cuda_extension_load_fails)
 
                 if X_edge is not None:
                     X_edge_pad_inds = W_pad.indices()
@@ -1040,8 +1038,8 @@ class FSWEmbedding(nn.Module):
         # Normalize W according to W_sum_padded
         if W.is_sparse:
             W = ag.div_sparse_dense.apply(W, W_sum_padded, slice_info_W,
-                                          self.use_custom_cuda_extension_if_available,
-                                          self.fail_if_cuda_extension_load_fails)
+                                          self._use_custom_cuda_extension_if_available,
+                                          self._fail_if_cuda_extension_load_fails)
             del slice_info_W, W_sum_padded
         else:
             W = W / W_sum_padded
@@ -1053,8 +1051,8 @@ class FSWEmbedding(nn.Module):
 
         elif (serialize_num_slices is None) or (serialize_num_slices >= self.nSlices):
             X_emb = FSWEmbedding._forward_helper(X, W, self.projVecs, self.freqs, graph_mode, X_edge, self.cartesian_mode, batch_dims,
-                                                 use_custom_cuda_extension_if_available = self.use_custom_cuda_extension_if_available,
-                                                 fail_if_cuda_extension_load_fails = self.fail_if_cuda_extension_load_fails)
+                                                 use_custom_cuda_extension_if_available = self._use_custom_cuda_extension_if_available,
+                                                 fail_if_cuda_extension_load_fails = self._fail_if_cuda_extension_load_fails)
 
         else:
             assert isinstance(serialize_num_slices, int) and (serialize_num_slices >= 1), 'serialize_num_slices must be None or a positive integer'
@@ -1069,8 +1067,8 @@ class FSWEmbedding(nn.Module):
                 freqs_curr = self.freqs if self.cartesian_mode else self.freqs[inds_curr]
                 
                 out_curr = FSWEmbedding._forward_helper(X, W, projVecs_curr, freqs_curr, graph_mode, X_edge, self.cartesian_mode, batch_dims,
-                                                        use_custom_cuda_extension_if_available = self.use_custom_cuda_extension_if_available,
-                                                        fail_if_cuda_extension_load_fails = self.fail_if_cuda_extension_load_fails)
+                                                        use_custom_cuda_extension_if_available = self._use_custom_cuda_extension_if_available,
+                                                        fail_if_cuda_extension_load_fails = self._fail_if_cuda_extension_load_fails)
 
                 assign_at(X_emb, out_curr, output_proj_axis, inds_curr)
 
@@ -1823,8 +1821,8 @@ class ag:
                 ctx.save_for_backward(A_save, B_save)
                 ctx.broadcast_dims = broadcast_dims
                 ctx.slice_info = slice_info if ctx.needs_input_grad[1] else None
-                ctx.use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
-                ctx.fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
+                ctx._use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
+                ctx._fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
 
             sp.verify_coalescence(out)
             return out
@@ -1857,8 +1855,8 @@ class ag:
                     out_B = sp.same_shape_prod(A, grad_output)
                         
                     out_B = sp.sum_sparse(out_B, dim=broadcast_dims, slice_info=slice_info,
-                                use_custom_cuda_extension_if_available=ctx.use_custom_cuda_extension_if_available,
-                                fail_if_cuda_extension_load_fails=ctx.fail_if_cuda_extension_load_fails).to_dense()
+                                          use_custom_cuda_extension_if_available=ctx._use_custom_cuda_extension_if_available,
+                                          fail_if_cuda_extension_load_fails=ctx._fail_if_cuda_extension_load_fails).to_dense()
                 else:
                     # 0 seconds
                     # In this case, B didn't need to be broadcast to A, so all of A,B,grad_output have the same shape and are not huge
@@ -1897,8 +1895,8 @@ class ag:
                 ctx.save_for_backward(A_save, B_save)
                 ctx.broadcast_dims = broadcast_dims
                 ctx.slice_info = slice_info
-                ctx.use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
-                ctx.fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
+                ctx._use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
+                ctx._fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
 
             sp.verify_coalescence(out)
             return out
@@ -1925,8 +1923,8 @@ class ag:
                     # 0 seconds
                     out_B = sp.same_shape_prod(A, grad_output) # This is still sparse and can be huge
                     out_B = sp.sum_sparse(out_B, dim=broadcast_dims, slice_info=slice_info,
-                                use_custom_cuda_extension_if_available=ctx.use_custom_cuda_extension_if_available,
-                                fail_if_cuda_extension_load_fails=ctx.fail_if_cuda_extension_load_fails).to_dense()
+                                          use_custom_cuda_extension_if_available=ctx._use_custom_cuda_extension_if_available,
+                                          fail_if_cuda_extension_load_fails=ctx._fail_if_cuda_extension_load_fails).to_dense()
                     out_B = -out_B / torch.square(B)
                 else:
                     # In this case, B didn't need to be broadcast to A, so all of A,B,grad_output have the same shape and are not huge
@@ -1960,8 +1958,8 @@ class ag:
             if True in ctx.needs_input_grad:
                 ctx.broadcast_dims = broadcast_dims
                 ctx.slice_info = slice_info if ctx.needs_input_grad[1] else None
-                ctx.use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
-                ctx.fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
+                ctx._use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
+                ctx._fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
 
             return out
 
@@ -1982,8 +1980,8 @@ class ag:
                 if len(broadcast_dims) > 0:
                     # If broadcasting happened, we need to sum over the broadcast dimensions
                     out_B = sp.sum_sparse(grad_output, dim=broadcast_dims, slice_info=slice_info,
-                                use_custom_cuda_extension_if_available=ctx.use_custom_cuda_extension_if_available,
-                                fail_if_cuda_extension_load_fails=ctx.fail_if_cuda_extension_load_fails ).to_dense()
+                                          use_custom_cuda_extension_if_available=ctx._use_custom_cuda_extension_if_available,
+                                          fail_if_cuda_extension_load_fails=ctx._fail_if_cuda_extension_load_fails).to_dense()
                 else:
                     # No broadcasting needed, so just convert to dense
                     out_B = grad_output.to_dense()
@@ -2437,8 +2435,8 @@ class ag:
             if ctx.needs_input_grad[0]:
                 ctx.dim = dim
                 ctx.slice_info = slice_info
-                ctx.use_custom_cuda_extension_if_available=use_custom_cuda_extension_if_available
-                ctx.fail_if_cuda_extension_load_fails=fail_if_cuda_extension_load_fails
+                ctx._use_custom_cuda_extension_if_available=use_custom_cuda_extension_if_available
+                ctx._fail_if_cuda_extension_load_fails=fail_if_cuda_extension_load_fails
 
             sp.verify_coalescence(out)
             return out
@@ -2455,8 +2453,8 @@ class ag:
             dim = ctx.dim
             slice_info = ctx.slice_info
             grad_input = sp.cumsum_sparse(grad_output, dim=dim, slice_info=slice_info, reverse=True,
-                                          use_custom_cuda_extension_if_available=ctx.use_custom_cuda_extension_if_available,
-                                          fail_if_cuda_extension_load_fails=ctx.fail_if_cuda_extension_load_fails)
+                                          use_custom_cuda_extension_if_available=ctx._use_custom_cuda_extension_if_available,
+                                          fail_if_cuda_extension_load_fails=ctx._fail_if_cuda_extension_load_fails)
 
             sp.verify_coalescence(grad_input)
 
