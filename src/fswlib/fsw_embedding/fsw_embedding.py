@@ -103,7 +103,7 @@ import time
 import ctypes
 import platform
 
-__all__ = ["FSWEmbedding", "TotalMassEncodingFunction"]
+__all__ = ["FSWEmbedding", "TotalMassEncodingFunction", "TotalMassEncodingMethod"]
 
 if platform.system() == "Windows":
     _lib_name = "fsw_embedding.dll"
@@ -249,7 +249,6 @@ class TotalMassEncodingFunction(Enum):
             ) from e
 
 
-from enum import Enum
 
 
 class TotalMassEncodingMethod(Enum):
@@ -313,6 +312,49 @@ class TotalMassEncodingMethod(Enum):
             ) from e
 
 
+class FrequencyInitMethod(Enum):
+    """
+    Strategy for initializing frequency vectors in the FSW embedding.
+
+    This enum is used in the `FSWEmbedding` class to control how the frequencies
+    are initialized when constructing the embedding.
+
+    Attributes
+    ----------
+    RANDOM : str
+        Initialize frequencies independently at random.
+    DENSITY_WEIGHTED : str
+        Spread frequencies over the range [0, f_max] with variable density
+        proportional to a frequency-dependent probability. This results in a
+        more informative set of frequencies, especially for structured data.
+
+    Used by: `FSWEmbedding.__init__`
+    """
+
+    RANDOM = "random"
+    DENSITY_WEIGHTED = "density_weighted"
+
+    def __str__(self):
+        return self.value
+
+    def describe(self):
+        return {
+            "random": "Frequencies are initialized independently at random.",
+            "density_weighted": (
+                "Frequencies are spread according to a probability distribution over frequency space.\n"
+                "Higher-probability frequencies are sampled more densely, based on a pre-defined density function."
+            )
+        }[self.value]
+
+    @classmethod
+    def from_str(cls, s: str) -> "FrequencyInitMethod":
+        try:
+            return cls(s)
+        except ValueError as e:
+            valid = [v.value for v in cls]
+            raise ValueError(f"Invalid value '{s}' for {cls.__name__}. Valid options are: {valid}") from e
+
+
 
 
 class FSWEmbedding(nn.Module):
@@ -344,7 +386,7 @@ class FSWEmbedding(nn.Module):
                  total_mass_encoding_method: str | TotalMassEncodingMethod = 'plain',  # 'plain' / 'homog' / 'homog_alt'
                  total_mass_padding_thresh: float | int = 1.0,  # Multisets/mesaures with a total mass below that threshold get padded with the complementary mass placed at x=0
                  learnable_slices: bool = False, learnable_frequencies: bool = False, learnable_powers: bool = False,
-                 freqs_init: float | int | str | tuple[float,float] = 'random',
+                 frequency_init: float | str | tuple[float,float] = 'random',
                  minimize_slice_coherence: bool = False,
                  enable_bias: bool = True,
                  device: torch.device | int | str | None = None,
@@ -354,58 +396,56 @@ class FSWEmbedding(nn.Module):
                  report: bool = False, user_warnings: bool = True,
                  report_on_coherence_minimization: bool = False):
         """
-        Initialize the FSWEmbedding module.
-
         Parameters
         ----------
         d_in : int
-            Dimensionality of input multiset elements (ambient dimension).
-        d_out : int or None, optional
-            Output embedding dimension. If None, defaults to `num_slices * num_frequencies`.
-        num_slices : int or None, optional
-            Number of projection directions. Required if `d_out` is not specified.
-        num_frequencies : int or None, optional
-            Number of Fourier frequencies per slice. Required if `d_out` is not specified.
-        collapse_output_axes  : bool, default=False
-            If True, aggregates over frequencies within each slice instead of flattening them.
-        d_edge : int, default=0
-            Dimensionality of edge features (used only when `graph_mode=True` in forward).
+            Input dimension of multiset elements (i.e., each element is a vector in R^{d_in}).
+        d_out : int, optional
+            Embedding output dimension. If not specified, both `num_slices` and `num_frequencies`
+            must be given to define the embedding shape.
+        num_slices : int, optional
+            Number of projection directions (slices). Used only in Cartesian mode.
+        num_frequencies : int, optional
+            Number of frequencies per slice. Used only in Cartesian mode.
+        collapse_frequencies : bool, default=False
+            If True, collapse the slice and frequency axes into a single output axis of size num_slices * num_frequencies.
+        edge_feature_dim : int, default=0
+            Dimension of edge feature vectors (used only in graph mode).
         encode_total_mass : bool, default=False
-            If True, encodes the total mass (multiset size) into the embedding.
-        total_mass_encoding_function : {'identity', 'sqrt', 'log'}, default='identity'
-            Function used to encode the total mass.
-        total_mass_encoding_method : {'plain', 'homog', 'homog_alt'}, default='plain'
-            Method for incorporating total mass information into the embedding.
-        total_mass_padding_thresh : float, default=1.0
-            Threshold below which mass is padded with a point mass at the origin.
+            Whether to encode the input multiset's total mass (i.e., size or weight sum).
+        total_mass_encoding_function : TotalMassEncodingFunction or str, default='identity'
+            Nonlinearity applied to the total mass before encoding.
+        total_mass_encoding_method : TotalMassEncodingMethod or str, default='plain'
+            Strategy for injecting total mass into the embedding.
+        total_mass_pad_thresh : float, default=1.0
+            Threshold below which total mass is padded to reach total_mass_pad_thresh, placing the remainder at x=0.
         learnable_slices : bool, default=False
-            If True, the projection directions are learned during training.
+            If True, projection directions (slices) are learnable.
         learnable_frequencies : bool, default=False
-            If True, the Fourier frequencies are learned during training.
+            If True, frequencies are learnable.
         learnable_powers : bool, default=False
-            If True, learns power parameters applied to slice outputs.
-        freqs_init : float, int, str, or tuple, default='random'
-            Initialization scheme for frequencies. Can be a fixed value, range, or strategy.
+            If True, frequency powers are learnable.
+        frequency_init_method : FrequencyInitMethod or str, default='random'
+            Strategy for initializing frequencies. See `FrequencyInitMethod`.
         minimize_slice_coherence : bool, default=False
-            If True, encourages slice directions to be mutually incoherent.
-        enable_bias : bool, default=True
-            If True, adds a bias term to the final embedding.
-        device : torch.device, int, str, or None, optional
-            Device to place all module parameters and buffers on.
-        dtype : torch.dtype or None, optional
-            Data type for computations (e.g., torch.float32 or torch.float64).
-        use_custom_cuda_extension_if_available : bool or None, optional
-            If True, uses the custom CUDA extension if available and supported.
+            If True, a coherence-minimizing loss is computed between slices.
+        bias : bool, default=True
+            Whether to include a learnable bias vector.
+        device : torch.device, str, or int, optional
+            Device on which to place parameters and computations.
+        dtype : torch.dtype, optional
+            Floating point precision used in computations.
+        use_custom_cuda_extension_if_available : bool or None, default=None
+            Whether to attempt using the custom CUDA kernel for speedup (Linux only).
         fail_if_cuda_extension_load_fails : bool, default=False
-            If True, raises a RuntimeError if the CUDA extension cannot be loaded.
+            If True, raise an error if the custom CUDA extension fails to load.
         report : bool, default=False
-            If True, prints internal details during initialization.
+            If True, enables verbose internal reporting.
         user_warnings : bool, default=True
-            If True, shows warnings to the user (e.g., fallback from CUDA extension).
+            If True, shows user-facing warnings (e.g., fallback to CPU).
         report_on_coherence_minimization : bool, default=False
-            If True, logs progress during slice coherence minimization.
+            If True, reports additional information about slice coherence minimization.
         """
-
 
         super().__init__()
 
@@ -480,8 +520,8 @@ class FSWEmbedding(nn.Module):
         self.learnable_frequencies = learnable_frequencies
         self.learnable_powers = learnable_powers
 
-        # Note: freqs_init is checked for correctness downstream at generate_embedding_parameters()
-        self.freqs_init = freqs_init
+        # Note: frequency_init is checked for correctness downstream at generate_embedding_parameters()
+        self._frequency_init = frequency_init
 
         self._enable_bias = enable_bias
 
@@ -575,19 +615,19 @@ class FSWEmbedding(nn.Module):
     # Resets the model parameters (slice vectors and frequencies) and updates the model settings.
 
     def reset_parameters(self,
-                         freqs_init: float | int | str | None | tuple[float,float] = None,
+                         frequency_init: float | int | str | None | tuple[float,float] = None,
                          minimize_slice_coherence: bool | None = None,
                          report: bool | None = None,
                          report_on_coherence_minimization: bool | None = None):
 
         # Apply user updates for these parameters
-        self.freqs_init = ifnone(freqs_init, self.freqs_init)
+        self._frequency_init = ifnone(frequency_init, self._frequency_init)
         self.minimize_slice_coherence = ifnone(minimize_slice_coherence, self.minimize_slice_coherence)
         self._report = ifnone(report, self._report)
         self._report_on_coherence_minimization = ifnone(report_on_coherence_minimization, self._report_on_coherence_minimization)
 
         # To make sure we don't use these values inside the function; if any of then is None, we must use its self. counterpart.
-        del minimize_slice_coherence, freqs_init, report, report_on_coherence_minimization
+        del minimize_slice_coherence, frequency_init, report, report_on_coherence_minimization
 
         qprintln(self._report)
 
@@ -617,15 +657,15 @@ class FSWEmbedding(nn.Module):
         # Generate slice vectors and frequencies
         # We always generate (and optimize) them in float64 and then convert to the desired dtype.
         slice_vectors, frequencies, bias = FSWEmbedding._generate_embedding_parameters(d_in=self._d_in + self.d_edge,
-                                                                            num_slices=self.num_slices, num_frequencies=self.num_frequencies,
-                                                                            cartesian_mode=self.cartesian_mode,
-                                                                            collapse_output_axes =self.collapse_output_axes ,
-                                                                            total_mass_encoding_dim=total_mass_encoding_dim,
-                                                                            freqs_init=self.freqs_init,
-                                                                            minimize_slice_coherence=self.minimize_slice_coherence,
-                                                                            device=device,
-                                                                            report = self._report,
-                                                                            report_on_coherence_minimization = self._report_on_coherence_minimization)
+                                                                                       num_slices=self.num_slices, num_frequencies=self.num_frequencies,
+                                                                                       cartesian_mode=self.cartesian_mode,
+                                                                                       collapse_output_axes =self.collapse_output_axes,
+                                                                                       total_mass_encoding_dim=total_mass_encoding_dim,
+                                                                                       frequency_init=self._frequency_init,
+                                                                                       minimize_slice_coherence=self.minimize_slice_coherence,
+                                                                                       device=device,
+                                                                                       report = self._report,
+                                                                                       report_on_coherence_minimization = self._report_on_coherence_minimization)
 
         slice_vectors = slice_vectors.to(dtype=dtype, device=device)
         frequencies = frequencies.to(dtype=dtype, device=device)
@@ -770,7 +810,7 @@ class FSWEmbedding(nn.Module):
                                        cartesian_mode: bool,
                                        collapse_output_axes : bool,
                                        total_mass_encoding_dim: int,
-                                       freqs_init: float | int | str | tuple[float,float],
+                                       frequency_init: float | int | str | tuple[float,float],
                                        minimize_slice_coherence: bool,
                                        device: torch.device | int | str | None,
                                        report: bool,
@@ -824,22 +864,22 @@ class FSWEmbedding(nn.Module):
             frequencies = torch.zeros(size=freqs_shape, dtype=dtype_init, device=device)
             qprintln(report, '- Initialized 0 frequencies')
 
-        elif isinstance(freqs_init, numbers.Real):
-            assert not np.isinf(freqs_init), 'freqs_init cannot be infinite'
-            assert not np.isnan(freqs_init), 'freqs_init cannot be NaN'
-            frequencies = freqs_init * torch.ones(size=freqs_shape, dtype=dtype_init, device=device)
-            qprintln(report, '- Initialized %d frequencies to %g' % (num_frequencies, freqs_init))
+        elif isinstance(frequency_init, numbers.Real):
+            assert not np.isinf(frequency_init), 'frequency_init cannot be infinite'
+            assert not np.isnan(frequency_init), 'frequency_init cannot be NaN'
+            frequencies = frequency_init * torch.ones(size=freqs_shape, dtype=dtype_init, device=device)
+            qprintln(report, '- Initialized %d frequencies to %g' % (num_frequencies, frequency_init))
 
-        elif isinstance(freqs_init, tuple):
-            # Here freqs_init should have been type-enforced to be a tuple of two real numbers.
+        elif isinstance(frequency_init, tuple):
+            # Here frequency_init should have been type-enforced to be a tuple of two real numbers.
             # However, it does not prevent the tuple from containing more numbers.
-            assert(len(freqs_init)==2), 'When freqs_init is a tuple, it must be of length 2'
+            assert(len(frequency_init)==2), 'When frequency_init is a tuple, it must be of length 2'
 
-            a = freqs_init[0]
-            b = freqs_init[1]
-            assert not np.isinf(a) and not np.isinf(b), 'Received infinite value in freqs_init tuple'
-            assert not np.isnan(a) and not np.isnan(b), 'Received NaN value in freqs_init tuple'
-            assert a <= b, 'When freqs_init is a tuple, it is required to satisfy freqs_init[0] <= freqs_init[1]'
+            a = frequency_init[0]
+            b = frequency_init[1]
+            assert not np.isinf(a) and not np.isinf(b), 'Received infinite value in frequency_init tuple'
+            assert not np.isnan(a) and not np.isnan(b), 'Received NaN value in frequency_init tuple'
+            assert a <= b, 'When frequency_init is a tuple, it is required to satisfy frequency_init[0] <= frequency_init[1]'
 
             if num_frequencies == 1:
                 frequencies = a + (b-a)/2 * torch.ones(size=freqs_shape, dtype=dtype_init, device=device)
@@ -848,7 +888,7 @@ class FSWEmbedding(nn.Module):
 
             qprintln(report, '- Initialized %d equispaced frequencies in the interval [%d, %d]' % (num_frequencies,a,b))
 
-        elif freqs_init == 'random':
+        elif frequency_init == 'random':
             frequencies: torch.Tensor = torch.rand(size=freqs_shape, dtype=dtype_init, device=device)
             frequencies, junk = torch.sort(frequencies, dim=0)
             assert (frequencies != 1).all(), "Unexpected behavior of torch.rand(): Returned a value of 1, whereas values are supposed to be in [0,1)"
@@ -857,13 +897,13 @@ class FSWEmbedding(nn.Module):
 
             qprintln(report, '- Initialized %d random frequencies i.i.d. with density f(x) = 1/(1+x)^2, x\u22650' % num_frequencies)
 
-        elif freqs_init == 'spread':
+        elif frequency_init == 'spread':
             frequencies = ( 0.5 + torch.arange(num_frequencies, dtype=dtype_init, device=device).reshape(freqs_shape) ) / num_frequencies
             frequencies = frequencies / (1-frequencies)
             qprintln(report, '- Initialized %d frequencies spread evenly in [%g, %g] according to probability density' % (num_frequencies, frequencies[0].item(), frequencies[-1].item()))
 
         else:
-            raise RuntimeError('Invalid value for argument freqs_init; expected number, tuple (a,b) of numbers denoting an interval, \'random\' or \'spread\'')
+            raise RuntimeError('Invalid value for argument frequency_init; expected number, tuple (a,b) of numbers denoting an interval, \'random\' or \'spread\'')
 
         # Detect nan and inf entries in frequencies
         if num_frequencies > 0:
@@ -912,47 +952,34 @@ class FSWEmbedding(nn.Module):
     def forward(self, X: torch.Tensor, W: torch.Tensor | str = 'unit', X_edge: torch.Tensor | None = None,
                 graph_mode: bool = False, serialize_num_slices: int | None = None):
         """
-        Compute the Fourier Sliced-Wasserstein embedding of input multisets, measures, or graphs.
-
         Parameters
         ----------
         X : torch.Tensor
-            Input tensor of shape `(n, d_in)` representing a multiset of `n` points in `ℝ^{d_in}`, or
-            of shape `(<batch_dims>, n, d_in)` for a batch of input multisets.
-            In `graph_mode=True`, may also be of shape `(<batch_dims[:-1]>, d_in)` to share input points across the last batch dimension.
-
+            Input tensor of multiset elements. Shape: (..., n, d_in).
         W : torch.Tensor or str, default='unit'
-            Weights tensor of shape `(n,)` or `(<batch_dims>, n)`, assigning non-negative weights to input points.
-            If set to `'unit'`, the input is treated as a uniform distribution over its elements.
-            Must contain at least one non-zero weight per multiset.
-
-        X_edge : torch.Tensor or None, optional
-            Optional tensor of edge features. Currently unused.
-
+            Weights for each element in the input multiset. Shape: (..., n), or 'unit' for uniform weights.
+        X_edge : torch.Tensor, optional
+            Edge features. Required only if `edge_feature_dim` > 0 and used in graph mode.
         graph_mode : bool, default=False
-            If True, interprets the input as a graph structure.
-            Each distribution is computed using a shared set of points `X`, with weights drawn from corresponding rows of `W`.
-            Allows efficient application to graphs, e.g., computing an embedding of the neighborhood of each node.
-
-        serialize_num_slices : int or None, optional
-            If set to an integer `t`, serializes the computation over slices in batches of size `t`.
-            This reduces memory usage by a factor of `<num_slices> / t` without changing the result.
+            If True, the batch is interpreted as a graph adjacency matrix over shared nodes.
+        serialize_num_slices : int, optional
+            If set, slices are computed in batches of this size to reduce memory consumption.
 
         Returns
         -------
-        X_emb : torch.Tensor
-            Output tensor of shape:
-              - `(<batch_dims>, d_out)` if `collapse_output_axes =True`, or
-              - `(<batch_dims>, num_slices, num_frequencies)` if `collapse_output_axes =False`.
-
-            If `graph_mode=True`, the output shape becomes `(n, d_out)` or `(<batch_dims>, n, d_out)`, depending on input shape.
+        torch.Tensor
+            The Fourier Sliced-Wasserstein embedding of the input. Shape depends on
+            initialization:
+              - (..., d_out), if `d_out` was provided
+              - (..., num_slices, num_frequencies), if `collapse_frequencies` is False
+              - (..., num_slices * num_frequencies), if `collapse_frequencies` is True
 
         Notes
         -----
-        - Input points `X` and weights `W` can be batched across any number of leading dimensions.
-        - In `graph_mode`, `X` is shared across the last batch dimension, allowing efficient graph neighborhood embeddings.
-        - If `X_edge` is used, it must be compatible with the weight structure of `W` (not yet implemented).
+        - If `graph_mode=True`, X is broadcast over batch dimensions, and W must be explicitly provided.
+        - The output embedding is differentiable w.r.t. X and W.
         """
+
 
         # Simple use:
         # X sized (n,d_in) represents a multiset of n points in R^d_in.
