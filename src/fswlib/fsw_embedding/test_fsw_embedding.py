@@ -161,7 +161,7 @@ def main():
     print()
 
 
-    embed = FSWEmbedding(d, d_out=15, collapse_freqs=False, device=device, dtype=dtype)
+    embed = FSWEmbedding(d, d_out=15, collapse_output_axes =False, device=device, dtype=dtype)
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 1)  ))
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 2)  ))
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 3)  ))
@@ -170,7 +170,7 @@ def main():
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 15)  ))
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 16)  ))
 
-    embed = FSWEmbedding(d, nSlices=15, nFreqs=37, collapse_freqs=False, device=device, dtype=dtype)
+    embed = FSWEmbedding(d, num_slices=15, num_frequencies=37, collapse_output_axes =False, device=device, dtype=dtype)
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 1)  ))
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 2)  ))
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 3)  ))
@@ -179,7 +179,7 @@ def main():
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 15)  ))
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 16)  ))
 
-    embed = FSWEmbedding(d, nSlices=15, nFreqs=37, collapse_freqs=True, device=device, dtype=dtype)
+    embed = FSWEmbedding(d, num_slices=15, num_frequencies=37, collapse_output_axes =True, device=device, dtype=dtype)
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 1)  ))
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 2)  ))
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 3)  ))
@@ -204,12 +204,12 @@ def main():
 
     if True:
         m=23
-        nSlices=None
-        nFreqs=None
+        num_slices=None
+        num_frequencies=None
     else:
         m=None
-        nSlices=19
-        nFreqs=17
+        num_slices=19
+        num_frequencies=17
 
     X = torch.randn(size=(2,3,n,d), dtype=dtype, device=device)
     Wx = torch.nn.functional.relu(torch.rand(size=(2,3,n-3,n), dtype=dtype, device=device)-0.2)
@@ -217,8 +217,8 @@ def main():
     #X.requires_grad = True
     #Wx.requires_grad = True
 
-    embed = FSWEmbedding(d, d_out=m, nSlices=nSlices, nFreqs=nFreqs, device=device, dtype=dtype)
-    #embed = FSWEmbedding(d, nSlices=15, nFreqs=7, collapse_freqs=False, device=device, dtype=dtype)
+    embed = FSWEmbedding(d, d_out=m, num_slices=num_slices, num_frequencies=num_frequencies, device=device, dtype=dtype)
+    #embed = FSWEmbedding(d, num_slices=15, num_frequencies=7, collapse_output_axes =False, device=device, dtype=dtype)
 
     Xx = X.unsqueeze(dim=-3).expand( tuple(Wx.shape) + (X.shape[-1],))
 
@@ -285,12 +285,12 @@ def main():
 
     m = 100
 
-    nSlices = None
+    num_slices = None
     nFreq = None
 
     # m = None
-    # nSlices = 20
-    # nFreqs =  50
+    # num_slices = 20
+    # num_frequencies =  50
 
     graph_mode = False
 
@@ -318,14 +318,14 @@ def main():
     W2.requires_grad = test_grad_W
 
     # Embed 1
-    embed = FSWEmbedding(d_in=d, d_out=m, nSlices=nSlices, nFreqs = nFreqs, device=device, dtype=dtype, learnable_slices=test_grad_slices, learnable_freqs=test_grad_freqs, minimize_slice_coherence=True, freqs_init='spread')
+    embed = FSWEmbedding(d_in=d, d_out=m, num_slices=num_slices, num_frequencies = num_frequencies, device=device, dtype=dtype, learnable_slices=test_grad_slices, learnable_frequencies=test_grad_freqs, minimize_slice_coherence=True, freqs_init='spread')
 
     emb1 = embed(X1, W1, graph_mode=graph_mode)
     S1 = emb1.norm()
     S1.backward()
 
-    proj_grad1 = embed.projVecs.grad.clone() if test_grad_slices else None
-    freqs_grad1 = embed.freqs.grad.clone() if test_grad_freqs else None
+    proj_grad1 = embed.slice_vectors.grad.clone() if test_grad_slices else None
+    freqs_grad1 = embed.frequencies.grad.clone() if test_grad_freqs else None
     bias_grad1 = embed.bias.grad.clone() if test_grad_bias else None
 
     # Embed 2
@@ -335,8 +335,8 @@ def main():
     S2 = emb2.norm()
     S2.backward()
 
-    proj_grad2 = embed.projVecs.grad.clone() if test_grad_slices else None
-    freqs_grad2 = embed.freqs.grad.clone() if test_grad_freqs else None
+    proj_grad2 = embed.slice_vectors.grad.clone() if test_grad_slices else None
+    freqs_grad2 = embed.frequencies.grad.clone() if test_grad_freqs else None
     bias_grad2 = embed.bias.grad.clone() if test_grad_bias else None
 
     # Compare gradients
@@ -355,7 +355,7 @@ def main():
         print('Grad projs error: ', reldiff(proj_grad1, proj_grad2))
 
     if test_grad_freqs:
-        print('Grad freqs error: ', reldiff(freqs_grad1, freqs_grad2))
+        print('Grad frequencies error: ', reldiff(freqs_grad1, freqs_grad2))
 
     if test_grad_bias:
         print('Grad bias error: ', reldiff(bias_grad1, bias_grad2))
@@ -397,8 +397,8 @@ def main():
 
     # print(state_dict)
 
-    # print('projVecs shape: ', state_dict['projVecs'].shape)
-    # state_dict['projVecs'][:] = 0
+    # print('slice_vectors shape: ', state_dict['slice_vectors'].shape)
+    # state_dict['slice_vectors'][:] = 0
 
     bs = 20
     n = 3000
@@ -420,7 +420,7 @@ def main():
 
     X.requires_grad = True
     W.requires_grad = True
-    embed = FSWEmbedding(d=d, m=m, device=device, dtype=dtype, learnable_slices=True, learnable_freqs=True)
+    embed = FSWEmbedding(d=d, m=m, device=device, dtype=dtype, learnable_slices=True, learnable_frequencies=True)
 
     t = time.time()
     emb = embed(X,W, graph_mode=True, serialize_num_slices=1)
@@ -495,7 +495,7 @@ def main():
         W1.requires_grad = True
         W2.requires_grad = True
 
-    embed = FSWEmbedding(d=d, m=m, device=device, dtype=dtype, learnable_freqs=True, learnable_slices=True)
+    embed = FSWEmbedding(d=d, m=m, device=device, dtype=dtype, learnable_frequencies=True, learnable_slices=True)
     E = embed(X1,W1)
 
 # if __name__ == "__main__":

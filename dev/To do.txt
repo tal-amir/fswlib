@@ -1,4 +1,5 @@
 Now:
+    - Replace string enums by Enum or Literal
     - Settle the issue on how modules' extra parameters (e.g. some boolean fields of the class) are saved and loaded.
     - For each constructor input argument, think carefully of its name and default value.
     - For each field, decide whether to expose it as a property or hide it

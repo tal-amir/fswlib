@@ -21,7 +21,7 @@ version = '2.2'
 version_date = '2025-05-30'
 
 # Edge features:
-# - Do not split self.projVecs. Do self.projVecs.shape[1] == d_in + d_edge.
+# - Do not split self.slice_vectors. Do self.slice_vectors.shape[1] == d_in + d_edge.
 #
 # Conditions:
 # - Edge features are used iff d_edge > 0
@@ -32,7 +32,7 @@ version_date = '2025-05-30'
 
 # TODO:
 # 0. Support d_in=0
-# 1. If d_in+d_edge=1, all proj vecs should equal 1.
+# 1. If d_in+d_edge=1, all slice vecs should equal 1.
 # 2. Add support for zero-sized output along any possible dimension (flat input corresponding to empty multisets, d_out=0)
 # 3. Accelerate by explicitly computing W, W_sum and W_cumsum when W='uniform' or 'unit'
 # 3. Rename 'cartesian_mode' to 'cartesian_freqs'
@@ -41,7 +41,7 @@ version_date = '2025-05-30'
 # 5. For safety, in all functions under the class sp that return sparse tensors, make sure gradient of input is off
 # 6. Make sure that the state_dict saves all the embedding parameters, not just the pytorch tensors (e.g. encode_total_mass).
 # 7. Implement custom .state_dict() and .load_state_dict() methods, which should save and load accompanyting non-tensor parameters,
-#    upon loading update required_grads of tensors according to .learnable_projs, .learnable_freqs, and allow initializing a model
+#    upon loading update required_grads of tensors according to .learnable_slices, .learnable_frequencies, and allow initializing a model
 #    directly from a saved state_dict.
 
 # Changelog:
@@ -79,7 +79,7 @@ version_date = '2025-05-30'
 # 1.24    Removed attributes 'device' and 'dtype' from FSW_embedding due to lack of safety. Use get_device(), get_dtype() instead.
 # 1.23    Added project_W()
 # 1.22    Added support for biases
-#         learnable_freqs=True now initializes frequencies to zero
+#         learnable_frequencies=True now initializes frequencies to zero
 # 1.21    Added reset_parameters()
 #         Added type hinting and enforcement
 
@@ -87,6 +87,8 @@ version_date = '2025-05-30'
 
 import numpy as np
 from typing import Sequence
+from enum import Enum
+
 
 import torch
 import torch.nn as nn
@@ -101,7 +103,7 @@ import time
 import ctypes
 import platform
 
-__all__ = ["FSWEmbedding"]
+__all__ = ["FSWEmbedding", "TotalMassEncodingFunction"]
 
 if platform.system() == "Windows":
     _lib_name = "fsw_embedding.dll"
@@ -170,12 +172,12 @@ tal_global_timer_start = 0
 
     Cartesian mode
     --------------
-    If d_out=None and instead nSlices and nFreqs are provided, the embedding is computed with a Cartesian product of the
-    slices and frequencies. The output shape is then (<batch_dims>, nSlices, nFreqs), or in graph mode
-    (<batch_dims>, nRecipients, nSlices, nFreqs).
+    If d_out=None and instead num_slices and num_frequencies are provided, the embedding is computed with a Cartesian product of the
+    slices and frequencies. The output shape is then (<batch_dims>, num_slices, num_frequencies), or in graph mode
+    (<batch_dims>, nRecipients, num_slices, num_frequencies).
     
-    If collapse_freqs=True, then the frequency axis is collaped to the slice axis, resulting in output size
-    (<batch_dims>, nSlices x nFreqs), or in graph mode (<batch_dims>, nRecipients, nSlices x nFreqs).
+    If collapse_output_axes =True, then the frequency axis is collaped to the slice axis, resulting in output size
+    (<batch_dims>, num_slices x num_frequencies), or in graph mode (<batch_dims>, nRecipients, num_slices x num_frequencies).
 
     Sparse W
     --------
@@ -183,6 +185,135 @@ tal_global_timer_start = 0
     complexity. The most common use scenario is in graph mode, when W represents the adjacency matrix of a graph with
     a large number of vertices and a relatively low number of edges.
 '''
+
+
+
+class TotalMassEncodingFunction(Enum):
+    """Enumeration of supported total mass encoding functions.
+
+    Each option corresponds to a different transformation applied to the input
+    multiset's total mass before embedding.
+
+    Attributes
+    ----------
+    IDENTITY : str
+        f(x) = x; no transformation.
+    SQRT : str
+        f(x) = sqrt(1 + x) - 1; mild nonlinearity.
+    LOG : str
+        f(x) = log(1 + x); stronger compression of large values.
+    """
+
+    IDENTITY = 'identity'
+    SQRT = 'sqrt'
+    LOG = 'log'
+
+    def __str__(self) -> str:
+        """Return the string value of the enum member."""
+        return self.value
+
+    def describe(self) -> str:
+        """Return a human-readable description of this encoding function."""
+        return {
+            'identity': "f(x) = x; no transformation",
+            'sqrt': "f(x) = sqrt(1 + x) - 1; mild nonlinear transform",
+            'log': "f(x) = log(1 + x); stronger compression of large values",
+        }[self.value]
+
+    @classmethod
+    def from_str(cls, s: str) -> "TotalMassEncodingFunction":
+        """Create an enum instance from a string.
+
+        Parameters
+        ----------
+        s : str
+            The string representation of the encoding function.
+
+        Returns
+        -------
+        TotalMassEncodingFunction
+            The corresponding enum member.
+
+        Raises
+        ------
+        ValueError
+            If the string is not a valid encoding function name.
+        """
+        try:
+            return cls(s)
+        except ValueError as e:
+            valid = [v.value for v in cls]
+            raise ValueError(
+                f"Invalid value '{s}' for {cls.__name__}. "
+                f"Valid options are: {valid}"
+            ) from e
+
+
+from enum import Enum
+
+
+class TotalMassEncodingMethod(Enum):
+    """Enumeration of strategies for integrating the total mass encoding into the embedding.
+
+    This enum specifies how the transformed total mass is incorporated into the final embedding
+    vector. Each method corresponds to a different augmentation or normalization technique.
+
+    Attributes
+    ----------
+    PLAIN : str
+        The transformed total mass is simply appended to the embedding vector.
+    HOMOGENEOUS : str
+        The embedding vector is homogenized by treating the total mass as a scale factor.
+    HOMOGENEOUS_ALT : str
+        An alternative homogenization scheme, using a learned projection or bias.
+    """
+
+    PLAIN = 'plain'
+    HOMOGENEOUS = 'homog'
+    HOMOGENEOUS_ALT = 'homog_alt'
+
+    def __str__(self) -> str:
+        """Return the string value of the enum member."""
+        return self.value
+
+    def describe(self) -> str:
+        """Return a human-readable description of this encoding method."""
+        return {
+            'plain': "Append the encoded total mass to the embedding vector.",
+            'homog': "Homogenize the embedding vector using the total mass as a scale factor.",
+            'homog_alt': "Alternative homogenization using a learned projection or offset.",
+        }[self.value]
+
+    @classmethod
+    def from_str(cls, s: str) -> "TotalMassEncodingMethod":
+        """Create an enum instance from a string.
+
+        Parameters
+        ----------
+        s : str
+            The string representation of the encoding method.
+
+        Returns
+        -------
+        TotalMassEncodingMethod
+            The corresponding enum member.
+
+        Raises
+        ------
+        ValueError
+            If the string is not a valid encoding method name.
+        """
+        try:
+            return cls(s)
+        except ValueError as e:
+            valid = [v.value for v in cls]
+            raise ValueError(
+                f"Invalid value '{s}' for {cls.__name__}. "
+                f"Valid options are: {valid}"
+            ) from e
+
+
+
 
 class FSWEmbedding(nn.Module):
     """
@@ -200,17 +331,19 @@ class FSWEmbedding(nn.Module):
     """
 
 
-    
+
     def __init__(self,
                  d_in: int,  # ambient dimension of input multisets / measures
                  d_out: int | None = None,  # embedding output dimension
-                 nSlices: int | None = None, nFreqs: int | None = None, collapse_freqs: bool = False,
+                 num_slices: int | None = None,
+                 num_frequencies: int | None = None,
+                 collapse_output_axes : bool = False,
                  d_edge: int = 0,  # dimension of edge feature vectors. requires calling forward() with graph_mode=True
                  encode_total_mass: bool = False,  # Tells whether to encode the input multiset sizes (a.k.a. total mass) in the embedding
-                 total_mass_encoding_function: str = 'identity',  # 'identity': f(x)=x, 'sqrt': f(x) = sqrt(1+x)-1, 'log': log(1+x)
-                 total_mass_encoding_method: str = 'plain',  # 'plain' / 'homog' / 'homog_alt'
-                 total_mass_pad_thresh: float | int = 1.0,  # Multisets/mesaures with a total mass below that threshold get padded with the complementary mass placed at x=0
-                 learnable_slices: bool = False, learnable_freqs: bool = False, learnable_powers: bool = False,
+                 total_mass_encoding_function: str | TotalMassEncodingFunction = "identity",  # 'identity': f(x)=x, 'sqrt': f(x) = sqrt(1+x)-1, 'log': log(1+x)
+                 total_mass_encoding_method: str | TotalMassEncodingMethod = 'plain',  # 'plain' / 'homog' / 'homog_alt'
+                 total_mass_padding_thresh: float | int = 1.0,  # Multisets/mesaures with a total mass below that threshold get padded with the complementary mass placed at x=0
+                 learnable_slices: bool = False, learnable_frequencies: bool = False, learnable_powers: bool = False,
                  freqs_init: float | int | str | tuple[float,float] = 'random',
                  minimize_slice_coherence: bool = False,
                  enable_bias: bool = True,
@@ -228,12 +361,12 @@ class FSWEmbedding(nn.Module):
         d_in : int
             Dimensionality of input multiset elements (ambient dimension).
         d_out : int or None, optional
-            Output embedding dimension. If None, defaults to `nSlices * nFreqs`.
-        nSlices : int or None, optional
+            Output embedding dimension. If None, defaults to `num_slices * num_frequencies`.
+        num_slices : int or None, optional
             Number of projection directions. Required if `d_out` is not specified.
-        nFreqs : int or None, optional
+        num_frequencies : int or None, optional
             Number of Fourier frequencies per slice. Required if `d_out` is not specified.
-        collapse_freqs : bool, default=False
+        collapse_output_axes  : bool, default=False
             If True, aggregates over frequencies within each slice instead of flattening them.
         d_edge : int, default=0
             Dimensionality of edge features (used only when `graph_mode=True` in forward).
@@ -243,11 +376,11 @@ class FSWEmbedding(nn.Module):
             Function used to encode the total mass.
         total_mass_encoding_method : {'plain', 'homog', 'homog_alt'}, default='plain'
             Method for incorporating total mass information into the embedding.
-        total_mass_pad_thresh : float, default=1.0
+        total_mass_padding_thresh : float, default=1.0
             Threshold below which mass is padded with a point mass at the origin.
         learnable_slices : bool, default=False
             If True, the projection directions are learned during training.
-        learnable_freqs : bool, default=False
+        learnable_frequencies : bool, default=False
             If True, the Fourier frequencies are learned during training.
         learnable_powers : bool, default=False
             If True, learns power parameters applied to slice outputs.
@@ -288,64 +421,69 @@ class FSWEmbedding(nn.Module):
         self._d_in = d_in
         self.d_edge = d_edge
 
-        self.encode_total_mass = encode_total_mass
-        self.total_mass_encoding_dim = 1 if self.encode_total_mass else 0
+        self._encode_total_mass = encode_total_mass
 
-        total_mass_pad_thresh = float(total_mass_pad_thresh)
-        assert not np.isinf(total_mass_pad_thresh), 'total_mass_pad_thresh cannot be inf'
-        assert not np.isnan(total_mass_pad_thresh), 'total_mass_pad_thresh cannot be NaN'        
-        assert total_mass_pad_thresh > 0, 'total_mass_pad_thresh must be positive'
+        total_mass_padding_thresh = float(total_mass_padding_thresh)
+        assert not np.isinf(total_mass_padding_thresh), 'total_mass_padding_thresh cannot be inf'
+        assert not np.isnan(total_mass_padding_thresh), 'total_mass_padding_thresh cannot be NaN'
+        assert total_mass_padding_thresh > 0, 'total_mass_padding_thresh must be positive'
 
-        self.total_mass_pad_thresh = total_mass_pad_thresh
+        self._total_mass_padding_thresh = total_mass_padding_thresh
 
         assert total_mass_encoding_method in {'plain','homog','homog_alt'}, '<total_mass_encoding_method> must be one of \'plain\', \'homog\', \'homog_alg\''
-        self.total_mass_encoding_method = total_mass_encoding_method
+        self._total_mass_encoding_method = total_mass_encoding_method
 
-        assert total_mass_encoding_function in {'identity','sqrt','log'}, '<total_mass_encoding_function> must be one of \'identity\', \'sqrt\', \'log\''
-        self.total_mass_encoding_function = total_mass_encoding_function        
+
+        #assert total_mass_encoding_function in {'identity','sqrt','log'}, '<total_mass_encoding_function> must be one of \'identity\', \'sqrt\', \'log\''
+        if isinstance(total_mass_encoding_function, str):
+            total_mass_encoding_function = TotalMassEncodingFunction.from_str(total_mass_encoding_function)
+
+        self._total_mass_encoding_function = total_mass_encoding_function
 
         if self.d_edge == 0:
             input_space_name = 'R^%d' % self._d_in
         else:
             input_space_name = 'R^(%d+%d)' % (self._d_in, self.d_edge)
 
-        if (d_out is not None) and (nSlices is None) and (nFreqs is None):
-            self.cartesian_mode = False            
-            self.collapse_freqs = False
+        total_mass_encoding_dim = 1 if self._encode_total_mass else 0
+
+        if (d_out is not None) and (num_slices is None) and (num_frequencies is None):
+            self.cartesian_mode = False
+            self.collapse_output_axes  = False
             self._d_out = d_out
-            self.nSlices = d_out - self.total_mass_encoding_dim
-            self.nFreqs = d_out - self.total_mass_encoding_dim
+            self.num_slices = d_out - total_mass_encoding_dim
+            self.num_frequencies = d_out - total_mass_encoding_dim
             output_space_name = 'R^%d' % self._d_out
 
-        elif (d_out is None) and (nSlices is not None) and (nFreqs is not None):
-            assert collapse_freqs or (not encode_total_mass), 'Cartesian mode with collapse_freqs=False is not supported when encode_total_mass=True'
+        elif (d_out is None) and (num_slices is not None) and (num_frequencies is not None):
+            assert collapse_output_axes  or (not encode_total_mass), 'Cartesian mode with collapse_output_axes =False is not supported when encode_total_mass=True'
 
             self.cartesian_mode = True
-            self.collapse_freqs = collapse_freqs
-            self.nSlices = nSlices
-            self.nFreqs = nFreqs
-            self._d_out = nSlices * nFreqs + self.total_mass_encoding_dim
-            output_space_name = ('R^%d' % self._d_out) if self.collapse_freqs else ('R^(%d\u00d7%d)' % (self.nSlices, self.nFreqs))
+            self.collapse_output_axes  = collapse_output_axes 
+            self.num_slices = num_slices
+            self.num_frequencies = num_frequencies
+            self._d_out = num_slices * num_frequencies + total_mass_encoding_dim
+            output_space_name = ('R^%d' % self._d_out) if self.collapse_output_axes  else ('R^(%d\u00d7%d)' % (self.num_slices, self.num_frequencies))
 
         else:
-            assert False, "Expected exactly one of (d_out != None) or (nSlices != None and nFreqs != None)"
+            assert False, "Expected exactly one of (d_out != None) or (num_slices != None and num_frequencies != None)"
 
         assert self._d_out >= 0, 'd_out must be nonnegative'
 
         #d_out = self.d_out
-        nSlices = self.nSlices
-        nFreqs = self.nFreqs
+        num_slices = self.num_slices
+        num_frequencies = self.num_frequencies
 
         self.minimize_slice_coherence = minimize_slice_coherence
 
         self.learnable_slices = learnable_slices
-        self.learnable_freqs = learnable_freqs
+        self.learnable_frequencies = learnable_frequencies
         self.learnable_powers = learnable_powers
 
         # Note: freqs_init is checked for correctness downstream at generate_embedding_parameters()
         self.freqs_init = freqs_init
 
-        self.enable_bias = enable_bias
+        self._enable_bias = enable_bias
 
         # _device_new and _dtype_new are only defined here on __init__ and passed on to reset_parameters(), which then deletes them
         if device is None:
@@ -375,7 +513,7 @@ class FSWEmbedding(nn.Module):
                 use_custom_cuda_extension_if_available = False
             else:
                 use_custom_cuda_extension_if_available = True
-        
+
         self._use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
         self._fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
 
@@ -392,32 +530,32 @@ class FSWEmbedding(nn.Module):
         qprintln(report)
         qprintln(report, 'Constructing embedding for sets in %s into %s  ' % (input_space_name, output_space_name))
 
-        if self.cartesian_mode and self.collapse_freqs:
-            slice_freq_str = 'Using %d slices \u00d7 %d frequencies, collapsed to one %d dimensional axis; ' % (nSlices, nFreqs, nSlices*nFreqs)
+        if self.cartesian_mode and self.collapse_output_axes :
+            slice_freq_str = 'Using %d slices \u00d7 %d frequencies, collapsed to one %d dimensional axis; ' % (num_slices, num_frequencies, num_slices*num_frequencies)
         elif self.cartesian_mode:
-            slice_freq_str = 'Using %d slices \u00d7 %s frequencies; ' % (nSlices, nFreqs)
+            slice_freq_str = 'Using %d slices \u00d7 %s frequencies; ' % (num_slices, num_frequencies)
         else:
-            slice_freq_str = 'Using %d (slice, frequency) pairs; ' % nSlices
+            slice_freq_str = 'Using %d (slice, frequency) pairs; ' % num_slices
 
         qprint(report, slice_freq_str)
 
-        if self.learnable_slices and self.learnable_freqs:
-            if self.enable_bias:
+        if self.learnable_slices and self.learnable_frequencies:
+            if self._enable_bias:
                 learnable_str = 'learnable slices, frequences and biases'
             else:
                 learnable_str = 'learnable slices and frequences, no bias'
         elif self.learnable_slices:
-            if self.enable_bias:
+            if self._enable_bias:
                 learnable_str = 'learnable slices and biases, fixed frequencies'
             else:
                 learnable_str = 'learnable slices, fixed frequences, no bias'
-        elif self.learnable_freqs:
-            if self.enable_bias:
+        elif self.learnable_frequencies:
+            if self._enable_bias:
                 learnable_str = 'fixed slices, learnable frequencies, fixed biases (initialized to zero)'
             else:
                 learnable_str = 'fixed slices, learnable frequencies, no biases'
         else:
-            if self.enable_bias:
+            if self._enable_bias:
                 learnable_str = 'fixed slices and frequencies, fixed biases (initialized to zero)'
             else:
                 learnable_str = 'fixed slices and frequencies, no bias'
@@ -426,16 +564,16 @@ class FSWEmbedding(nn.Module):
 
         qprintln(report, 'device: %s    dtype: %s' % (self._device_new, self._dtype_new))
 
-        self.projVecs = None
-        self.freqs = None
+        self.slice_vectors = None
+        self.frequencies = None
         self.bias = None
 
         self.reset_parameters()
 
 
 
-    # Resets the model parameters (projection vectors and frequencies) and updates the model settings.
-    
+    # Resets the model parameters (slice vectors and frequencies) and updates the model settings.
+
     def reset_parameters(self,
                          freqs_init: float | int | str | None | tuple[float,float] = None,
                          minimize_slice_coherence: bool | None = None,
@@ -473,30 +611,33 @@ class FSWEmbedding(nn.Module):
         else:
             dtype = self.dtype
 
-        # Generate projection vectors and frequencies
+
+        total_mass_encoding_dim = 1 if self._encode_total_mass else 0
+
+        # Generate slice vectors and frequencies
         # We always generate (and optimize) them in float64 and then convert to the desired dtype.
-        projVecs, freqs, bias = FSWEmbedding._generate_embedding_parameters(d_in=self._d_in + self.d_edge,
-                                                                            nSlices=self.nSlices, nFreqs=self.nFreqs,
+        slice_vectors, frequencies, bias = FSWEmbedding._generate_embedding_parameters(d_in=self._d_in + self.d_edge,
+                                                                            num_slices=self.num_slices, num_frequencies=self.num_frequencies,
                                                                             cartesian_mode=self.cartesian_mode,
-                                                                            collapse_freqs=self.collapse_freqs,
-                                                                            total_mass_encoding_dim=self.total_mass_encoding_dim,
+                                                                            collapse_output_axes =self.collapse_output_axes ,
+                                                                            total_mass_encoding_dim=total_mass_encoding_dim,
                                                                             freqs_init=self.freqs_init,
                                                                             minimize_slice_coherence=self.minimize_slice_coherence,
                                                                             device=device,
                                                                             report = self._report,
                                                                             report_on_coherence_minimization = self._report_on_coherence_minimization)
 
-        projVecs = projVecs.to(dtype=dtype, device=device)
-        freqs = freqs.to(dtype=dtype, device=device)
+        slice_vectors = slice_vectors.to(dtype=dtype, device=device)
+        frequencies = frequencies.to(dtype=dtype, device=device)
 
-        self.projVecs = nn.Parameter( projVecs, requires_grad=self.learnable_slices )
-        self.freqs = nn.Parameter( freqs, requires_grad=self.learnable_freqs )
+        self.slice_vectors = nn.Parameter( slice_vectors, requires_grad=self.learnable_slices )
+        self.frequencies = nn.Parameter( frequencies, requires_grad=self.learnable_frequencies )
 
-        if self.enable_bias:
+        if self._enable_bias:
             bias = bias.to(dtype=dtype, device=device)
 
-            if self.cartesian_mode and self.collapse_freqs:
-                bias = bias.reshape((self.nSlices*self.nFreqs))
+            if self.cartesian_mode and self.collapse_output_axes :
+                bias = bias.reshape((self.num_slices*self.num_frequencies))
 
             self.bias = nn.Parameter( bias, requires_grad=self.learnable_slices )
 
@@ -521,9 +662,26 @@ class FSWEmbedding(nn.Module):
             if isinstance(arg, torch.dtype):
                 assert arg.is_floating_point and not arg.is_complex, 'dtype must be real floating-point; instead got dtype=%s' % arg
 
-        super().to(*args, **kwargs)       
-       
+        super().to(*args, **kwargs)
+
         return self
+
+
+    @property
+    def encode_total_mass(self) -> bool:
+        return self._encode_total_mass
+
+
+    @property
+    def total_mass_encoding_function(self) -> TotalMassEncodingFunction:
+        """Which function is used to encode total mass."""
+        return self._total_mass_encoding_function
+
+
+    @property
+    def total_mass_encoding_method(self) -> TotalMassEncodingMethod:
+        """Which method is used to encode total mass."""
+        return self._total_mass_encoding_method
 
 
     @property
@@ -549,16 +707,16 @@ class FSWEmbedding(nn.Module):
     @property
     def d_out(self) -> int:
         """int: Dimensionality of the embedding output.
-    
+
         Returns
         -------
         int
             The dimension of the vector produced by the embedding for each multiset or distribution.
-    
+
         Notes
         -----
         This value is set at initialization and governs the size of the embedding output.
-    
+
         See Also
         --------
         __init__ : The `d_out` argument specifies this value at initialization.
@@ -582,7 +740,7 @@ class FSWEmbedding(nn.Module):
         --------
         __init__ : The `device` can be specified at initialization.
         """
-        return self.projVecs.device
+        return self.slice_vectors.device
 
 
     @property
@@ -602,15 +760,15 @@ class FSWEmbedding(nn.Module):
         --------
         __init__ : The `dtype` can be specified at initialization.
         """
-        return self.projVecs.dtype
+        return self.slice_vectors.dtype
 
 
     @staticmethod
     def _generate_embedding_parameters(d_in: int,
-                                       nSlices: int,
-                                       nFreqs: int,
+                                       num_slices: int,
+                                       num_frequencies: int,
                                        cartesian_mode: bool,
-                                       collapse_freqs: bool,
+                                       collapse_output_axes : bool,
                                        total_mass_encoding_dim: int,
                                        freqs_init: float | int | str | tuple[float,float],
                                        minimize_slice_coherence: bool,
@@ -622,57 +780,57 @@ class FSWEmbedding(nn.Module):
         # Axis number for the ambient space R^d_in
         ambspace_axis = 1
 
-        ### A. Generate projection vectors
+        ### A. Generate slice vectors
 
-        projVecs = torch.randn(size=(nSlices, d_in), dtype=dtype_init, device=device)
-        projVecs = nn.functional.normalize(projVecs, p=2.0, dim=ambspace_axis, eps=0, out=None)
+        slice_vectors = torch.randn(size=(num_slices, d_in), dtype=dtype_init, device=device)
+        slice_vectors = nn.functional.normalize(slice_vectors, p=2.0, dim=ambspace_axis, eps=0, out=None)
 
         if minimize_slice_coherence:
-            if (nSlices > d_in) or True:
-                projVecs = minimize_mutual_coherence(projVecs, report=report_on_coherence_minimization)
-                qprintln(report, '- Generated %d projection vectors in R^%d with minimized mutual coherence' % (nSlices, d_in))
+            if (num_slices > d_in) or True:
+                slice_vectors = minimize_mutual_coherence(slice_vectors, report=report_on_coherence_minimization)
+                qprintln(report, '- Generated %d slice vectors in R^%d with minimized mutual coherence' % (num_slices, d_in))
             else:
-                print('nSlices: ', nSlices, 'd_in: ', d_in)
-                # Here we need to compute a set of nSlices orthogonal vectors in R^d_in.
+                print('num_slices: ', num_slices, 'd_in: ', d_in)
+                # Here we need to compute a set of num_slices orthogonal vectors in R^d_in.
                 # Below are two methods to do so: SVD and QR decomposition
                 # In some cases with little available memory, SVD seems more resilient, whereas QR sometimes crashes.
                 use_svd = True
 
                 if use_svd:
-                    U, S, Vh = torch.linalg.svd(projVecs, full_matrices=False)
-                    projVecs = Vh
+                    U, S, Vh = torch.linalg.svd(slice_vectors, full_matrices=False)
+                    slice_vectors = Vh
                     del U, S, Vh
                 else:
-                    projVecs = projVecs.transpose(0,1)
-                    projVecs, R = torch.linalg.qr(projVecs, mode='reduced')
+                    slice_vectors = slice_vectors.transpose(0,1)
+                    slice_vectors, R = torch.linalg.qr(slice_vectors, mode='reduced')
                     del R
-                    projVecs = projVecs.transpose(0,1)
-                qprintln(report, '- Generated %d perpendicular projection vectors in R^%d using QR decomposition' % (nSlices, d_in))
+                    slice_vectors = slice_vectors.transpose(0,1)
+                qprintln(report, '- Generated %d perpendicular slice vectors in R^%d using QR decomposition' % (num_slices, d_in))
 
         else:
-            qprintln(report, '- Generated %d random projection vectors' % nSlices)
+            qprintln(report, '- Generated %d random slice vectors' % num_slices)
 
-        # Detect nans, infs and zero vectors in projVecs
-        assert not torch.isinf(projVecs).any(), "Found infs in projVecs"
-        assert not torch.isnan(projVecs).any(), "Found nans in projVecs"
-        assert not (projVecs == 0).all(dim=1).any(), 'Found zero vectors in projVecs'
+        # Detect nans, infs and zero vectors in slice_vectors
+        assert not torch.isinf(slice_vectors).any(), "Found infs in slice_vectors"
+        assert not torch.isnan(slice_vectors).any(), "Found nans in slice_vectors"
+        assert not (slice_vectors == 0).all(dim=1).any(), 'Found zero vectors in slice_vectors'
 
 
 
         ### B. Generate frequencies
-        freqs_shape = (nFreqs,) # Note: Changing this to (self.nFreqs, 1) yields incorrect results in self.forward()
+        freqs_shape = (num_frequencies,) # Note: Changing this to (self.num_frequencies, 1) yields incorrect results in self.forward()
 
-        if nFreqs == 0:
-            freqs = torch.zeros(size=freqs_shape, dtype=dtype_init, device=device)
+        if num_frequencies == 0:
+            frequencies = torch.zeros(size=freqs_shape, dtype=dtype_init, device=device)
             qprintln(report, '- Initialized 0 frequencies')
 
         elif isinstance(freqs_init, numbers.Real):
             assert not np.isinf(freqs_init), 'freqs_init cannot be infinite'
             assert not np.isnan(freqs_init), 'freqs_init cannot be NaN'
-            freqs = freqs_init * torch.ones(size=freqs_shape, dtype=dtype_init, device=device)
-            qprintln(report, '- Initialized %d frequencies to %g' % (nFreqs, freqs_init))
+            frequencies = freqs_init * torch.ones(size=freqs_shape, dtype=dtype_init, device=device)
+            qprintln(report, '- Initialized %d frequencies to %g' % (num_frequencies, freqs_init))
 
-        elif isinstance(freqs_init, tuple):            
+        elif isinstance(freqs_init, tuple):
             # Here freqs_init should have been type-enforced to be a tuple of two real numbers.
             # However, it does not prevent the tuple from containing more numbers.
             assert(len(freqs_init)==2), 'When freqs_init is a tuple, it must be of length 2'
@@ -683,68 +841,68 @@ class FSWEmbedding(nn.Module):
             assert not np.isnan(a) and not np.isnan(b), 'Received NaN value in freqs_init tuple'
             assert a <= b, 'When freqs_init is a tuple, it is required to satisfy freqs_init[0] <= freqs_init[1]'
 
-            if nFreqs == 1:
-                freqs = a + (b-a)/2 * torch.ones(size=freqs_shape, dtype=dtype_init, device=device)
+            if num_frequencies == 1:
+                frequencies = a + (b-a)/2 * torch.ones(size=freqs_shape, dtype=dtype_init, device=device)
             else:
-                freqs = a + (b-a) * ( torch.arange(nFreqs, dtype=dtype_init, device=device) / (nFreqs-1) )
+                frequencies = a + (b-a) * ( torch.arange(num_frequencies, dtype=dtype_init, device=device) / (num_frequencies-1) )
 
-            qprintln(report, '- Initialized %d equispaced frequencies in the interval [%d, %d]' % (nFreqs,a,b))
+            qprintln(report, '- Initialized %d equispaced frequencies in the interval [%d, %d]' % (num_frequencies,a,b))
 
         elif freqs_init == 'random':
-            freqs: torch.Tensor = torch.rand(size=freqs_shape, dtype=dtype_init, device=device)
-            freqs, junk = torch.sort(freqs, dim=0)
-            assert (freqs != 1).all(), "Unexpected behavior of torch.rand(): Returned a value of 1, whereas values are supposed to be in [0,1)"
-            assert (freqs < 1).all(), "Unexpected behavior of torch.rand(): Returned a value > 1, whereas values are supposed to be in [0,1)"
-            freqs = freqs / (1-freqs)
+            frequencies: torch.Tensor = torch.rand(size=freqs_shape, dtype=dtype_init, device=device)
+            frequencies, junk = torch.sort(frequencies, dim=0)
+            assert (frequencies != 1).all(), "Unexpected behavior of torch.rand(): Returned a value of 1, whereas values are supposed to be in [0,1)"
+            assert (frequencies < 1).all(), "Unexpected behavior of torch.rand(): Returned a value > 1, whereas values are supposed to be in [0,1)"
+            frequencies = frequencies / (1-frequencies)
 
-            qprintln(report, '- Initialized %d random frequencies i.i.d. with density f(x) = 1/(1+x)^2, x\u22650' % nFreqs)
+            qprintln(report, '- Initialized %d random frequencies i.i.d. with density f(x) = 1/(1+x)^2, x\u22650' % num_frequencies)
 
         elif freqs_init == 'spread':
-            freqs = ( 0.5 + torch.arange(nFreqs, dtype=dtype_init, device=device).reshape(freqs_shape) ) / nFreqs
-            freqs = freqs / (1-freqs)
-            qprintln(report, '- Initialized %d frequencies spread evenly in [%g, %g] according to probability density' % (nFreqs, freqs[0].item(), freqs[-1].item()))
+            frequencies = ( 0.5 + torch.arange(num_frequencies, dtype=dtype_init, device=device).reshape(freqs_shape) ) / num_frequencies
+            frequencies = frequencies / (1-frequencies)
+            qprintln(report, '- Initialized %d frequencies spread evenly in [%g, %g] according to probability density' % (num_frequencies, frequencies[0].item(), frequencies[-1].item()))
 
         else:
             raise RuntimeError('Invalid value for argument freqs_init; expected number, tuple (a,b) of numbers denoting an interval, \'random\' or \'spread\'')
-        
-        # Detect nan and inf entries in freqs
-        if nFreqs > 0:
-            assert not torch.isinf(freqs).any(), "Found infs in freqs"
-            assert not torch.isnan(freqs).any(), "Found nans in freqs"
+
+        # Detect nan and inf entries in frequencies
+        if num_frequencies > 0:
+            assert not torch.isinf(frequencies).any(), "Found infs in frequencies"
+            assert not torch.isnan(frequencies).any(), "Found nans in frequencies"
 
         # C. Generate bias vector. Always initialized to zero.
-        if cartesian_mode and not collapse_freqs:
-            bias_shape = (nSlices, nFreqs)
-        elif cartesian_mode and collapse_freqs:
-            bias_shape = (nSlices*nFreqs + total_mass_encoding_dim,)
+        if cartesian_mode and not collapse_output_axes :
+            bias_shape = (num_slices, num_frequencies)
+        elif cartesian_mode and collapse_output_axes :
+            bias_shape = (num_slices*num_frequencies + total_mass_encoding_dim,)
         else:
-            bias_shape = (nSlices + total_mass_encoding_dim,)
+            bias_shape = (num_slices + total_mass_encoding_dim,)
 
         bias = torch.zeros(size=bias_shape, dtype=dtype_init, device=device)
 
         qprintln(report)
 
-        return projVecs, freqs, bias
+        return slice_vectors, frequencies, bias
 
 
 
     # Spreads the frequencies on an interval centered at 'center' with the given radius, in an equispaced manner.
-    # This might be useful when using the embedding for graph message passing with learnable_projs=True, as the magnitude of the
-    # projection vectors already determines the effective frequency, and having a very high max-frequency-to-low-frequency ratio
+    # This might be useful when using the embedding for graph message passing with learnable_slices=True, as the magnitude of the
+    # slice vectors already determines the effective frequency, and having a very high max-frequency-to-low-frequency ratio
     # may impede the optimization due to ill conditioning.
-    
+
     def _spread_freqs_at_interval(self, center: float | int, radius: float | int):
         assert radius >= 0
 
-        if (self.nFreqs == 1) or (radius == 0):
-            freqs_new = center * torch.ones_like(self.freqs)
+        if (self.num_frequencies == 1) or (radius == 0):
+            freqs_new = center * torch.ones_like(self.frequencies)
         else:
-            spread = 2 * (0.5 + torch.arange(self.nFreqs, dtype=self.dtype, device=self.device).reshape(self.freqs.shape) ) / self.nFreqs - 1
-            spread = spread * 1/(1 - 1/self.nFreqs)
+            spread = 2 * (0.5 + torch.arange(self.num_frequencies, dtype=self.dtype, device=self.device).reshape(self.frequencies.shape) ) / self.num_frequencies - 1
+            spread = spread * 1/(1 - 1/self.num_frequencies)
             freqs_new = center + radius * spread
 
         state_dict = self.state_dict()
-        state_dict['freqs'] = freqs_new
+        state_dict['frequencies'] = freqs_new
         self.load_state_dict(state_dict)
 
         return self
@@ -777,15 +935,15 @@ class FSWEmbedding(nn.Module):
             Allows efficient application to graphs, e.g., computing an embedding of the neighborhood of each node.
 
         serialize_num_slices : int or None, optional
-            If set to an integer `t`, serializes the computation over projection slices in batches of size `t`.
+            If set to an integer `t`, serializes the computation over slices in batches of size `t`.
             This reduces memory usage by a factor of `<num_slices> / t` without changing the result.
 
         Returns
         -------
         X_emb : torch.Tensor
             Output tensor of shape:
-              - `(<batch_dims>, d_out)` if `collapse_freqs=True`, or
-              - `(<batch_dims>, nSlices, nFreqs)` if `collapse_freqs=False`.
+              - `(<batch_dims>, d_out)` if `collapse_output_axes =True`, or
+              - `(<batch_dims>, num_slices, num_frequencies)` if `collapse_output_axes =False`.
 
             If `graph_mode=True`, the output shape becomes `(n, d_out)` or `(<batch_dims>, n, d_out)`, depending on input shape.
 
@@ -799,7 +957,7 @@ class FSWEmbedding(nn.Module):
         # Simple use:
         # X sized (n,d_in) represents a multiset of n points in R^d_in.
         # If W sized (n,) is provided, then (X,W) represents a distribution, with each point X[i,:]
-        # assigned the weight W[i]. 
+        # assigned the weight W[i].
         # The weights are normalized internally so they do not have to sum up to 1, but they must be nonnegative
         # and contain at least one nonzero.
         # If W is not provided, it is assumed to be uniform weights 1/n.
@@ -813,7 +971,7 @@ class FSWEmbedding(nn.Module):
         # If graph_mode=True, then the points in X are shared between all batches along the last batch dimension.
         # That is, forward(X,W,graph_mode=True) produces (more efficiently) the same result as forward(X_expand, W),
         # where d_in = X.shape[-1]  and  X_expand = X.unsqueeze(dim=-3).expand( tuple(W.shape) + (d_in,) ).
-        # A common usage for this feature is when W sized (n,n) represents an adjacency matrix of a graph, 
+        # A common usage for this feature is when W sized (n,n) represents an adjacency matrix of a graph,
         # and X sized (n,d_in) represents vertex features. Then the output of embed(X,W,graph_mode=True) will be of size (n,d_out),
         # with each of its [i,:] rows representing the embedding of the features of all neighbours of vertex i, with weights
         # given by their edge weights.
@@ -825,31 +983,31 @@ class FSWEmbedding(nn.Module):
         #
         # By default, the output size is (<batch_dims>, d_out), where each X_emb(j1,...,jk,:) contains the embedding of one distribution.
         #
-        # If the parameters nSlices and nFreqs are set on initialization, then the output is of size
-        # (<batch_dims>, nSlices, nFreqs) or (<batch_dims>, nSlices*nFreqs) - the former if 
-        # the parameter 'collapse_freqs' is set to False (default), the latter if it is set to True.
+        # If the parameters num_slices and num_frequencies are set on initialization, then the output is of size
+        # (<batch_dims>, num_slices, num_frequencies) or (<batch_dims>, num_slices*num_frequencies) - the former if
+        # the parameter 'collapse_output_axes ' is set to False (default), the latter if it is set to True.
         #
         # If serialize_num_slices = t (integer), then the computation is serialized to batches of size t.
         # This does not affect the result, but reduces the momery complexity by a factor of <number of slices> / t
 
         # Verify slices and frequencies at each forward pass if they are learnable
         if fsw_embedding_basic_safety_checks and self.learnable_slices:
-            assert not torch.isnan(self.projVecs).any(), 'Projection vectors contain NaNs'
-            assert not torch.isinf(self.projVecs).any(), 'Projection vectors contain infs'
+            assert not torch.isnan(self.slice_vectors).any(), 'Slice vectors contain NaNs'
+            assert not torch.isinf(self.slice_vectors).any(), 'Slice vectors contain infs'
             # Note: We allow them to contain zero vectors when they are learnable, in case i.e. when sparsity is desired
-            # assert not (self.projVecs == 0).all(dim=1).any(), 'Projection vectors contain a zero vector'
+            # assert not (self.slice_vectors == 0).all(dim=1).any(), 'Slice vectors contain a zero vector'
 
-        if fsw_embedding_basic_safety_checks and self.learnable_freqs:
-            assert not torch.isnan(self.freqs).any(), 'Frequencies contain NaNs'
-            assert not torch.isinf(self.freqs).any(), 'Frequencies contain infs'
+        if fsw_embedding_basic_safety_checks and self.learnable_frequencies:
+            assert not torch.isnan(self.frequencies).any(), 'Frequencies contain NaNs'
+            assert not torch.isinf(self.frequencies).any(), 'Frequencies contain infs'
 
         ### A. Verify input types and content
 
-        assert self.total_mass_pad_thresh > 0, 'total_mass_pad_thresh must be positive'
+        assert self._total_mass_padding_thresh > 0, 'total_mass_padding_thresh must be positive'
 
         if self.d_edge > 0:
             assert graph_mode, 'd_edge > 0 (given at initialization) necessitates graph_mode=True on forward call'
-            assert X_edge is not None, 'X_edge must be provided since d_edge > 0'            
+            assert X_edge is not None, 'X_edge must be provided since d_edge > 0'
         else:
             assert (X_edge is None) or (X_edge.numel() == 0), 'X_edge should be None or empty since d_edge == 0'
             X_edge = None
@@ -867,7 +1025,7 @@ class FSWEmbedding(nn.Module):
             assert W.dtype == self.dtype, ( "W has the wrong dtype. Expected %s, got %s" % (self.dtype, W.dtype) )
             assert W.device == self.device, ( "W is on the wrong device. Expected %s, got %s" % (self.device, W.device) )
 
-            # Check if W is sparse. If so, ensure that W is of the correct layout.            
+            # Check if W is sparse. If so, ensure that W is of the correct layout.
             # Note: Strangely enough, sparse tensors of layouts other than COO (e.g. CSR) may have is_sparse=False.
             #       This may lead us to mistakenly treat a, e.g. W that is sparse CSR as dense.
             #       Currently there is no is_dense() function in torch, so reading the layout string directly is the second best.
@@ -916,7 +1074,7 @@ class FSWEmbedding(nn.Module):
 
 
         ### B. Verify input sizes
-            
+
         assert len(X.shape) >= 2, "X must be a tensor of order at least 2"
         assert X.shape[-1] == self._d_in, "The last dimension of X must equal d_in=%d. Instead got %d" % (self._d_in, X.shape[-1])
 
@@ -930,7 +1088,7 @@ class FSWEmbedding(nn.Module):
                     err_str = "Shape mismatch between X and W: If X.shape = (b1,b2,...,bk,n,d_in) then W.shape should be (b1,b2,...,bk,n) (Perhaps missing argument graph_mode=True?)"
                 else:
                     err_str = "Shape mismatch between X and W: If X.shape = (b1,b2,...,bk,n,d_in) then W.shape should be (b1,b2,...,bk,n) (unless graph_mode=True)"
-                
+
                 assert (len(W.shape) == len(X.shape)-1) and (W.shape == X.shape[0:-1]), err_str
 
             elif W == 'unit':
@@ -955,10 +1113,10 @@ class FSWEmbedding(nn.Module):
                 assert isinstance(X_edge, torch.Tensor) # For PyCharm to know
 
                 # Verify that X_edge has the right shape and is compatible with W
-                assert (((self.d_edge == 1) and (X_edge.shape == W.shape)) or 
-                    ((X_edge.dim() == W.dim()+1) and (X_edge.shape[0:-1] == W.shape) and (X_edge.shape[-1] == self.d_edge))), (
+                assert (((self.d_edge == 1) and (X_edge.shape == W.shape)) or
+                        ((X_edge.dim() == W.dim()+1) and (X_edge.shape[0:-1] == W.shape) and (X_edge.shape[-1] == self.d_edge))), (
                     "Shape mismatch between X_edge and W: if W.shape = (b1,b2,...,bk,nRecipients,n) then X.shape should be (b1,b2,...,bk,nRecipients,n,d_edge) (with the possible exception (b1,b2,...,bk,nRecipients,n) when d_edge=1" )
-                
+
                 if X_edge.is_sparse:
                     assert X_edge.values().shape[0] == W.values().shape[0], 'Sparse X_edge must have the same number of values() as W'
                     if fsw_embedding_basic_safety_checks:
@@ -966,25 +1124,25 @@ class FSWEmbedding(nn.Module):
 
                     if X_edge.dense_dim()==0:
                         X_edge = ag.unsqueeze_dense_dim.apply(X_edge)
-                    
+
 
         ### C. Precalculate axis indices and output shape
-             
+
         # These are the different axes we use to store data for processing. These definitions are repeated in forward_helper()
         # element_axis corresponds to the index of the multiset elements
         # ambspace_axis corresponds to the elements' coordinate index in the ambient space R^d_in
-        # After projection, the ambient space coordinates are replaced by the projection/slice number; thus proj_axis=ambspace_axis
-        # If we're in Cartesian mode, the frequencies have their own axis freq_axis, otherwise it is the same axis as proj_axis.
+        # After projection, the ambient space coordinates are replaced by the slice number; thus slice_axis=ambspace_axis
+        # If we're in Cartesian mode, the frequencies have their own axis freq_axis, otherwise it is the same axis as slice_axis.
         recipient_axis = len(batch_dims) if graph_mode else None  # Message-recipient vertices
         element_axis  = recipient_axis+1 if graph_mode else len(batch_dims) # In graph mode this axis denotes the message-sender vertices
         ambspace_axis = element_axis + 1
-        proj_axis     = ambspace_axis
+        slice_axis     = ambspace_axis
         # noinspection PyUnusedLocal
-        freq_axis     = proj_axis +1 if self.cartesian_mode else proj_axis
-        output_proj_axis = element_axis # In the output, the element axis is replaced by the projection axis
+        freq_axis     = slice_axis +1 if self.cartesian_mode else slice_axis
+        output_slice_axis = element_axis # In the output, the element axis is replaced by the slice axis
 
         output_shape_before_collapse_and_totmass_augmentation =  batch_dims + (nRecipients,) if graph_mode else batch_dims
-        output_shape_before_collapse_and_totmass_augmentation += (self.nSlices, self.nFreqs) if self.cartesian_mode else (self.nSlices, )
+        output_shape_before_collapse_and_totmass_augmentation += (self.num_slices, self.num_frequencies) if self.cartesian_mode else (self.num_slices, )
 
         ### D. Input is ok. Start working.
 
@@ -993,18 +1151,18 @@ class FSWEmbedding(nn.Module):
             slice_info_W = sp.get_slice_info(W, -1, calc_nnz_per_slice=False,
                                              use_custom_cuda_extension_if_available=self._use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails=self._fail_if_cuda_extension_load_fails)
             W_sum = ag.sum_sparseToDense.apply(W, -1, slice_info_W, self._use_custom_cuda_extension_if_available, self._fail_if_cuda_extension_load_fails)
-        
+
         else:
-            W_sum = torch.sum(W, dim=-1, keepdim=True)            
+            W_sum = torch.sum(W, dim=-1, keepdim=True)
 
         # Total-mass deficit to be compensated for by padding
-        W_pad = ag.custom_lowclamp.apply(self.total_mass_pad_thresh-W_sum, 0.0)
+        W_pad = ag.custom_lowclamp.apply(self._total_mass_padding_thresh - W_sum, 0.0)
 
         # Detect weight deficit and augment W and X accordingly
         if (W_pad > 0).any():
             zshape = list(X.shape)
             zshape[-2] = 1
-            X = torch.cat( (X, torch.zeros(zshape, device=X.device, dtype=X.dtype)), dim=-2 )               
+            X = torch.cat( (X, torch.zeros(zshape, device=X.device, dtype=X.dtype)), dim=-2 )
 
             if W.is_sparse:
                 # Make sure this works
@@ -1015,7 +1173,7 @@ class FSWEmbedding(nn.Module):
 
                 if X_edge is not None:
                     X_edge_pad_inds = W_pad.indices()
-                    X_edge_pad_vals = torch.zeros( (nRecipients, self.d_edge), device=X.device, dtype=X.dtype)
+                    X_edge_pad_vals = torch.zeros((nRecipients, self.d_edge), device=X.device, dtype=X.dtype)
                     X_edge_pad_shape = replace_in_tuple(tuple(X_edge.shape), -2, 1)
 
                     X_edge_pad = sp.sparse_coo_tensor_coalesced(indices=X_edge_pad_inds, values=X_edge_pad_vals, size = X_edge_pad_shape)
@@ -1023,16 +1181,16 @@ class FSWEmbedding(nn.Module):
             else:
                 W = torch.cat( (W, W_pad), dim=-1 )
                 if X_edge is not None:
-                    zshape = list(W.shape)+[self.d_edge,]
+                    zshape = list(W.shape)+[self.d_edge, ]
                     zshape[-2] = 1
                     if X_edge.dim() == W.dim():
                         X_edge = X_edge.unsqueeze(-1)
                     X_edge = torch.cat( (X_edge, torch.zeros(zshape, device=X.device, dtype=X.dtype)), dim=-2 )
 
-            W_sum_padded = ag.custom_lowclamp.apply(W_sum, self.total_mass_pad_thresh)
-        else:            
+            W_sum_padded = ag.custom_lowclamp.apply(W_sum, self._total_mass_padding_thresh)
+        else:
             W_sum_padded = W_sum
-        
+
         del W_pad
 
         # Normalize W according to W_sum_padded
@@ -1049,55 +1207,55 @@ class FSWEmbedding(nn.Module):
         if self._d_out == 0:
             X_emb = torch.zeros(size=output_shape_before_collapse_and_totmass_augmentation, dtype=self.dtype, device=self.device)
 
-        elif (serialize_num_slices is None) or (serialize_num_slices >= self.nSlices):
-            X_emb = FSWEmbedding._forward_helper(X, W, self.projVecs, self.freqs, graph_mode, X_edge, self.cartesian_mode, batch_dims,
+        elif (serialize_num_slices is None) or (serialize_num_slices >= self.num_slices):
+            X_emb = FSWEmbedding._forward_helper(X, W, self.slice_vectors, self.frequencies, graph_mode, X_edge, self.cartesian_mode, batch_dims,
                                                  use_custom_cuda_extension_if_available = self._use_custom_cuda_extension_if_available,
                                                  fail_if_cuda_extension_load_fails = self._fail_if_cuda_extension_load_fails)
 
         else:
             assert isinstance(serialize_num_slices, int) and (serialize_num_slices >= 1), 'serialize_num_slices must be None or a positive integer'
 
-            nIter = (self.nSlices // serialize_num_slices) if (self.nSlices % serialize_num_slices == 0) else (1 + self.nSlices // serialize_num_slices)
+            nIter = (self.num_slices // serialize_num_slices) if (self.num_slices % serialize_num_slices == 0) else (1 + self.num_slices // serialize_num_slices)
 
             X_emb = torch.empty(size=output_shape_before_collapse_and_totmass_augmentation, dtype=self.dtype, device=self.device)
 
             for iIter in range(nIter):
-                inds_curr = torch.arange(iIter*serialize_num_slices, min( self.nSlices, (iIter+1)*serialize_num_slices), dtype=torch.int64, device=self.device)
-                projVecs_curr = self.projVecs[inds_curr,:]
-                freqs_curr = self.freqs if self.cartesian_mode else self.freqs[inds_curr]
-                
-                out_curr = FSWEmbedding._forward_helper(X, W, projVecs_curr, freqs_curr, graph_mode, X_edge, self.cartesian_mode, batch_dims,
+                inds_curr = torch.arange(iIter*serialize_num_slices, min( self.num_slices, (iIter+1)*serialize_num_slices), dtype=torch.int64, device=self.device)
+                slice_vecs_curr = self.slice_vectors[inds_curr,:]
+                freqs_curr = self.frequencies if self.cartesian_mode else self.frequencies[inds_curr]
+
+                out_curr = FSWEmbedding._forward_helper(X, W, slice_vecs_curr, freqs_curr, graph_mode, X_edge, self.cartesian_mode, batch_dims,
                                                         use_custom_cuda_extension_if_available = self._use_custom_cuda_extension_if_available,
                                                         fail_if_cuda_extension_load_fails = self._fail_if_cuda_extension_load_fails)
 
-                assign_at(X_emb, out_curr, output_proj_axis, inds_curr)
+                assign_at(X_emb, out_curr, output_slice_axis, inds_curr)
 
-        if self.cartesian_mode and self.collapse_freqs:
+        if self.cartesian_mode and self.collapse_output_axes :
             X_emb = torch.flatten(X_emb, start_dim=element_axis, end_dim=element_axis+1)
 
-        if self.encode_total_mass:
-            if self.total_mass_encoding_function == 'identity':
+        if self._encode_total_mass:
+            if self._total_mass_encoding_function == 'identity':
                 total_mass = W_sum
-            elif self.total_mass_encoding_function == 'sqrt':
+            elif self._total_mass_encoding_function == 'sqrt':
                 # x/(sqrt(x+1)+1) is a numerically-safe formulation of sqrt(1+x)-1
                 # note that we don't use sqrt(1+x) since we need the function to vanish at x=0,
                 # and we don't use sqrt(x) since we need it to have a gradient at x=0.
                 total_mass = 2*( W_sum / ( torch.sqrt(W_sum + 1) + 1) )
-            elif self.total_mass_encoding_function == 'log':
+            elif self._total_mass_encoding_function == 'log':
                 total_mass = torch.log1p(W_sum)
             else:
                 raise RuntimeError('This should not happen')
             
             del W_sum
             
-            if self.total_mass_encoding_method == 'plain':
+            if self._total_mass_encoding_method == 'plain':
                 assert isinstance(total_mass, torch.Tensor) # to silence PyCharm
                 assert isinstance(X_emb, torch.Tensor) # to silence PyCharm
                 X_emb = torch.cat( (total_mass, X_emb), dim=-1)
-            elif self.total_mass_encoding_method == 'homog':
+            elif self._total_mass_encoding_method == 'homog':
                 X_emb_norm = torch.mean(X_emb.abs(), dim=-1, keepdim=True)
                 X_emb = torch.cat( (total_mass * X_emb_norm, X_emb), dim=-1)
-            elif self.total_mass_encoding_method == 'homog_alt':
+            elif self._total_mass_encoding_method == 'homog_alt':
                 X_emb_norm = torch.mean(X_emb.abs(), dim=-1, keepdim=True)
                 X_emb = torch.cat((FSWEmbedding._total_mass_homog_alt_encoding_part1(total_mass) * X_emb_norm,
                                    FSWEmbedding._total_mass_homog_alt_encoding_part2(total_mass) * X_emb), dim=-1)
@@ -1105,36 +1263,36 @@ class FSWEmbedding(nn.Module):
                 raise RuntimeError('This should not happen')
 
         # Add bias
-        if self.enable_bias:
+        if self._enable_bias:
             X_emb += self.bias
 
         return X_emb
 
 
     @staticmethod
-    def _forward_helper(X, W, projVecs, freqs, graph_mode, X_edge, cartesian_mode, batch_dims,
+    def _forward_helper(X, W, slice_vectors, frequencies, graph_mode, X_edge, cartesian_mode, batch_dims,
                         use_custom_cuda_extension_if_available,
                         fail_if_cuda_extension_load_fails):
-        # This function computes the embedding of (X,W) for a subset of the projections and frequencies.
-        # projVecs should be of size (num_projections x d_in), and freqs should be of size nFreqs (not nFreqs x 1).
+        # This function computes the embedding of (X,W) for a subset of the slices and frequencies.
+        # slice_vectors should be of size (num_slices x d_in), and frequencies should be of size num_frequencies (not num_frequencies x 1).
 
         d_in = X.shape[-1]
         #n = W.shape[-1]
         nRecepients = W.shape[-2] if graph_mode else None
-        nProjs = projVecs.shape[0]
-        nFreqs = len(freqs)
+        num_slices = slice_vectors.shape[0]
+        num_frequencies = len(frequencies)
         sparse_mode = W.is_sparse
         d_edge = X_edge.shape[-1] if X_edge is not None else 0
 
-        assert len(freqs.shape) == 1, "This should not happen"
-        assert (len(projVecs.shape) == 2) and (projVecs.shape[1] == d_in + d_edge), "This should not happen"
+        assert len(frequencies.shape) == 1, "This should not happen"
+        assert (len(slice_vectors.shape) == 2) and (slice_vectors.shape[1] == d_in + d_edge), "This should not happen"
 
         # Calculate the projections of X
         if d_edge == 0:
-            Xp = torch.tensordot(X, projVecs, dims=([-1,],[1,]))
+            Xp = torch.tensordot(X, slice_vectors, dims=([-1,],[1,]))
         else:
             # noinspection PyUnresolvedReferences
-            Xp = torch.tensordot(X, projVecs[:,0:d_in], dims=([-1,],[1,]))
+            Xp = torch.tensordot(X, slice_vectors[:,0:d_in], dims=([-1,],[1,]))
 
         del X
 
@@ -1151,14 +1309,14 @@ class FSWEmbedding(nn.Module):
             del Xp
 
             if graph_mode:
-                # Create recepient axis before sender axis and projection axis
+                # Create recepient axis before sender axis and slice axis
                 Xps = Xps.unsqueeze(dim=-3)
                 Xpi = Xpi.unsqueeze(dim=-3)
 
         elif sparse_mode: # d_edge > 0, sparse_mode=True
             Xe = X_edge.values()
             # noinspection PyUnresolvedReferences
-            Xep = torch.tensordot(Xe, projVecs[:,d_in:], dims=([-1,],[-1,]))
+            Xep = torch.tensordot(Xe, slice_vectors[:,d_in:], dims=([-1,],[-1,]))
             del Xe
 
             inds = W.indices()
@@ -1180,13 +1338,13 @@ class FSWEmbedding(nn.Module):
             del Xep
 
         else: # d_edge > 0, sparse_mode=False
-            # Create recepient axis before sender axis and projection axis
-            Xpx = Xp.unsqueeze(dim=-3) #.expand(tuple(W.shape) + (nProjs,))
+            # Create recepient axis before sender axis and slice axis
+            Xpx = Xp.unsqueeze(dim=-3) #.expand(tuple(W.shape) + (num_slices,))
             # Replicate Xpx along recepient axis
             Xpx = Xpx.repeat(replace_in_tuple((1,)*Xpx.dim(),-3,nRecepients))
             # Add edge-feature part of inner product to each recepient for each sender and projection
             # noinspection PyUnresolvedReferences
-            Xpx += torch.tensordot(X_edge, projVecs[:,d_in:], dims=([-1,],[-1,]))
+            Xpx += torch.tensordot(X_edge, slice_vectors[:,d_in:], dims=([-1,],[-1,]))
             # Sort along element/sender axis
             Xps, Xpi = ag.sort.apply(Xpx, -2, False)
             #Xps, Xpi = torch.sort(Xpx, dim=-2, descending=False, stable=True)
@@ -1198,19 +1356,19 @@ class FSWEmbedding(nn.Module):
         recipient_axis = len(batch_dims) if graph_mode else None  # Message-recipient vertices
         element_axis  = recipient_axis+1 if graph_mode else len(batch_dims) # In graph mode this axis denotes the message-sender vertices
         ambspace_axis = element_axis + 1        
-        proj_axis     = ambspace_axis
-        freq_axis     = proj_axis +1 if cartesian_mode else proj_axis
+        slice_axis     = ambspace_axis
+        freq_axis     = slice_axis +1 if cartesian_mode else slice_axis
         # noinspection PyUnusedLocal
-        output_proj_axis = element_axis # In the output, the element axis is replaced by the projection axis
+        output_slice_axis = element_axis # In the output, the element axis is replaced by the slice axis
 
-        assert len(freqs.shape) == 1
+        assert len(frequencies.shape) == 1
         for i in range(freq_axis):
-            freqs = freqs.unsqueeze(0)
+            frequencies = frequencies.unsqueeze(0)
 
         if not sparse_mode:
             if graph_mode and (d_edge == 0):
-                Xps = Xps.expand(tuple(W.shape) + (nProjs,))
-                Xpi = Xpi.expand(tuple(W.shape) + (nProjs,))
+                Xps = Xps.expand(tuple(W.shape) + (num_slices,))
+                Xpi = Xpi.expand(tuple(W.shape) + (num_slices,))
 
             # Sort the weights according to their corresponding projected elements
             W_big = W.unsqueeze(-1).expand_as(Xps)
@@ -1218,7 +1376,7 @@ class FSWEmbedding(nn.Module):
 
             if cartesian_mode:
                 Wps = Wps.unsqueeze(dim=-1)
-                Xps = Xps.unsqueeze(-1).expand(Xps.shape + (nFreqs,))
+                Xps = Xps.unsqueeze(-1).expand(Xps.shape + (num_frequencies,))
 
             # Once we have Wps we don't need W_big and Xpi
             del W_big, Xpi
@@ -1226,18 +1384,18 @@ class FSWEmbedding(nn.Module):
             Wps_sum = torch.cumsum(Wps, dim=element_axis)
 
             # Here we assume sinc(x) = sin(pi*x)/(pi*x)
-            sincs = 2 * Wps_sum * torch.sinc(2 * freqs * Wps_sum)
+            sincs = 2 * Wps_sum * torch.sinc(2 * frequencies * Wps_sum)
             sinc_diffs = diff_zeropad(sincs, dim=element_axis)
             del sincs
 
         elif sparse_mode:
-            # We unsqueeze W to add a projection axis, in order to sort W according to each projection of X
-            # Note: This repmat is unavoidable, because we sort the weights according to different permutations along proj_axis
+            # We unsqueeze W to add a slice axis, in order to sort W according to each projection of X
+            # Note: This repmat is unavoidable, because we sort the weights according to different permutations along slice_axis
             W_unsqueeze = ag.unsqueeze_sparse.apply(W,-1)
             del W
 
             # 1.71 seconds
-            W_big = ag.repmat_sparse.apply(W_unsqueeze, nProjs, proj_axis)
+            W_big = ag.repmat_sparse.apply(W_unsqueeze, num_slices, slice_axis)
             del W_unsqueeze
 
             if d_edge > 0:
@@ -1266,13 +1424,13 @@ class FSWEmbedding(nn.Module):
 
             if cartesian_mode:
                 # Note:
-                # These repmats may be avoided if ag.sinc_cos_sparse could take freqs as a separate input, and broadcast all inputs accordingly.
+                # These repmats may be avoided if ag.sinc_cos_sparse could take frequencies as a separate input, and broadcast all inputs accordingly.
                 # But sinc_diffs is of the same size as Wps and Wps_sum, so we could reduce the memory usage at most by 2/3, and only in cartesian mode.
                 # This may not worth the effort.
 
-                Wps = ag.repmat_sparse.apply(ag.unsqueeze_sparse.apply(Wps,-1), nFreqs, freq_axis)
-                Wps_sum = ag.repmat_sparse.apply(ag.unsqueeze_sparse.apply(Wps_sum,-1), nFreqs, freq_axis)
-                Xps = Xps.unsqueeze(-1).expand(Xps.shape + (nFreqs,))
+                Wps = ag.repmat_sparse.apply(ag.unsqueeze_sparse.apply(Wps,-1), num_frequencies, freq_axis)
+                Wps_sum = ag.repmat_sparse.apply(ag.unsqueeze_sparse.apply(Wps_sum,-1), num_frequencies, freq_axis)
+                Xps = Xps.unsqueeze(-1).expand(Xps.shape + (num_frequencies,))
                
             # Here we use the sum-to-product identity sin(2a)-sin(2b) = 2*sin(a-b)*cos(a+b)            
             # This formula probably leads to a loss of one significant digit, but it is much easier in the sparse case than using diff().
@@ -1281,7 +1439,7 @@ class FSWEmbedding(nn.Module):
             variant = 2
 
             if variant == 1:
-                arg2 = np.pi * freqs * (2*Wps_sum - Wps)
+                arg2 = np.pi * frequencies * (2*Wps_sum - Wps)
                 del Wps_sum
                 assert_coalesced(arg2)
 
@@ -1289,17 +1447,17 @@ class FSWEmbedding(nn.Module):
                 arg2 = ag.add_same_pattern.apply(Wps, Wps_sum, -1, 2)
                 del Wps_sum
                 # 1.22 seconds
-                slice_info_freqs = sp.get_slice_info(arg2, sp.get_broadcast_dims_B_to_A(arg2, freqs),
+                slice_info_freqs = sp.get_slice_info(arg2, sp.get_broadcast_dims_B_to_A(arg2, frequencies),
                                                      calc_nnz_per_slice=False,
                                                      use_custom_cuda_extension_if_available=use_custom_cuda_extension_if_available,
                                                      fail_if_cuda_extension_load_fails=fail_if_cuda_extension_load_fails)
                 # 0.15 seconds
-                arg2 = ag.mul_sparse_dense.apply(arg2, np.pi*freqs, slice_info_freqs,
+                arg2 = ag.mul_sparse_dense.apply(arg2, np.pi*frequencies, slice_info_freqs,
                                                  use_custom_cuda_extension_if_available,
                                                  fail_if_cuda_extension_load_fails)
 
             # 0.14 seconds
-            arg1 = ag.mul_sparse_dense.apply(Wps, freqs, slice_info_freqs,
+            arg1 = ag.mul_sparse_dense.apply(Wps, frequencies, slice_info_freqs,
                                              use_custom_cuda_extension_if_available,
                                              fail_if_cuda_extension_load_fails)
 
@@ -1347,10 +1505,10 @@ class FSWEmbedding(nn.Module):
 
         # We squeeze the element axis after having summed up along it
         product_sums = product_sums.squeeze(dim=element_axis)
-        freqs = freqs.squeeze(dim=element_axis)
+        frequencies = frequencies.squeeze(dim=element_axis)
 
-        # freqs and product_sums are always dense
-        out = (1+freqs) * product_sums            
+        # frequencies and product_sums are always dense
+        out = (1+frequencies) * product_sums            
         del product_sums
 
         return out
@@ -1358,7 +1516,7 @@ class FSWEmbedding(nn.Module):
 
 
     def _get_mutual_coherence(self):
-        gram = self.projVecs @ self.projVecs.transpose(0,1)
+        gram = self.slice_vectors @ self.slice_vectors.transpose(0,1)
         inds = range(self._d_out)
         gram[inds,inds] = 0
 
