@@ -1,0 +1,19 @@
+site_name: fswlib Documentation
+
+theme:
+  name: material
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: false
+            docstring_style: numpy
+            members_order: source
+            filters:
+              - "!^_"  # hide private members
+
+nav:
+  - Home: index.md
