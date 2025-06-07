@@ -1,0 +1,32 @@
+{% extends "default.html.jinja2" %}
+
+{% block class_members %}
+  {% set methods = doc.members | selectattr("is_function") | list %}
+  {% set properties = doc.members | selectattr("is_property") | list %}
+  {% set attributes = doc.members
+      | rejectattr("is_function")
+      | rejectattr("is_property")
+      | rejectattr("is_class")
+      | list %}
+
+  {% if methods %}
+  <h2 id="methods">Methods</h2>
+  {% for member in methods %}
+    {{ render_doc(member) }}
+  {% endfor %}
+  {% endif %}
+
+  {% if properties %}
+  <h2 id="properties">Properties</h2>
+  {% for member in properties %}
+    {{ render_doc(member) }}
+  {% endfor %}
+  {% endif %}
+
+  {% if attributes %}
+  <h2 id="attributes">Attributes</h2>
+  {% for member in attributes %}
+    {{ render_doc(member) }}
+  {% endfor %}
+  {% endif %}
+{% endblock %}
