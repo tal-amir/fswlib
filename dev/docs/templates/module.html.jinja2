@@ -7,3 +7,41 @@
         {{ nav_members(module.members.values()) }}
     {% endif %}
 {% endblock %}
+
+{% defaultmacro nav_members(members) %}
+<ul class="memberlist">
+
+    {# First: methods #}
+    {% for m in members if is_public(m) and m.kind == "method" | trim %}
+        <li>
+            <a class="method" href="#{{ m.qualname }}">{{ m.name }}</a>
+        </li>
+    {% endfor %}
+
+    {# Second: properties #}
+    {% for m in members if is_public(m) and m.kind == "property" | trim %}
+        <li>
+            <a class="property" href="#{{ m.qualname }}">{{ m.name }}</a>
+        </li>
+    {% endfor %}
+
+    {# Third: everything else #}
+    {% for m in members if is_public(m) and m.kind != "method" and m.kind != "property" | trim %}
+        <li>
+            {% if m.kind == "class" %}
+                <a class="class" href="#{{ m.qualname }}">{{ m.qualname }}</a>
+                {% if m.own_members %}
+                    {{ nav_members(m.own_members) | indent(12) }}
+                {% endif %}
+            {% elif m.kind == "module" %}
+                <a class="module" href="#{{ m.name }}">{{ m.name }}</a>
+            {% elif m.name == "__init__" %}
+                <a class="function" href="#{{ m.qualname }}">{{ m.qualname.split(".")[-2] }}</a>
+            {% else %}
+                <a class="{{ m.kind }}" href="#{{ m.qualname }}">{{ m.name }}</a>
+            {% endif %}
+        </li>
+    {% endfor %}
+
+</ul>
+{% enddefaultmacro %}
