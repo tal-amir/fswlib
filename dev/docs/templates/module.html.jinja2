@@ -1,2 +1,9 @@
 {% extends "default/module.html.jinja2" %}
 {% block title %}{{ module.modulename }} FSWLIB documentation{% endblock %}
+
+{% block nav_members %}
+    {% if module.members %}
+        <h2>FSWLIB Documentation</h2>
+        {{ nav_members(module.members.values()) }}
+    {% endif %}
+{% endblock %}
