@@ -1,0 +1,27 @@
+{% extends "default/class.html.jinja2" %}
+
+{# --- Replace the page header --- #}
+{% block header %}
+<h1>{{ module.name }} — Custom API Reference</h1>
+{% endblock %}
+
+{# --- Sort members: methods first, then properties, then fields --- #}
+{% block members %}
+  {% set methods = [] %}
+  {% set properties = [] %}
+  {% set fields = [] %}
+
+  {% for member in cls.members %}
+    {% if member.kind == "method" %}
+      {% do methods.append(member) %}
+    {% elif member.kind == "property" %}
+      {% do properties.append(member) %}
+    {% else %}
+      {% do fields.append(member) %}
+    {% endif %}
+  {% endfor %}
+
+  {{ self.render_members(methods) }}
+  {{ self.render_members(properties) }}
+  {{ self.render_members(fields) }}
+{% endblock %}
