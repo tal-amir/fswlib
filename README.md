@@ -103,6 +103,7 @@ Xb shape: torch.Size([5, 3, 7, 9, 50, 15])
 embed(Xb) shape: torch.Size([5, 3, 7, 9, 123])
 ```
 
+The example below illustrates the difference between the core embedding, which is invariant to the input multiset size, and an embedding that explicitly encodes it.
 ```python
 # --- Encoding multiset size (total mass) ---
 # By default, the embedding is invariant to the input multiset size, since it
