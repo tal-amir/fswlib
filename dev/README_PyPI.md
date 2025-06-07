@@ -57,7 +57,7 @@ from fswlib import FSWEmbedding
 # Configuration
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 dtype = torch.float32
-d = 15     # Input element dimension
+d = 15     # Dimension of multiset elements
 n = 50     # Multiset size
 m = 123    # Embedding output dimension
 
@@ -89,9 +89,10 @@ print("Xb shape:", Xb.shape)
 print("embed(Xb) shape:", Xb_emb.shape)
 
 # --- Encoding multiset size (total mass) ---
-# By default, the embedding is invariant to the input multiset size, since it treats inputs as *probability measures*.
-# Set `encode_total_mass = True` to make the embedding encode the size of the input multisets, or, more generally,
-# the total mass (i.e. sum of weights).
+# By default, the embedding is invariant to the input multiset size, since it
+# treats inputs as *probability measures*.
+# Set `encode_total_mass = True` to make the embedding encode the size of the
+# input multisets, or, more generally, the total mass (i.e. sum of weights).
 embed_total_mass_invariant = FSWEmbedding(d_in=d, d_out=m, device=device, dtype=dtype)
 embed_total_mass_aware =     FSWEmbedding(d_in=d, d_out=m, encode_total_mass=True, device=device, dtype=dtype)
 
