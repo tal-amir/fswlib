@@ -8,21 +8,47 @@
     {% endif %}
 {% endblock %}
 
-{% block module_contents %}
-    {% for m in module.flattened_own_members if is_public(m) | trim %}
-        <section id="{{ m.qualname or m.name }}">
-            {{ member(m) }}
-            {% if m.kind == "class" %}
-                {# METHODS #}
-                {% for m in m.own_members if m.kind == "method" and is_public(m) | trim %}
-                    <div id="{{ m.qualname }}" class="classattr">
-                        {{ member(m) }}
-                    </div>
-                {% endfor %}
-                {# PROPERTIES #}
-                {# OTHER NON-CLASS MEMBERS #}
-                {# INHERITED MEMBERS (unchanged) #}
-            {% endif %}
-        </section>
-    {% endfor %}
+{% block content %}
+    <main class="pdoc">
+        {{ super() }}  {# You can omit this if replacing everything #}
+
+        {% block module_contents %}
+            {# Your reordered class member logic here #}
+            {% for m in module.flattened_own_members if is_public(m) | trim %}
+                <section id="{{ m.qualname or m.name }}">
+                    {{ member(m) }}
+                    {% if m.kind == "class" %}
+                        {# METHODS #}
+                        {% for m in m.own_members if m.kind == "method" and is_public(m) | trim %}
+                            <div id="{{ m.qualname }}" class="classattr">
+                                {{ member(m) }}
+                            </div>
+                        {% endfor %}
+                        {# PROPERTIES #}
+                        {% for m in m.own_members if m.kind == "property" and is_public(m) | trim %}
+                            <div id="{{ m.qualname }}" class="classattr">
+                                {{ member(m) }}
+                            </div>
+                        {% endfor %}
+                        {# OTHER NON-CLASS MEMBERS #}
+                        {% for m in m.own_members if m.kind not in ["method", "property", "class"] and is_public(m) | trim %}
+                            <div id="{{ m.qualname }}" class="classattr">
+                                {{ member(m) }}
+                            </div>
+                        {% endfor %}
+                        {# INHERITED MEMBERS #}
+                        {% set inherited_members = inherited(m) | trim %}
+                        {% if inherited_members %}
+                            <div class="inherited">
+                                <h5>Inherited Members</h5>
+                                <dl>
+                                    {{ inherited_members }}
+                                </dl>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </section>
+            {% endfor %}
+        {% endblock %}
+    </main>
 {% endblock %}
