@@ -87,21 +87,18 @@ version_date = '2025-06-07'
 # 1.21    Added reset_parameters()
 #         Added type hinting and enforcement
 
-
-import numpy as np
-from typing import Sequence, Any, TypeVar, Type, Literal, overload
-from enum import Enum
-
 import torch
 import torch.nn as nn
 from torch.autograd.function import once_differentiable
 
+import numpy as np
+from typing import Sequence, Any, TypeVar, Type, Literal, overload
+from enum import Enum
+import inspect
 import warnings
 import numbers
-
 import os
 import time
-
 import ctypes
 import platform
 
@@ -514,7 +511,34 @@ class FSWEmbedding(nn.Module):
 
         self.reset_parameters()
 
+    @classmethod
+    def from_config(cls, config: dict) -> "FSWEmbedding":
+        """
+        Construct an FSWEmbedding instance from a configuration dictionary.
 
+        Parameters
+        ----------
+        config : dict
+            Dictionary of keyword arguments matching the `__init__` parameters.
+
+        Returns
+        -------
+        FSWEmbedding
+            A new instance initialized with the provided configuration.
+
+        Raises
+        ------
+        TypeError
+            If any keys in the dictionary are not valid constructor arguments.
+        """
+        sig = inspect.signature(cls.__init__)
+        valid_keys = set(sig.parameters) - {'self'}
+        invalid_keys = set(config) - valid_keys
+        if len(invalid_keys) == 1:
+            raise TypeError(f"Unexpected config key: '{list(invalid_keys)[0]}'")
+        elif len(invalid_keys) > 1:
+            raise TypeError(f"Unexpected config keys: {invalid_keys}")
+        return cls(**config)
 
     # Resets the model parameters (slice vectors and frequencies) and updates the model settings.
     def reset_parameters(self,
@@ -1239,8 +1263,8 @@ class FSWEmbedding(nn.Module):
                     X_emb = torch.cat( (total_mass * X_emb_norm, X_emb), dim=-1)
                 case TotalMassEncodingMethod.HOMOGENEOUS_LEGACY:
                     X_emb_norm = torch.mean(X_emb.abs(), dim=-1, keepdim=True)
-                    X_emb = torch.cat((FSWEmbedding._total_mass_homog_alt_encoding_part1(total_mass) * X_emb_norm,
-                                       FSWEmbedding._total_mass_homog_alt_encoding_part2(total_mass) * X_emb), dim=-1)
+                    X_emb = torch.cat((FSWEmbedding._total_mass_homogeneous_legacy_encoding_part1(total_mass) * X_emb_norm,
+                                       FSWEmbedding._total_mass_homogeneous_legacy_encoding_part2(total_mass) * X_emb), dim=-1)
                 case _:  # fallback
                     raise RuntimeError(f"Unsupported encoding method: {self._total_mass_encoding_method}")
 
@@ -1507,12 +1531,12 @@ class FSWEmbedding(nn.Module):
 
 
     @staticmethod
-    def _total_mass_homog_alt_encoding_part1(totmass: torch.Tensor):
+    def _total_mass_homogeneous_legacy_encoding_part1(totmass: torch.Tensor):
         out = torch.where(totmass <= 1, totmass*(2-totmass), 1)
         return out
 
     @staticmethod
-    def _total_mass_homog_alt_encoding_part2(totmass: torch.Tensor):
+    def _total_mass_homogeneous_legacy_encoding_part2(totmass: torch.Tensor):
         out = torch.where(totmass <= 1, totmass.square(), 2*totmass-1)
         return out
 

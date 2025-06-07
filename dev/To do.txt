@@ -1,4 +1,14 @@
 Now:
+    - Add support for FSWEmbedding.from_config().
+      Check if there are standard such methods in other PyTorch modules.
+      See which is better as input: Dict or custom Config class
+    - Create example_graph.py script with an example of using FSWEmbedding in graph mode
+    - Create example_training.py, where a simple module of embed+MLP will be created and trained to distinguish
+      spheres and simplices of different radii and randomly-rotated.
+      Show the use of learnable_slices and learnable_frequencies.
+    - Create example_sliced_wasserstein.py, where the SW distance will be approximated with different embedding
+      dimensions, and for each dimension, the STD will be estimated
+
     v - Replace string enums by Enum or Literal
     v - Settle the issue on how modules' extra parameters (e.g. some boolean fields of the class) are saved and loaded.
     v - For each constructor input argument, think carefully of its name and default value.
