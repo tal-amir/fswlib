@@ -1,12 +1,17 @@
 Now:
-    - Replace string enums by Enum or Literal
-    - Settle the issue on how modules' extra parameters (e.g. some boolean fields of the class) are saved and loaded.
-    - For each constructor input argument, think carefully of its name and default value.
-    - For each field, decide whether to expose it as a property or hide it
-    - Check whether the .to() code is inherited properly, and whether .reset_parameters() should also be inherited, and
-      whether its implementation is ok.
+    v - Replace string enums by Enum or Literal
+    v - Settle the issue on how modules' extra parameters (e.g. some boolean fields of the class) are saved and loaded.
+    v - For each constructor input argument, think carefully of its name and default value.
+    v - For each field, decide whether to expose it as a property or hide it
+    v - Check whether the .to() code is inherited properly, and whether .reset_parameters() should also be inherited, and
+        whether its implementation is ok.
 
 Later:
+    - Read and improve all the generated HTML documentation:
+      1. Add 'see also' where applicable, especially in the definitions of Enum values, or where these values are
+         provided as input arguments.
+      2. Add some missing references to equations in the paper, e.g. in different Enum options for the total mass encoding
+         method and function
     - Make the "create dummy bins" command available standalone
     - Add that dummy creation command and a cleanup to the prepare_for_upload script
     - Create examples and tests

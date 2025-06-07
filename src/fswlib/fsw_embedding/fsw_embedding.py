@@ -367,17 +367,17 @@ class FSWEmbedding(nn.Module):
             # If the output should be empty, we force encode_total_mass to be False
             encode_total_mass = 0
 
-        self._d_in = d_in
-        self._d_edge = d_edge
+        self._d_in: int = d_in
+        self._d_edge: int = d_edge
 
-        self._encode_total_mass = encode_total_mass
+        self._encode_total_mass: bool = encode_total_mass
 
         total_mass_padding_thresh = float(total_mass_padding_thresh)
         assert not np.isinf(total_mass_padding_thresh), 'total_mass_padding_thresh cannot be inf'
         assert not np.isnan(total_mass_padding_thresh), 'total_mass_padding_thresh cannot be NaN'
         assert total_mass_padding_thresh > 0, 'total_mass_padding_thresh must be positive'
 
-        self._total_mass_padding_thresh = total_mass_padding_thresh
+        self._total_mass_padding_thresh: float = total_mass_padding_thresh
         del total_mass_padding_thresh
 
         self._total_mass_encoding_method = TotalMassEncodingMethod.resolve(total_mass_encoding_method)
@@ -517,7 +517,6 @@ class FSWEmbedding(nn.Module):
 
 
     # Resets the model parameters (slice vectors and frequencies) and updates the model settings.
-
     def reset_parameters(self,
                          frequency_init: float | tuple[float,float] | str | FrequencyInitMethod | None = None,
                          minimize_slice_coherence: bool | None = None,
