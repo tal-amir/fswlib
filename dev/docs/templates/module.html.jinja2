@@ -8,40 +8,40 @@
     {% endif %}
 {% endblock %}
 
-{% defaultmacro nav_members(members) %}
-<ul class="memberlist">
-
-    {# First: methods #}
-    {% for m in members if is_public(m) and m.kind == "method" | trim %}
-        <li>
-            <a class="method" href="#{{ m.qualname }}">{{ m.name }}</a>
-        </li>
-    {% endfor %}
-
-    {# Second: properties #}
-    {% for m in members if is_public(m) and m.kind == "property" | trim %}
-        <li>
-            <a class="property" href="#{{ m.qualname }}">{{ m.name }}</a>
-        </li>
-    {% endfor %}
-
-    {# Third: everything else #}
-    {% for m in members if is_public(m) and m.kind != "method" and m.kind != "property" | trim %}
-        <li>
+{% block module_contents %}
+    {% for m in module.flattened_own_members if is_public(m) | trim %}
+        <section id="{{ m.qualname or m.name }}">
+            {{ member(m) }}
             {% if m.kind == "class" %}
-                <a class="class" href="#{{ m.qualname }}">{{ m.qualname }}</a>
-                {% if m.own_members %}
-                    {{ nav_members(m.own_members) | indent(12) }}
+                {# METHODS #}
+                {% for m in m.own_members if m.kind == "method" and is_public(m) | trim %}
+                    <div id="{{ m.qualname }}" class="classattr">
+                        {{ member(m) }}
+                    </div>
+                {% endfor %}
+                {# PROPERTIES #}
+                {% for m in m.own_members if m.kind == "property" and is_public(m) | trim %}
+                    <div id="{{ m.qualname }}" class="classattr">
+                        {{ member(m) }}
+                    </div>
+                {% endfor %}
+                {# OTHER NON-CLASS MEMBERS #}
+                {% for m in m.own_members if m.kind not in ["method", "property", "class"] and is_public(m) | trim %}
+                    <div id="{{ m.qualname }}" class="classattr">
+                        {{ member(m) }}
+                    </div>
+                {% endfor %}
+                {# INHERITED MEMBERS (unchanged) #}
+                {% set inherited_members = inherited(m) | trim %}
+                {% if inherited_members %}
+                    <div class="inherited">
+                        <h5>Inherited Members</h5>
+                        <dl>
+                            {{ inherited_members }}
+                        </dl>
+                    </div>
                 {% endif %}
-            {% elif m.kind == "module" %}
-                <a class="module" href="#{{ m.name }}">{{ m.name }}</a>
-            {% elif m.name == "__init__" %}
-                <a class="function" href="#{{ m.qualname }}">{{ m.qualname.split(".")[-2] }}</a>
-            {% else %}
-                <a class="{{ m.kind }}" href="#{{ m.qualname }}">{{ m.name }}</a>
             {% endif %}
-        </li>
+        </section>
     {% endfor %}
-
-</ul>
-{% enddefaultmacro %}
+{% endblock %}

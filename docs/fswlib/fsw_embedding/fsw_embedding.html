@@ -22,132 +22,116 @@
 
 
         <h2>FSWLIB Documentation</h2>
-        <ul class="memberlist">
+            <ul class="memberlist">
+            <li>
+                    <a class="class" href="#FSWEmbedding">FSWEmbedding</a>
+                            <ul class="memberlist">
+                        <li>
+                                <a class="function" href="#FSWEmbedding.__init__">FSWEmbedding</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.slice_vectors">slice_vectors</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.frequencies">frequencies</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.bias">bias</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#FSWEmbedding.from_config">from_config</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#FSWEmbedding.reset_parameters">reset_parameters</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#FSWEmbedding.to">to</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.num_slices">num_slices</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.num_frequencies">num_frequencies</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.cartesian_mode">cartesian_mode</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.collapse_output_axes">collapse_output_axes</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.learnable_slices">learnable_slices</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.learnable_frequencies">learnable_frequencies</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.enable_bias">enable_bias</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.encode_total_mass">encode_total_mass</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.total_mass_encoding_function">total_mass_encoding_function</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.total_mass_encoding_method">total_mass_encoding_method</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.total_mass_padding_thresh">total_mass_padding_thresh</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.d_in">d_in</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.d_out">d_out</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.device">device</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#FSWEmbedding.dtype">dtype</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#FSWEmbedding.forward">forward</a>
+                        </li>
+                </ul>
 
+            </li>
+            <li>
+                    <a class="class" href="#TotalMassEncodingFunction">TotalMassEncodingFunction</a>
+                            <ul class="memberlist">
+                        <li>
+                                <a class="variable" href="#TotalMassEncodingFunction.IDENTITY">IDENTITY</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#TotalMassEncodingFunction.SQRT">SQRT</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#TotalMassEncodingFunction.LOG">LOG</a>
+                        </li>
+                </ul>
 
+            </li>
+            <li>
+                    <a class="class" href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a>
+                            <ul class="memberlist">
+                        <li>
+                                <a class="variable" href="#TotalMassEncodingMethod.DECOUPLED">DECOUPLED</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#TotalMassEncodingMethod.SCALED">SCALED</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#TotalMassEncodingMethod.HOMOGENEOUS">HOMOGENEOUS</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#TotalMassEncodingMethod.HOMOGENEOUS_LEGACY">HOMOGENEOUS_LEGACY</a>
+                        </li>
+                </ul>
 
-        <li>
-                <a class="class" href="#FSWEmbedding">FSWEmbedding</a>
-                    <ul class="memberlist">
-
-
-
-                    <li>
-                            <a class="function" href="#FSWEmbedding.__init__">FSWEmbedding</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.slice_vectors">slice_vectors</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.frequencies">frequencies</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.bias">bias</a>
-                    </li>
-                    <li>
-                            <a class="function" href="#FSWEmbedding.from_config">from_config</a>
-                    </li>
-                    <li>
-                            <a class="function" href="#FSWEmbedding.reset_parameters">reset_parameters</a>
-                    </li>
-                    <li>
-                            <a class="function" href="#FSWEmbedding.to">to</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.num_slices">num_slices</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.num_frequencies">num_frequencies</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.cartesian_mode">cartesian_mode</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.collapse_output_axes">collapse_output_axes</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.learnable_slices">learnable_slices</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.learnable_frequencies">learnable_frequencies</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.enable_bias">enable_bias</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.encode_total_mass">encode_total_mass</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.total_mass_encoding_function">total_mass_encoding_function</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.total_mass_encoding_method">total_mass_encoding_method</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.total_mass_padding_thresh">total_mass_padding_thresh</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.d_in">d_in</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.d_out">d_out</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.device">device</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#FSWEmbedding.dtype">dtype</a>
-                    </li>
-                    <li>
-                            <a class="function" href="#FSWEmbedding.forward">forward</a>
-                    </li>
-
-            </ul>
-
-        </li>
-        <li>
-                <a class="class" href="#TotalMassEncodingFunction">TotalMassEncodingFunction</a>
-                    <ul class="memberlist">
-
-
-
-                    <li>
-                            <a class="variable" href="#TotalMassEncodingFunction.IDENTITY">IDENTITY</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#TotalMassEncodingFunction.SQRT">SQRT</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#TotalMassEncodingFunction.LOG">LOG</a>
-                    </li>
-
-            </ul>
-
-        </li>
-        <li>
-                <a class="class" href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a>
-                    <ul class="memberlist">
-
-
-
-                    <li>
-                            <a class="variable" href="#TotalMassEncodingMethod.DECOUPLED">DECOUPLED</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#TotalMassEncodingMethod.SCALED">SCALED</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#TotalMassEncodingMethod.HOMOGENEOUS">HOMOGENEOUS</a>
-                    </li>
-                    <li>
-                            <a class="variable" href="#TotalMassEncodingMethod.HOMOGENEOUS_LEGACY">HOMOGENEOUS_LEGACY</a>
-                    </li>
-
-            </ul>
-
-        </li>
-
-</ul>
+            </li>
+    </ul>
 
 
 
@@ -4045,8 +4029,8 @@ Part of the <code>fswlib</code> package: <a href="https://pypi.org/project/fswli
 
 
             </section>
-                <section id="FSWEmbedding">
-                            <input id="FSWEmbedding-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+        <section id="FSWEmbedding">
+                    <input id="FSWEmbedding-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr class">
             
     <span class="def">class</span>
@@ -5360,8 +5344,8 @@ layouts, learnable parameters, and optional CUDA acceleration via a custom exten
 </div>
 
 
-                            <div id="FSWEmbedding.__init__" class="classattr">
-                                        <input id="FSWEmbedding.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    <div id="FSWEmbedding.__init__" class="classattr">
+                                <input id="FSWEmbedding.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
         <span class="name">FSWEmbedding</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">d_in</span><span class="p">:</span> <span class="nb">int</span>,</span><span class="param">	<span class="n">d_out</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">num_slices</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">num_frequencies</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">collapse_output_axes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">d_edge</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>,</span><span class="param">	<span class="n">encode_total_mass</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">total_mass_encoding_function</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="#TotalMassEncodingFunction">TotalMassEncodingFunction</a></span> <span class="o">=</span> <span class="s1">&#39;identity&#39;</span>,</span><span class="param">	<span class="n">total_mass_encoding_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a></span> <span class="o">=</span> <span class="s1">&#39;decoupled&#39;</span>,</span><span class="param">	<span class="n">total_mass_padding_thresh</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">1.0</span>,</span><span class="param">	<span class="n">learnable_slices</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">learnable_frequencies</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">frequency_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">fswlib</span><span class="o">.</span><span class="n">fsw_embedding</span><span class="o">.</span><span class="n">fsw_embedding</span><span class="o">.</span><span class="n">FrequencyInitMethod</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">FrequencyInitMethod</span><span class="o">.</span><span class="n">RANDOM</span><span class="p">:</span> <span class="s1">&#39;random&#39;</span><span class="o">&gt;</span>,</span><span class="param">	<span class="n">minimize_slice_coherence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">enable_bias</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>,</span><span class="param">	<span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">use_custom_cuda_extension_if_available</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">fail_if_cuda_extension_load_fails</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">report</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">report_on_coherence_minimization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></span>)</span>
@@ -5678,9 +5662,9 @@ Enum for strategies to incorporate total mass into the embedding.  </p>
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.slice_vectors" class="classattr">
-                                <div class="attr variable">
+                    </div>
+                    <div id="FSWEmbedding.slice_vectors" class="classattr">
+                        <div class="attr variable">
             <span class="name">slice_vectors</span>
 
         
@@ -5689,9 +5673,9 @@ Enum for strategies to incorporate total mass into the embedding.  </p>
     
     
 
-                            </div>
-                            <div id="FSWEmbedding.frequencies" class="classattr">
-                                <div class="attr variable">
+                    </div>
+                    <div id="FSWEmbedding.frequencies" class="classattr">
+                        <div class="attr variable">
             <span class="name">frequencies</span>
 
         
@@ -5700,9 +5684,9 @@ Enum for strategies to incorporate total mass into the embedding.  </p>
     
     
 
-                            </div>
-                            <div id="FSWEmbedding.bias" class="classattr">
-                                <div class="attr variable">
+                    </div>
+                    <div id="FSWEmbedding.bias" class="classattr">
+                        <div class="attr variable">
             <span class="name">bias</span>
 
         
@@ -5711,9 +5695,9 @@ Enum for strategies to incorporate total mass into the embedding.  </p>
     
     
 
-                            </div>
-                            <div id="FSWEmbedding.from_config" class="classattr">
-                                        <input id="FSWEmbedding.from_config-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.from_config" class="classattr">
+                                <input id="FSWEmbedding.from_config-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
                     <div class="decorator decorator-classmethod">@classmethod</div>
 
@@ -5778,9 +5762,9 @@ Dictionary of keyword arguments matching the <code><a href="#FSWEmbedding.__init
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.reset_parameters" class="classattr">
-                                        <input id="FSWEmbedding.reset_parameters-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.reset_parameters" class="classattr">
+                                <input id="FSWEmbedding.reset_parameters-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
         <span class="def">def</span>
@@ -5868,9 +5852,9 @@ Dictionary of keyword arguments matching the <code><a href="#FSWEmbedding.__init
 
     
 
-                            </div>
-                            <div id="FSWEmbedding.to" class="classattr">
-                                        <input id="FSWEmbedding.to-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.to" class="classattr">
+                                <input id="FSWEmbedding.to-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
         <span class="def">def</span>
@@ -5987,9 +5971,9 @@ tensor([[0.6122+0.j, 0.1150+0.j],
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.num_slices" class="classattr">
-                                        <input id="FSWEmbedding.num_slices-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.num_slices" class="classattr">
+                                <input id="FSWEmbedding.num_slices-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
             <span class="name">num_slices</span><span class="annotation">: int</span>
 
@@ -6008,9 +5992,9 @@ tensor([[0.6122+0.j, 0.1150+0.j],
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.num_frequencies" class="classattr">
-                                        <input id="FSWEmbedding.num_frequencies-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.num_frequencies" class="classattr">
+                                <input id="FSWEmbedding.num_frequencies-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
             <span class="name">num_frequencies</span><span class="annotation">: int</span>
 
@@ -6029,9 +6013,9 @@ tensor([[0.6122+0.j, 0.1150+0.j],
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.cartesian_mode" class="classattr">
-                                        <input id="FSWEmbedding.cartesian_mode-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.cartesian_mode" class="classattr">
+                                <input id="FSWEmbedding.cartesian_mode-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
             <span class="name">cartesian_mode</span><span class="annotation">: bool</span>
 
@@ -6050,9 +6034,9 @@ tensor([[0.6122+0.j, 0.1150+0.j],
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.collapse_output_axes" class="classattr">
-                                        <input id="FSWEmbedding.collapse_output_axes-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.collapse_output_axes" class="classattr">
+                                <input id="FSWEmbedding.collapse_output_axes-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
             <span class="name">collapse_output_axes</span><span class="annotation">: bool</span>
 
@@ -6071,9 +6055,9 @@ tensor([[0.6122+0.j, 0.1150+0.j],
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.learnable_slices" class="classattr">
-                                        <input id="FSWEmbedding.learnable_slices-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.learnable_slices" class="classattr">
+                                <input id="FSWEmbedding.learnable_slices-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
             <span class="name">learnable_slices</span><span class="annotation">: bool</span>
 
@@ -6092,9 +6076,9 @@ tensor([[0.6122+0.j, 0.1150+0.j],
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.learnable_frequencies" class="classattr">
-                                        <input id="FSWEmbedding.learnable_frequencies-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.learnable_frequencies" class="classattr">
+                                <input id="FSWEmbedding.learnable_frequencies-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
             <span class="name">learnable_frequencies</span><span class="annotation">: bool</span>
 
@@ -6113,9 +6097,9 @@ tensor([[0.6122+0.j, 0.1150+0.j],
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.enable_bias" class="classattr">
-                                        <input id="FSWEmbedding.enable_bias-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.enable_bias" class="classattr">
+                                <input id="FSWEmbedding.enable_bias-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
             <span class="name">enable_bias</span><span class="annotation">: bool</span>
 
@@ -6134,9 +6118,9 @@ tensor([[0.6122+0.j, 0.1150+0.j],
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.encode_total_mass" class="classattr">
-                                        <input id="FSWEmbedding.encode_total_mass-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.encode_total_mass" class="classattr">
+                                <input id="FSWEmbedding.encode_total_mass-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
             <span class="name">encode_total_mass</span><span class="annotation">: bool</span>
 
@@ -6155,9 +6139,9 @@ tensor([[0.6122+0.j, 0.1150+0.j],
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.total_mass_encoding_function" class="classattr">
-                                        <input id="FSWEmbedding.total_mass_encoding_function-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.total_mass_encoding_function" class="classattr">
+                                <input id="FSWEmbedding.total_mass_encoding_function-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
             <span class="name">total_mass_encoding_function</span><span class="annotation">: <a href="#TotalMassEncodingFunction">TotalMassEncodingFunction</a></span>
 
@@ -6176,9 +6160,9 @@ tensor([[0.6122+0.j, 0.1150+0.j],
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.total_mass_encoding_method" class="classattr">
-                                        <input id="FSWEmbedding.total_mass_encoding_method-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.total_mass_encoding_method" class="classattr">
+                                <input id="FSWEmbedding.total_mass_encoding_method-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
             <span class="name">total_mass_encoding_method</span><span class="annotation">: <a href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a></span>
 
@@ -6197,9 +6181,9 @@ tensor([[0.6122+0.j, 0.1150+0.j],
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.total_mass_padding_thresh" class="classattr">
-                                        <input id="FSWEmbedding.total_mass_padding_thresh-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.total_mass_padding_thresh" class="classattr">
+                                <input id="FSWEmbedding.total_mass_padding_thresh-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
             <span class="name">total_mass_padding_thresh</span><span class="annotation">: float</span>
 
@@ -6218,9 +6202,9 @@ tensor([[0.6122+0.j, 0.1150+0.j],
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.d_in" class="classattr">
-                                        <input id="FSWEmbedding.d_in-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.d_in" class="classattr">
+                                <input id="FSWEmbedding.d_in-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
             <span class="name">d_in</span><span class="annotation">: int</span>
 
@@ -6267,9 +6251,9 @@ tensor([[0.6122+0.j, 0.1150+0.j],
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.d_out" class="classattr">
-                                        <input id="FSWEmbedding.d_out-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.d_out" class="classattr">
+                                <input id="FSWEmbedding.d_out-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
             <span class="name">d_out</span><span class="annotation">: int</span>
 
@@ -6316,9 +6300,9 @@ tensor([[0.6122+0.j, 0.1150+0.j],
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.device" class="classattr">
-                                        <input id="FSWEmbedding.device-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.device" class="classattr">
+                                <input id="FSWEmbedding.device-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
             <span class="name">device</span>
 
@@ -6365,9 +6349,9 @@ tensor([[0.6122+0.j, 0.1150+0.j],
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.dtype" class="classattr">
-                                        <input id="FSWEmbedding.dtype-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.dtype" class="classattr">
+                                <input id="FSWEmbedding.dtype-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
             <span class="name">dtype</span>
 
@@ -6414,9 +6398,9 @@ tensor([[0.6122+0.j, 0.1150+0.j],
 </div>
 
 
-                            </div>
-                            <div id="FSWEmbedding.forward" class="classattr">
-                                        <input id="FSWEmbedding.forward-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <div id="FSWEmbedding.forward" class="classattr">
+                                <input id="FSWEmbedding.forward-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
         <span class="def">def</span>
@@ -6854,10 +6838,10 @@ the embedding in smaller blocks without changing the result.</li>
 </div>
 
 
-                            </div>
-                </section>
-                <section id="TotalMassEncodingFunction">
-                            <input id="TotalMassEncodingFunction-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    </div>
+        </section>
+        <section id="TotalMassEncodingFunction">
+                    <input id="TotalMassEncodingFunction-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr class">
             
     <span class="def">class</span>
@@ -6906,8 +6890,8 @@ f(x) = log(1 + x); stronger compression of large values.</li>
 </div>
 
 
-                            <div id="TotalMassEncodingFunction.IDENTITY" class="classattr">
-                                <div class="attr variable">
+                    <div id="TotalMassEncodingFunction.IDENTITY" class="classattr">
+                        <div class="attr variable">
             <span class="name">IDENTITY</span>        =
 <span class="default_value">&lt;<a href="#TotalMassEncodingFunction.IDENTITY">TotalMassEncodingFunction.IDENTITY</a>: &#39;identity&#39;&gt;</span>
 
@@ -6917,9 +6901,9 @@ f(x) = log(1 + x); stronger compression of large values.</li>
     
     
 
-                            </div>
-                            <div id="TotalMassEncodingFunction.SQRT" class="classattr">
-                                <div class="attr variable">
+                    </div>
+                    <div id="TotalMassEncodingFunction.SQRT" class="classattr">
+                        <div class="attr variable">
             <span class="name">SQRT</span>        =
 <span class="default_value">&lt;<a href="#TotalMassEncodingFunction.SQRT">TotalMassEncodingFunction.SQRT</a>: &#39;sqrt&#39;&gt;</span>
 
@@ -6929,9 +6913,9 @@ f(x) = log(1 + x); stronger compression of large values.</li>
     
     
 
-                            </div>
-                            <div id="TotalMassEncodingFunction.LOG" class="classattr">
-                                <div class="attr variable">
+                    </div>
+                    <div id="TotalMassEncodingFunction.LOG" class="classattr">
+                        <div class="attr variable">
             <span class="name">LOG</span>        =
 <span class="default_value">&lt;<a href="#TotalMassEncodingFunction.LOG">TotalMassEncodingFunction.LOG</a>: &#39;log&#39;&gt;</span>
 
@@ -6941,19 +6925,19 @@ f(x) = log(1 + x); stronger compression of large values.</li>
     
     
 
-                            </div>
-                            <div class="inherited">
-                                <h5>Inherited Members</h5>
-                                <dl>
-                                    <div><dt><a href="#EnumWithResolve">EnumWithResolve</a></dt>
+                    </div>
+                    <div class="inherited">
+                        <h5>Inherited Members</h5>
+                        <dl>
+                            <div><dt><a href="#EnumWithResolve">EnumWithResolve</a></dt>
                                 <dd id="TotalMassEncodingFunction.resolve" class="function"><a href="#EnumWithResolve.resolve">resolve</a></dd>
 
             </div>
-                                </dl>
-                            </div>
-                </section>
-                <section id="TotalMassEncodingMethod">
-                            <input id="TotalMassEncodingMethod-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                        </dl>
+                    </div>
+        </section>
+        <section id="TotalMassEncodingMethod">
+                    <input id="TotalMassEncodingMethod-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr class">
             
     <span class="def">class</span>
@@ -7040,8 +7024,8 @@ International Conference on Learning Representations (ICLR), 2025.
 </div>
 
 
-                            <div id="TotalMassEncodingMethod.DECOUPLED" class="classattr">
-                                <div class="attr variable">
+                    <div id="TotalMassEncodingMethod.DECOUPLED" class="classattr">
+                        <div class="attr variable">
             <span class="name">DECOUPLED</span>        =
 <span class="default_value">&lt;<a href="#TotalMassEncodingMethod.DECOUPLED">TotalMassEncodingMethod.DECOUPLED</a>: &#39;decoupled&#39;&gt;</span>
 
@@ -7051,9 +7035,9 @@ International Conference on Learning Representations (ICLR), 2025.
     
     
 
-                            </div>
-                            <div id="TotalMassEncodingMethod.SCALED" class="classattr">
-                                <div class="attr variable">
+                    </div>
+                    <div id="TotalMassEncodingMethod.SCALED" class="classattr">
+                        <div class="attr variable">
             <span class="name">SCALED</span>        =
 <span class="default_value">&lt;<a href="#TotalMassEncodingMethod.SCALED">TotalMassEncodingMethod.SCALED</a>: &#39;scaled&#39;&gt;</span>
 
@@ -7063,9 +7047,9 @@ International Conference on Learning Representations (ICLR), 2025.
     
     
 
-                            </div>
-                            <div id="TotalMassEncodingMethod.HOMOGENEOUS" class="classattr">
-                                <div class="attr variable">
+                    </div>
+                    <div id="TotalMassEncodingMethod.HOMOGENEOUS" class="classattr">
+                        <div class="attr variable">
             <span class="name">HOMOGENEOUS</span>        =
 <span class="default_value">&lt;<a href="#TotalMassEncodingMethod.HOMOGENEOUS">TotalMassEncodingMethod.HOMOGENEOUS</a>: &#39;homogeneous&#39;&gt;</span>
 
@@ -7075,9 +7059,9 @@ International Conference on Learning Representations (ICLR), 2025.
     
     
 
-                            </div>
-                            <div id="TotalMassEncodingMethod.HOMOGENEOUS_LEGACY" class="classattr">
-                                <div class="attr variable">
+                    </div>
+                    <div id="TotalMassEncodingMethod.HOMOGENEOUS_LEGACY" class="classattr">
+                        <div class="attr variable">
             <span class="name">HOMOGENEOUS_LEGACY</span>        =
 <span class="default_value">&lt;<a href="#TotalMassEncodingMethod.HOMOGENEOUS_LEGACY">TotalMassEncodingMethod.HOMOGENEOUS_LEGACY</a>: &#39;homogeneous_legacy&#39;&gt;</span>
 
@@ -7087,17 +7071,17 @@ International Conference on Learning Representations (ICLR), 2025.
     
     
 
-                            </div>
-                            <div class="inherited">
-                                <h5>Inherited Members</h5>
-                                <dl>
-                                    <div><dt><a href="#EnumWithResolve">EnumWithResolve</a></dt>
+                    </div>
+                    <div class="inherited">
+                        <h5>Inherited Members</h5>
+                        <dl>
+                            <div><dt><a href="#EnumWithResolve">EnumWithResolve</a></dt>
                                 <dd id="TotalMassEncodingMethod.resolve" class="function"><a href="#EnumWithResolve.resolve">resolve</a></dd>
 
             </div>
-                                </dl>
-                            </div>
-                </section>
+                        </dl>
+                    </div>
+        </section>
     </main>
 </body>
 </html>
