@@ -25,7 +25,7 @@ def main():
     do_monte_carlo = False
 
     do_compile = False
-    serialize_num_slices = None
+    max_parallel_slices = None
 
     # d: ambient dimension
     # n: maximal multiset size
@@ -56,7 +56,7 @@ def main():
         d = 3
         n = 1000000
         m = 150
-        #serialize_num_slices = 15
+        #max_parallel_slices = 15
     elif setting == 5: # Could take 10 minutes
         d = 3
         n = 1000000
@@ -108,11 +108,11 @@ def main():
 
     t_start = time.time();
 
-    X1_emb = embed(X1,W1, serialize_num_slices=serialize_num_slices); print('1', end='', flush=True)
-    X2_emb = embed(X2,W2, serialize_num_slices=serialize_num_slices); print('2', end='', flush=True)
+    X1_emb = embed(X1,W1, max_parallel_slices=max_parallel_slices); print('1', end='', flush=True)
+    X2_emb = embed(X2,W2, max_parallel_slices=max_parallel_slices); print('2', end='', flush=True)
 
-    X1_emb2 = embed2(X1,W1, serialize_num_slices=serialize_num_slices); print('3', end='', flush=True)
-    X2_emb2 = embed2(X2,W2, serialize_num_slices=serialize_num_slices); print('4', end='', flush=True)
+    X1_emb2 = embed2(X1,W1, max_parallel_slices=max_parallel_slices); print('3', end='', flush=True)
+    X2_emb2 = embed2(X2,W2, max_parallel_slices=max_parallel_slices); print('4', end='', flush=True)
 
     print(flush=True)
 
@@ -162,31 +162,31 @@ def main():
 
 
     embed = FSWEmbedding(d, d_out=15, collapse_output_axes =False, device=device, dtype=dtype)
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 1)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 2)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 3)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 5)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 14)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 15)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 16)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 1)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 2)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 3)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 5)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 14)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 15)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 16)  ))
 
     embed = FSWEmbedding(d, num_slices=15, num_frequencies=37, collapse_output_axes =False, device=device, dtype=dtype)
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 1)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 2)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 3)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 5)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 14)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 15)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 16)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 1)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 2)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 3)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 5)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 14)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 15)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 16)  ))
 
     embed = FSWEmbedding(d, num_slices=15, num_frequencies=37, collapse_output_axes =True, device=device, dtype=dtype)
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 1)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 2)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 3)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 5)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 14)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 15)  ))
-    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, serialize_num_slices = 16)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 1)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 2)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 3)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 5)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 14)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 15)  ))
+    print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 16)  ))
 
 
 
@@ -226,10 +226,10 @@ def main():
 
     emb1a = embed(Xx,Wx)
     emb1b = embed(Xx,Wx.to_sparse())
-    emb1c = embed(Xx,Wx.to_sparse(), serialize_num_slices=1)
-    emb1d = embed(Xx,Wx, serialize_num_slices=1)
+    emb1c = embed(Xx,Wx.to_sparse(), max_parallel_slices=1)
+    emb1d = embed(Xx,Wx, max_parallel_slices=1)
 
-    emb2a = embed(X,Wx.to_sparse(), graph_mode=True, serialize_num_slices=1)
+    emb2a = embed(X,Wx.to_sparse(), graph_mode=True, max_parallel_slices=1)
 
     print('=========================================')
     emb2b = embed(X,Wx.to_sparse(), graph_mode=True)
@@ -251,10 +251,10 @@ def main():
         embedw.load_state_dict(sd) # your error
 
         emb1aw = embedw(Xx,Wx.to_sparse())
-        emb1bw = embedw(Xx,Wx.to_sparse(), serialize_num_slices=7)
-        emb1cw = embedw(Xx,Wx, serialize_num_slices=7)
+        emb1bw = embedw(Xx,Wx.to_sparse(), max_parallel_slices=7)
+        emb1cw = embedw(Xx,Wx, max_parallel_slices=7)
 
-        emb2aw = embedw(X,Wx.to_sparse(), graph_mode=True, serialize_num_slices=7)
+        emb2aw = embedw(X,Wx.to_sparse(), graph_mode=True, max_parallel_slices=7)
         emb2bw = embedw(X,Wx.to_sparse(), graph_mode=True)
         emb2cw = embedw(X,Wx, graph_mode=True)
 
@@ -318,7 +318,7 @@ def main():
     W2.requires_grad = test_grad_W
 
     # Embed 1
-    embed = FSWEmbedding(d_in=d, d_out=m, num_slices=num_slices, num_frequencies = num_frequencies, device=device, dtype=dtype, learnable_slices=test_grad_slices, learnable_frequencies=test_grad_freqs, minimize_slice_coherence=True, freqs_init='spread')
+    embed = FSWEmbedding(d_in=d, d_out=m, num_slices=num_slices, num_frequencies = num_frequencies, device=device, dtype=dtype, learnable_slices=test_grad_slices, learnable_frequencies=test_grad_freqs, minimize_slice_coherence=True, frequency_init='even')
 
     emb1 = embed(X1, W1, graph_mode=graph_mode)
     S1 = emb1.norm()
@@ -423,7 +423,7 @@ def main():
     embed = FSWEmbedding(d=d, m=m, device=device, dtype=dtype, learnable_slices=True, learnable_frequencies=True)
 
     t = time.time()
-    emb = embed(X,W, graph_mode=True, serialize_num_slices=1)
+    emb = embed(X,W, graph_mode=True, max_parallel_slices=1)
 
     S = emb.norm()
     S.backward()

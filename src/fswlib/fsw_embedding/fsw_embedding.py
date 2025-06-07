@@ -1,24 +1,28 @@
 """
 fsw_embedding.py
 
-Main Python module for computing the Fourier Sliced-Wasserstein (FSW) embedding.
+Main module for computing the Fourier Sliced-Wasserstein (FSW) embedding.
+Part of the `fswlib` package: https://pypi.org/project/fswlib/
 
 Authors:
     Tal Amir, Nadav Dym
     Technion – Israel Institute of Technology
 
-This code is based on our paper:
+This code is based on the paper:
     "Fourier Sliced-Wasserstein Embedding for Multisets and Measures"
     Tal Amir, Nadav Dym
     International Conference on Learning Representations (ICLR), 2025
 
-Paper URL:   https://iclr.cc/virtual/2025/poster/30562
-Project URL: https://github.com/tal-amir/fswlib
+Paper URL:
+    https://iclr.cc/virtual/2025/poster/30562
+
+Project repository:
+    https://github.com/tal-amir/fswlib
 """
 
 
-version = '2.2'
-version_date = '2025-05-30'
+version = '2.3'
+version_date = '2025-06-07'
 
 # Edge features:
 # - Do not split self.slice_vectors. Do self.slice_vectors.shape[1] == d_in + d_edge.
@@ -84,11 +88,9 @@ version_date = '2025-05-30'
 #         Added type hinting and enforcement
 
 
-
 import numpy as np
-from typing import Sequence
+from typing import Sequence, Any, TypeVar, Type, Literal, overload
 from enum import Enum
-
 
 import torch
 import torch.nn as nn
@@ -105,6 +107,7 @@ import platform
 
 __all__ = ["FSWEmbedding", "TotalMassEncodingFunction", "TotalMassEncodingMethod"]
 
+# Name of custom CUDA extension binary
 if platform.system() == "Windows":
     _lib_name = "fsw_embedding.dll"
 elif platform.system() == "Darwin":  # macOS
@@ -117,7 +120,7 @@ else:  # Linux and others
 _lib_path = os.path.join(os.path.dirname(__file__), _lib_name)
 
 # Internal state for custom CUDA extension
-# The library will be loaded on the first time it is used
+# The library will be loaded on the first time it is needed
 _tried_to_load_lib = False
 _lib_handle = None
 
@@ -134,65 +137,41 @@ fsw_embedding_basic_safety_checks = True
 # This was not observed to increase accuracy, and it incurs a significantly narrower memory bottleneck and a slightly higher running time.
 fsw_embedding_high_precision = False
 
-
+# These are used for measuring running time
 tal_global_timer = 0
 tal_global_timer_start = 0
 
-''' Maps multisets in R^d_in to vectors in R^d_out using the Fourier Sliced-Wasserstrin Embedding.
-    Also supports weighted point-clouds in R^d_in, which are regarded as discrete distributions over R^d_in.
-    
-    The Euclidean distance between two embeddings approximates the Sliced-Wasserstein distance
-    distance the input distributions:
-                ||embed(X1,W1)-embed(X2,W2)||_2  =<approx>=  sqrt(d_out) * SW((X1,W1),(X2,W2))
-
-    To guarantee that the embedding is injective with at most n input points, use
-    d_out >= 2*n*d_in+1 for multisets and d_out >= 2n(d_in+1)+1 for distributions.
-    
-    The input point tensor X should be of size (<batch_dims>, n, d_in), where <batch_dims> can be
-    any list of dimensions. The accompanying weights W should be of size (<batch_dims>, n).
-    The output is of size (<batch_dims>, d_out).
-
-    If W is not provided, all weights are assumed to be uniform 1/n, with n being the number
-    of points in X.
-            
-    The weights should be non-negative. They do not have to be normalized, as they are normalized
-    internally, but they should have a positive sum. 
-
-    Graph mode
-    ----------
-    If graph_mode=True, W is treated as a conjugacy matrix of a graph with vertex features given in X.
-    If X is of size (<batch_dims>, n, d_in), then W should be of size (<batch_dims>, nRecipients, n),
-    with W[<batch_indices>, i, j] containing the weight of the edge from vertex j to vertex i. 
-    The output is then of size (<batch_dims>, nRecipients, d_out), with each vector output[<batch indices>, i, :]
-    holding the embedding of all feature vectors of neighbors of vertex i, with the corresponding weights being
-    the weights of the edges leading from them to i.
-
-    Note that W does not have to be square; hence the number of message recipients needs not be equal to the number
-    of senders.
-
-    Cartesian mode
-    --------------
-    If d_out=None and instead num_slices and num_frequencies are provided, the embedding is computed with a Cartesian product of the
-    slices and frequencies. The output shape is then (<batch_dims>, num_slices, num_frequencies), or in graph mode
-    (<batch_dims>, nRecipients, num_slices, num_frequencies).
-    
-    If collapse_output_axes =True, then the frequency axis is collaped to the slice axis, resulting in output size
-    (<batch_dims>, num_slices x num_frequencies), or in graph mode (<batch_dims>, nRecipients, num_slices x num_frequencies).
-
-    Sparse W
-    --------
-    The input W can be sparse. In some use cases this could lead to a considerable reduction in running time and memory
-    complexity. The most common use scenario is in graph mode, when W represents the adjacency matrix of a graph with
-    a large number of vertices and a relatively low number of edges.
-'''
 
 
+_E = TypeVar("_E", bound="EnumWithResolve")
 
-class TotalMassEncodingFunction(Enum):
-    """Enumeration of supported total mass encoding functions.
+class EnumWithResolve(Enum):
+    @classmethod
+    def resolve(cls: Type[_E], obj: Any) -> _E:
+        if isinstance(obj, cls):
+            return obj
+        if isinstance(obj, str):
+            try:
+                return cls(obj)
+            except ValueError:
+                valid = [v.value for v in cls]
+                raise ValueError(
+                    f"Invalid string '{obj}' for {cls.__name__}. Valid options: {valid}"
+                )
+        raise TypeError(
+            f"Expected a string or {cls.__name__} instance, got {type(obj).__name__}."
+        )
 
-    Each option corresponds to a different transformation applied to the input
-    multiset's total mass before embedding.
+    def __str__(self) -> str:
+        """Return the string value of the enum member."""
+        return self.value
+
+
+class TotalMassEncodingFunction(EnumWithResolve):
+    """Function applied to the total mass before embedding.
+
+    Each option defines a different transformation applied to the total mass of an input measure/multiset
+    before it is incorporated into the embedding vector.
 
     Attributes
     ----------
@@ -203,253 +182,179 @@ class TotalMassEncodingFunction(Enum):
     LOG : str
         f(x) = log(1 + x); stronger compression of large values.
     """
-
     IDENTITY = 'identity'
     SQRT = 'sqrt'
     LOG = 'log'
 
-    def __str__(self) -> str:
-        """Return the string value of the enum member."""
-        return self.value
-
-    def describe(self) -> str:
-        """Return a human-readable description of this encoding function."""
-        return {
-            'identity': "f(x) = x; no transformation",
-            'sqrt': "f(x) = sqrt(1 + x) - 1; mild nonlinear transform",
-            'log': "f(x) = log(1 + x); stronger compression of large values",
-        }[self.value]
-
-    @classmethod
-    def from_str(cls, s: str) -> "TotalMassEncodingFunction":
-        """Create an enum instance from a string.
-
-        Parameters
-        ----------
-        s : str
-            The string representation of the encoding function.
-
-        Returns
-        -------
-        TotalMassEncodingFunction
-            The corresponding enum member.
-
-        Raises
-        ------
-        ValueError
-            If the string is not a valid encoding function name.
-        """
-        try:
-            return cls(s)
-        except ValueError as e:
-            valid = [v.value for v in cls]
-            raise ValueError(
-                f"Invalid value '{s}' for {cls.__name__}. "
-                f"Valid options are: {valid}"
-            ) from e
 
 
+class TotalMassEncodingMethod(EnumWithResolve):
+    """
+    Strategies for incorporating total mass into the embedding.
 
-
-class TotalMassEncodingMethod(Enum):
-    """Enumeration of strategies for integrating the total mass encoding into the embedding.
-
-    This enum specifies how the transformed total mass is incorporated into the final embedding
-    vector. Each method corresponds to a different augmentation or normalization technique.
+    Each method defines a different way of incorporating the total mass of an input measure
+    (or the size of an input multiset), with the FSW embedding of its normalized form, into a single output vector.
+    For further discussion, see Appendix A.1 of the reference below.
 
     Attributes
     ----------
-    PLAIN : str
-        The transformed total mass is simply appended to the embedding vector.
+    DECOUPLED : str
+        The total mass is appended as a separate component to the embedding vector,
+        which is computed from the normalized input. See Equation (18).
+
+    SCALED : str
+        Similar to DECOUPLED, but the embedding of the normalized input is scaled
+        by the total mass. Using the notation of Equation (18), this yields:
+
+            Êₘ(μ) = [ μ(Ω), μ(Ω) · Êₘ₋₁(μ_ρ) ]
+
     HOMOGENEOUS : str
-        The embedding vector is homogenized by treating the total mass as a scale factor.
-    HOMOGENEOUS_ALT : str
-        An alternative homogenization scheme, using a learned projection or bias.
+        A method that encodes the total mass while preserving homogeneity
+        with respect to the elements of the input multiset. See Equation (19).
+
+    HOMOGENEOUS_LEGACY : str
+        An alternative, legacy version of the homogeneous method, retained
+        for reference and compatibility.
+
+    Reference
+    ---------
+    Tal Amir, Nadav Dym.
+    "Fourier Sliced-Wasserstein Embedding for Multisets and Measures."
+    International Conference on Learning Representations (ICLR), 2025.
+    https://iclr.cc/virtual/2025/poster/30562
     """
-
-    PLAIN = 'plain'
-    HOMOGENEOUS = 'homog'
-    HOMOGENEOUS_ALT = 'homog_alt'
-
-    def __str__(self) -> str:
-        """Return the string value of the enum member."""
-        return self.value
-
-    def describe(self) -> str:
-        """Return a human-readable description of this encoding method."""
-        return {
-            'plain': "Append the encoded total mass to the embedding vector.",
-            'homog': "Homogenize the embedding vector using the total mass as a scale factor.",
-            'homog_alt': "Alternative homogenization using a learned projection or offset.",
-        }[self.value]
-
-    @classmethod
-    def from_str(cls, s: str) -> "TotalMassEncodingMethod":
-        """Create an enum instance from a string.
-
-        Parameters
-        ----------
-        s : str
-            The string representation of the encoding method.
-
-        Returns
-        -------
-        TotalMassEncodingMethod
-            The corresponding enum member.
-
-        Raises
-        ------
-        ValueError
-            If the string is not a valid encoding method name.
-        """
-        try:
-            return cls(s)
-        except ValueError as e:
-            valid = [v.value for v in cls]
-            raise ValueError(
-                f"Invalid value '{s}' for {cls.__name__}. "
-                f"Valid options are: {valid}"
-            ) from e
+    DECOUPLED = 'decoupled'
+    SCALED = 'scaled'
+    HOMOGENEOUS = 'homogeneous'
+    HOMOGENEOUS_LEGACY = 'homogeneous_legacy'
 
 
 
-class FrequencyInitMethod(Enum):
-    """Enum for selecting a frequency initialization strategy."""
+class FrequencyInitMethod(EnumWithResolve):
+    """
+    Strategy for initializing frequencies in the FSW embedding.
+
+    This enumeration specifies how the frequencies in the FSW embedding are
+    initialized.
+
+    Attributes
+    ----------
+    RANDOM : str
+        Frequencies are sampled independently at random from the distribution
+        D_ξ, as defined in Section 3 of our paper.
+    EVEN : str
+        Frequencies are spaced deterministically for efficient coverage of the frequency domain,
+        with spacing inversely proportional to the density function f_ξ.
+
+    See Also
+    --------
+    FSWEmbedding.__init__ : Where this method is selected and used.
+    """
 
     RANDOM = "random"
     EVEN = "even"
-
-    def __str__(self):
-        return self.value
-
-    def describe(self) -> str:
-        """Return a human-readable description of the method."""
-        return {
-            "random": (
-                "Frequencies are sampled independently at random "
-                "from a predefined distribution."
-            ),
-            "even": (
-                "Frequencies are deterministically spaced according to a probability "
-                "density function, so that their density is proportional to the PDF."
-            ),
-        }[self.value]
-
-    @classmethod
-    def from_str(cls, s: str) -> "FrequencyInitMethod":
-        try:
-            return cls(s)
-        except ValueError as e:
-            valid = [v.value for v in cls]
-            raise ValueError(
-                f"Invalid value '{s}' for {cls.__name__}. "
-                f"Valid options are: {valid}"
-            ) from e
-
 
 
 
 class FSWEmbedding(nn.Module):
     """
-    Embedding module implementing the Fourier Sliced-Wasserstein (FSW) embedding.
+    Fourier Sliced-Wasserstein (FSW) embedding module.
 
-    This module computes a fixed-length representation of input multisets or measures
-    by projecting them onto random (or learned) one-dimensional slices, applying
-    a variant of the Sliced Wasserstein transform in the Fourier domain.
+    Maps input multisets or discrete measures in ℝᵈⁱⁿ to vectors in ℝᵈᵒᵘᵗ using projections
+    onto 1D slices followed by a Fourier-based transformation. The output is a fixed-length
+    vector embedding that approximates the Sliced-Wasserstein distance between inputs.
 
-    Designed for use with PyTorch, and optionally supports a custom CUDA extension
-    for faster computation on sparse inputs.
+    This PyTorch-compatible module supports batched inputs, graph inputs, Cartesian frequency
+    layouts, learnable parameters, and optional CUDA acceleration via a custom extension.
 
-    See the ICLR 2025 paper "Fourier Sliced-Wasserstein Embedding for Multisets and Measures"
-    by Tal Amir and Nadav Dym for details.
+    For full details, see:
+        Tal Amir, Nadav Dym, "Fourier Sliced-Wasserstein Embedding for Multisets and Measures",
+        International Conference on Learning Representations (ICLR), 2025.
     """
 
 
-
     def __init__(self,
-                 d_in: int,  # ambient dimension of input multisets / measures
-                 d_out: int | None = None,  # embedding output dimension
+                 d_in: int,
+                 d_out: int | None = None,
                  num_slices: int | None = None,
                  num_frequencies: int | None = None,
                  collapse_output_axes : bool = False,
-                 d_edge: int = 0,  # dimension of edge feature vectors. requires calling forward() with graph_mode=True
-                 encode_total_mass: bool = False,  # Tells whether to encode the input multiset sizes (a.k.a. total mass) in the embedding
-                 total_mass_encoding_function: str | TotalMassEncodingFunction = "identity",  # 'identity': f(x)=x, 'sqrt': f(x) = sqrt(1+x)-1, 'log': log(1+x)
-                 total_mass_encoding_method: str | TotalMassEncodingMethod = 'plain',  # 'plain' / 'homog' / 'homog_alt'
-                 total_mass_padding_thresh: float | int = 1.0,  # Multisets/mesaures with a total mass below that threshold get padded with the complementary mass placed at x=0
-                 learnable_slices: bool = False, learnable_frequencies: bool = False, learnable_powers: bool = False,
-                 frequency_init: float | str | tuple[float,float] = 'random',
+                 d_edge: int = 0,
+                 encode_total_mass: bool = False,
+                 total_mass_encoding_function: str | TotalMassEncodingFunction = 'identity',
+                 total_mass_encoding_method: str | TotalMassEncodingMethod = 'decoupled',
+                 total_mass_padding_thresh: float | int = 1.0,
+                 learnable_slices: bool = False,
+                 learnable_frequencies: bool = False,
+                 frequency_init: float | tuple[float,float] | str | FrequencyInitMethod = FrequencyInitMethod.RANDOM,
                  minimize_slice_coherence: bool = False,
                  enable_bias: bool = True,
                  device: torch.device | int | str | None = None,
                  dtype: torch.dtype | None = None,
                  use_custom_cuda_extension_if_available: bool | None = None,
-                 fail_if_cuda_extension_load_fails: bool = False,  # Produce a runtime error (rather than a warning) when failing to load the custom CUDA extension
-                 report: bool = False, user_warnings: bool = True,
+                 fail_if_cuda_extension_load_fails: bool = False,
+                 report: bool = False,
                  report_on_coherence_minimization: bool = False):
         """
-        Fourier Sliced-Wasserstein embedding module.
+        Initialize an FSWEmbedding module.
 
         Parameters
         ----------
         d_in : int
-            Dimension of the input vectors in each multiset or measure.
+            Dimensionality of input multiset elements.
         d_out : int, optional
-            Desired embedding dimension. If not specified, `n_slices` and `n_frequencies`
-            must be provided.
-        n_slices : int, optional
-            Number of slice directions (used in Cartesian mode). Ignored if `d_out` is specified.
-        n_frequencies : int, optional
-            Number of frequency values per slice (used in Cartesian mode). Ignored if `d_out` is specified.
-        collapse_frequencies : bool, default=False
-            If True, flattens the slice and frequency axes into a single output dimension.
+            Desired embedding dimension. If not specified, must provide both `num_slices` and `num_frequencies`.
+        num_slices : int, optional
+            Number of slice directions to be used in Cartesian mode. Should be omitted if `d_out` is specified.
+        num_frequencies : int, optional
+            Number of frequencies per slice to be used in Cartesian mode. Should be omitted if `d_out` is specified.
+        collapse_output_axes : bool, default=False
+            If True, flattens the slice and frequency dimensions into a single output axis. Only relevant in Cartesian mode.
         d_edge : int, default=0
-            Dimension of edge features (for use with graph inputs).
+            Dimension of edge feature vectors, used only for graph inputs.
         encode_total_mass : bool, default=False
-            Whether to encode the total mass (i.e., multiset size) in the embedding.
-        total_mass_encoding_function : str, default='identity'
-            Function used to transform the total mass before embedding. Options: 'identity', 'sqrt', 'log'.
-        total_mass_encoding_method : str, default='plain'
-            Method used to incorporate total mass into the embedding. Options: 'plain', 'homog', 'homog_alt'.
-        total_mass_pad_thresh : float or int, default=1.0
-            Minimum mass threshold before padding is applied to input multisets.
+            Whether to incorporate the total mass of the input measure into the embedding.
+        total_mass_encoding_function : str or TotalMassEncodingFunction, default='identity'
+            Transformation applied to the total mass before embedding ('identity', 'sqrt', 'log', or enum).
+        total_mass_encoding_method : str or TotalMassEncodingMethod, default='decoupled'
+            Strategy for combining the transformed total mass with the core embedding.
+        total_mass_padding_thresh : float or int, default=1.0
+            Inputs with total mass below this threshold are padded at the origin to reach it.
         learnable_slices : bool, default=False
-            Whether to learn the slice directions via gradient descent.
+            If True, slice directions are treated as learnable parameters.
         learnable_frequencies : bool, default=False
-            Whether to learn the frequency values via gradient descent.
-        learnable_powers : bool, default=False
-            Whether to learn the power exponents used in the computation.
-        frequency_init : float or str or tuple of float or FrequencyInitMethod, default='random'
-            Strategy used to initialize the frequencies. Accepts:
-            - a float (fixed frequency),
-            - a tuple (low, high) defining an interval to sample from,
-            - a string ('random' or 'even'),
-            - or a `FrequencyInitMethod` enum value.
+            If True, frequency values are learnable.
+        frequency_init : float, str, tuple of float, or FrequencyInitMethod, default='random'
+            Initialization scheme for frequencies:
+              - A float sets all frequencies to the same value.
+              - A tuple `(low, high)` sets evenly spaced values in that interval.
+              - A string ('random', 'even') or enum member may also be used.
         minimize_slice_coherence : bool, default=False
-            Whether to optimize the slices to reduce directional coherence.
+            If True, adds a regularizer to encourage low mutual coherence between slices.
         enable_bias : bool, default=True
-            Whether to add a learnable bias vector to the embedding.
-        device : torch.device or int or str, optional
-            Device on which to initialize parameters (e.g., 'cpu' or 'cuda').
+            Whether to add a learnable bias to the output embedding.
+        device : torch.device, int, str, or None, optional
+            The device on which to allocate tensors (e.g., 'cpu', 'cuda', or an index).
         dtype : torch.dtype, optional
-            Data type for floating-point values (e.g., torch.float32).
-        use_custom_cuda_extension_if_available : bool, optional
-            Whether to use a custom CUDA extension if it is available.
+            Data type of all floating-point tensors (e.g., torch.float32).
+        use_custom_cuda_extension_if_available : bool or None, optional
+            Whether to use the custom CUDA kernel if present.
         fail_if_cuda_extension_load_fails : bool, default=False
-            If True, raises an error if the CUDA extension cannot be loaded.
+            Whether to raise a runtime error (rather than a warning) if the CUDA extension failes to load.
         report : bool, default=False
-            Whether to print configuration details after initialization.
-        user_warnings : bool, default=True
-            If False, suppresses all user-facing warnings.
+            If True, prints a summary of the configuration after initialization.
         report_on_coherence_minimization : bool, default=False
-            If True, logs diagnostic output during coherence minimization.
+            If True, prints diagnostics during slice coherence minimization.
 
         See Also
         --------
-        FrequencyInitMethod : Enum class for valid frequency initialization strategies.
-        TotalMassEncodingFunction : Enum class for total mass transformations.
+        FrequencyInitMethod :
+            Enum for selecting frequency initialization strategies.
+        TotalMassEncodingFunction :
+            Enum for total mass transformations.
+        TotalMassEncodingMethod :
+            Enum for strategies to incorporate total mass into the embedding.
         """
-
 
         super().__init__()
 
@@ -463,7 +368,7 @@ class FSWEmbedding(nn.Module):
             encode_total_mass = 0
 
         self._d_in = d_in
-        self.d_edge = d_edge
+        self._d_edge = d_edge
 
         self._encode_total_mass = encode_total_mass
 
@@ -473,41 +378,38 @@ class FSWEmbedding(nn.Module):
         assert total_mass_padding_thresh > 0, 'total_mass_padding_thresh must be positive'
 
         self._total_mass_padding_thresh = total_mass_padding_thresh
+        del total_mass_padding_thresh
 
-        assert total_mass_encoding_method in {'plain','homog','homog_alt'}, '<total_mass_encoding_method> must be one of \'plain\', \'homog\', \'homog_alg\''
-        self._total_mass_encoding_method = total_mass_encoding_method
+        self._total_mass_encoding_method = TotalMassEncodingMethod.resolve(total_mass_encoding_method)
+        del total_mass_encoding_method
 
+        self._total_mass_encoding_function = TotalMassEncodingFunction.resolve(total_mass_encoding_function)
+        del total_mass_encoding_function
 
-        #assert total_mass_encoding_function in {'identity','sqrt','log'}, '<total_mass_encoding_function> must be one of \'identity\', \'sqrt\', \'log\''
-        if isinstance(total_mass_encoding_function, str):
-            total_mass_encoding_function = TotalMassEncodingFunction.from_str(total_mass_encoding_function)
-
-        self._total_mass_encoding_function = total_mass_encoding_function
-
-        if self.d_edge == 0:
+        if self._d_edge == 0:
             input_space_name = 'R^%d' % self._d_in
         else:
-            input_space_name = 'R^(%d+%d)' % (self._d_in, self.d_edge)
+            input_space_name = 'R^(%d+%d)' % (self._d_in, self._d_edge)
 
         total_mass_encoding_dim = 1 if self._encode_total_mass else 0
 
         if (d_out is not None) and (num_slices is None) and (num_frequencies is None):
-            self.cartesian_mode = False
-            self.collapse_output_axes  = False
+            self._cartesian_mode = False
+            self._collapse_output_axes  = False
             self._d_out = d_out
-            self.num_slices = d_out - total_mass_encoding_dim
-            self.num_frequencies = d_out - total_mass_encoding_dim
+            self._num_slices = d_out - total_mass_encoding_dim
+            self._num_frequencies = d_out - total_mass_encoding_dim
             output_space_name = 'R^%d' % self._d_out
 
         elif (d_out is None) and (num_slices is not None) and (num_frequencies is not None):
             assert collapse_output_axes  or (not encode_total_mass), 'Cartesian mode with collapse_output_axes =False is not supported when encode_total_mass=True'
 
-            self.cartesian_mode = True
-            self.collapse_output_axes  = collapse_output_axes 
-            self.num_slices = num_slices
-            self.num_frequencies = num_frequencies
+            self._cartesian_mode = True
+            self._collapse_output_axes  = collapse_output_axes
+            self._num_slices = num_slices
+            self._num_frequencies = num_frequencies
             self._d_out = num_slices * num_frequencies + total_mass_encoding_dim
-            output_space_name = ('R^%d' % self._d_out) if self.collapse_output_axes  else ('R^(%d\u00d7%d)' % (self.num_slices, self.num_frequencies))
+            output_space_name = ('R^%d' % self._d_out) if self._collapse_output_axes  else ('R^(%d\u00d7%d)' % (self._num_slices, self._num_frequencies))
 
         else:
             assert False, "Expected exactly one of (d_out != None) or (num_slices != None and num_frequencies != None)"
@@ -515,14 +417,13 @@ class FSWEmbedding(nn.Module):
         assert self._d_out >= 0, 'd_out must be nonnegative'
 
         #d_out = self.d_out
-        num_slices = self.num_slices
-        num_frequencies = self.num_frequencies
+        num_slices = self._num_slices
+        num_frequencies = self._num_frequencies
 
-        self.minimize_slice_coherence = minimize_slice_coherence
+        self._minimize_slice_coherence = minimize_slice_coherence
 
-        self.learnable_slices = learnable_slices
-        self.learnable_frequencies = learnable_frequencies
-        self.learnable_powers = learnable_powers
+        self._learnable_slices = learnable_slices
+        self._learnable_frequencies = learnable_frequencies
 
         # Note: frequency_init is checked for correctness downstream at generate_embedding_parameters()
         self._frequency_init = frequency_init
@@ -537,7 +438,6 @@ class FSWEmbedding(nn.Module):
             else:
                 # Fallback: infer from a dummy tensor
                 device = torch.tensor([]).device
-
 
         if dtype is None:
             # Use get_default_dtype if available
@@ -561,7 +461,7 @@ class FSWEmbedding(nn.Module):
         self._use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
         self._fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
 
-        self._report = report
+        self._report : bool = report
         self._report_on_coherence_minimization = report_on_coherence_minimization
 
         qprintln(report)
@@ -574,26 +474,26 @@ class FSWEmbedding(nn.Module):
         qprintln(report)
         qprintln(report, 'Constructing embedding for sets in %s into %s  ' % (input_space_name, output_space_name))
 
-        if self.cartesian_mode and self.collapse_output_axes :
+        if self._cartesian_mode and self._collapse_output_axes :
             slice_freq_str = 'Using %d slices \u00d7 %d frequencies, collapsed to one %d dimensional axis; ' % (num_slices, num_frequencies, num_slices*num_frequencies)
-        elif self.cartesian_mode:
+        elif self._cartesian_mode:
             slice_freq_str = 'Using %d slices \u00d7 %s frequencies; ' % (num_slices, num_frequencies)
         else:
             slice_freq_str = 'Using %d (slice, frequency) pairs; ' % num_slices
 
         qprint(report, slice_freq_str)
 
-        if self.learnable_slices and self.learnable_frequencies:
+        if self._learnable_slices and self._learnable_frequencies:
             if self._enable_bias:
                 learnable_str = 'learnable slices, frequences and biases'
             else:
                 learnable_str = 'learnable slices and frequences, no bias'
-        elif self.learnable_slices:
+        elif self._learnable_slices:
             if self._enable_bias:
                 learnable_str = 'learnable slices and biases, fixed frequencies'
             else:
                 learnable_str = 'learnable slices, fixed frequences, no bias'
-        elif self.learnable_frequencies:
+        elif self._learnable_frequencies:
             if self._enable_bias:
                 learnable_str = 'fixed slices, learnable frequencies, fixed biases (initialized to zero)'
             else:
@@ -619,14 +519,14 @@ class FSWEmbedding(nn.Module):
     # Resets the model parameters (slice vectors and frequencies) and updates the model settings.
 
     def reset_parameters(self,
-                         frequency_init: float | int | str | None | tuple[float,float] = None,
+                         frequency_init: float | tuple[float,float] | str | FrequencyInitMethod | None = None,
                          minimize_slice_coherence: bool | None = None,
                          report: bool | None = None,
                          report_on_coherence_minimization: bool | None = None):
 
         # Apply user updates for these parameters
         self._frequency_init = ifnone(frequency_init, self._frequency_init)
-        self.minimize_slice_coherence = ifnone(minimize_slice_coherence, self.minimize_slice_coherence)
+        self._minimize_slice_coherence = ifnone(minimize_slice_coherence, self._minimize_slice_coherence)
         self._report = ifnone(report, self._report)
         self._report_on_coherence_minimization = ifnone(report_on_coherence_minimization, self._report_on_coherence_minimization)
 
@@ -660,13 +560,13 @@ class FSWEmbedding(nn.Module):
 
         # Generate slice vectors and frequencies
         # We always generate (and optimize) them in float64 and then convert to the desired dtype.
-        slice_vectors, frequencies, bias = FSWEmbedding._generate_embedding_parameters(d_in=self._d_in + self.d_edge,
-                                                                                       num_slices=self.num_slices, num_frequencies=self.num_frequencies,
-                                                                                       cartesian_mode=self.cartesian_mode,
-                                                                                       collapse_output_axes =self.collapse_output_axes,
+        slice_vectors, frequencies, bias = FSWEmbedding._generate_embedding_parameters(d_in=self._d_in + self._d_edge,
+                                                                                       num_slices=self._num_slices, num_frequencies=self._num_frequencies,
+                                                                                       cartesian_mode=self._cartesian_mode,
+                                                                                       collapse_output_axes =self._collapse_output_axes,
                                                                                        total_mass_encoding_dim=total_mass_encoding_dim,
                                                                                        frequency_init=self._frequency_init,
-                                                                                       minimize_slice_coherence=self.minimize_slice_coherence,
+                                                                                       minimize_slice_coherence=self._minimize_slice_coherence,
                                                                                        device=device,
                                                                                        report = self._report,
                                                                                        report_on_coherence_minimization = self._report_on_coherence_minimization)
@@ -674,21 +574,20 @@ class FSWEmbedding(nn.Module):
         slice_vectors = slice_vectors.to(dtype=dtype, device=device)
         frequencies = frequencies.to(dtype=dtype, device=device)
 
-        self.slice_vectors = nn.Parameter( slice_vectors, requires_grad=self.learnable_slices )
-        self.frequencies = nn.Parameter( frequencies, requires_grad=self.learnable_frequencies )
+        self.slice_vectors = nn.Parameter(slice_vectors, requires_grad=self._learnable_slices)
+        self.frequencies = nn.Parameter(frequencies, requires_grad=self._learnable_frequencies)
 
         if self._enable_bias:
             bias = bias.to(dtype=dtype, device=device)
 
-            if self.cartesian_mode and self.collapse_output_axes :
-                bias = bias.reshape((self.num_slices*self.num_frequencies))
+            if self._cartesian_mode and self._collapse_output_axes :
+                bias = bias.reshape((self._num_slices * self._num_frequencies))
 
-            self.bias = nn.Parameter( bias, requires_grad=self.learnable_slices )
+            self.bias = nn.Parameter(bias, requires_grad=self._learnable_slices)
 
         else:
             self.bias = None
 
-        # This also initializes the .device and .dtype fields
         self.to(device=self.device, dtype=self.dtype)
 
         return self
@@ -712,20 +611,59 @@ class FSWEmbedding(nn.Module):
 
 
     @property
-    def encode_total_mass(self) -> bool:
-        return self._encode_total_mass
+    def num_slices(self) -> int:
+        """Number of slices used in the embedding."""
+        return self._num_slices
 
+    @property
+    def num_frequencies(self) -> int:
+        """Number of frequencies used in the embedding. In Cartesian mode, this is the number of frequencies per slice."""
+        return self._num_frequencies
+
+    @property
+    def cartesian_mode(self) -> bool:
+        """Whether Cartesian mode is active (i.e., `d_out`  = `num_slices` × `num_frequencies`)."""
+        return self._cartesian_mode
+
+    @property
+    def collapse_output_axes(self) -> bool:
+        """Whether the slice and frequency axes are flattened into a single dimension."""
+        return self._collapse_output_axes
+
+    @property
+    def learnable_slices(self) -> bool:
+        """Whether slice directions are learnable parameters."""
+        return self._learnable_slices
+
+    @property
+    def learnable_frequencies(self) -> bool:
+        """Whether frequency values are learnable parameters."""
+        return self._learnable_frequencies
+
+    @property
+    def enable_bias(self) -> bool:
+        """Whether a learnable bias vector is added to the output embedding."""
+        return self._enable_bias
+
+    @property
+    def encode_total_mass(self) -> bool:
+        """Whether the total mass of the input measure is encoded into the embedding."""
+        return self._encode_total_mass
 
     @property
     def total_mass_encoding_function(self) -> TotalMassEncodingFunction:
-        """Which function is used to encode total mass."""
+        """Function applied to the total mass before it is stored."""
         return self._total_mass_encoding_function
-
 
     @property
     def total_mass_encoding_method(self) -> TotalMassEncodingMethod:
-        """Which method is used to encode total mass."""
+        """Strategy used to incorporate total mass into the final embedding vector."""
         return self._total_mass_encoding_method
+
+    @property
+    def total_mass_padding_thresh(self) -> float:
+        """Minimum total mass threshold; inputs below this value are padded to reach it."""
+        return self._total_mass_padding_thresh
 
 
     @property
@@ -814,7 +752,7 @@ class FSWEmbedding(nn.Module):
                                        cartesian_mode: bool,
                                        collapse_output_axes : bool,
                                        total_mass_encoding_dim: int,
-                                       frequency_init: float | int | str | tuple[float,float],
+                                       frequency_init: float | tuple[float,float] | str | FrequencyInitMethod,
                                        minimize_slice_coherence: bool,
                                        device: torch.device | int | str | None,
                                        report: bool,
@@ -892,22 +830,25 @@ class FSWEmbedding(nn.Module):
 
             qprintln(report, '- Initialized %d equispaced frequencies in the interval [%d, %d]' % (num_frequencies,a,b))
 
-        elif frequency_init == 'random':
-            frequencies: torch.Tensor = torch.rand(size=freqs_shape, dtype=dtype_init, device=device)
-            frequencies, junk = torch.sort(frequencies, dim=0)
-            assert (frequencies != 1).all(), "Unexpected behavior of torch.rand(): Returned a value of 1, whereas values are supposed to be in [0,1)"
-            assert (frequencies < 1).all(), "Unexpected behavior of torch.rand(): Returned a value > 1, whereas values are supposed to be in [0,1)"
-            frequencies = frequencies / (1-frequencies)
-
-            qprintln(report, '- Initialized %d random frequencies i.i.d. with density f(x) = 1/(1+x)^2, x\u22650' % num_frequencies)
-
-        elif frequency_init == 'spread':
-            frequencies = ( 0.5 + torch.arange(num_frequencies, dtype=dtype_init, device=device).reshape(freqs_shape) ) / num_frequencies
-            frequencies = frequencies / (1-frequencies)
-            qprintln(report, '- Initialized %d frequencies spread evenly in [%g, %g] according to probability density' % (num_frequencies, frequencies[0].item(), frequencies[-1].item()))
-
         else:
-            raise RuntimeError('Invalid value for argument frequency_init; expected number, tuple (a,b) of numbers denoting an interval, \'random\' or \'spread\'')
+            frequency_init = FrequencyInitMethod.resolve(frequency_init)
+
+            if frequency_init == FrequencyInitMethod.RANDOM:
+                frequencies: torch.Tensor = torch.rand(size=freqs_shape, dtype=dtype_init, device=device)
+                frequencies, junk = torch.sort(frequencies, dim=0)
+                assert (frequencies != 1).all(), "Unexpected behavior of torch.rand(): Returned a value of 1, whereas values are supposed to be in [0,1)"
+                assert (frequencies < 1).all(), "Unexpected behavior of torch.rand(): Returned a value > 1, whereas values are supposed to be in [0,1)"
+                frequencies = frequencies / (1-frequencies)
+
+                qprintln(report, '- Initialized %d random frequencies i.i.d. with density f(x) = 1/(1+x)^2, x\u22650' % num_frequencies)
+
+            elif frequency_init == FrequencyInitMethod.EVEN:
+                frequencies = ( 0.5 + torch.arange(num_frequencies, dtype=dtype_init, device=device).reshape(freqs_shape) ) / num_frequencies
+                frequencies = frequencies / (1-frequencies)
+                qprintln(report, '- Initialized %d frequencies spread evenly in [%g, %g] according to probability density' % (num_frequencies, frequencies[0].item(), frequencies[-1].item()))
+
+            else:
+                raise RuntimeError('Invalid value for argument frequency_init; expected number, tuple (a,b) of numbers denoting an interval, \'random\' or \'spread\'')
 
         # Detect nan and inf entries in frequencies
         if num_frequencies > 0:
@@ -938,11 +879,11 @@ class FSWEmbedding(nn.Module):
     def _spread_freqs_at_interval(self, center: float | int, radius: float | int):
         assert radius >= 0
 
-        if (self.num_frequencies == 1) or (radius == 0):
+        if (self._num_frequencies == 1) or (radius == 0):
             freqs_new = center * torch.ones_like(self.frequencies)
         else:
-            spread = 2 * (0.5 + torch.arange(self.num_frequencies, dtype=self.dtype, device=self.device).reshape(self.frequencies.shape) ) / self.num_frequencies - 1
-            spread = spread * 1/(1 - 1/self.num_frequencies)
+            spread = 2 * (0.5 + torch.arange(self._num_frequencies, dtype=self.dtype, device=self.device).reshape(self.frequencies.shape)) / self._num_frequencies - 1
+            spread = spread * 1/(1 - 1 / self._num_frequencies)
             freqs_new = center + radius * spread
 
         state_dict = self.state_dict()
@@ -952,88 +893,84 @@ class FSWEmbedding(nn.Module):
         return self
 
 
-    # noinspection PyTypeHints
-    def forward(self, X: torch.Tensor, W: torch.Tensor | str = 'unit', X_edge: torch.Tensor | None = None,
-                graph_mode: bool = False, serialize_num_slices: int | None = None):
+    def forward(self,
+                X: torch.Tensor,
+                W: Literal['unit', 'uniform'] | torch.Tensor = 'unit',
+                X_edge: None | torch.Tensor = None,
+                graph_mode: bool = False,
+                max_parallel_slices: int | None = None):
         """
-        Compute the embedding of a multiset, measure, or graph input.
+        Compute the FSW embedding of an input multiset, measure, or graph.
+
+        This method maps input sets of vectors (optionally weighted) to vectors in ℝ^{d_out}
+        using the Fourier Sliced-Wasserstein (FSW) embedding. It supports batched inputs and
+        graph-based neighbor aggregation, with possibly sparse weight/adjacency matrices.
 
         Parameters
         ----------
         X : torch.Tensor
             Input tensor of shape `(n, d_in)` or `(..., n, d_in)` for batched input.
-        W : torch.Tensor or str, default='unit'
-            Weights tensor of shape `(n,)` or `(..., n)` corresponding to the importance of
-            each point in the input. If 'unit', uniform weights are used.
+        W : torch.Tensor or {'unit', 'uniform'}, default='unit'
+            Weights tensor of shape `(n,)` or `(..., n)` corresponding to point importance.
+            If set to `'unit'` or `'uniform'`, uniform weights of `1/n` are assumed.
         X_edge : torch.Tensor, optional
-            Optional edge features tensor, required if `d_edge > 0`.
+            Optional edge feature tensor. Required if `d_edge > 0` was set at initialization.
         graph_mode : bool, default=False
-            If True, interprets `W` as an adjacency matrix and performs neighbor-aggregated
-            embedding as used in graph-based settings.
-        serialize_num_slices : int, optional
-            If set, splits the computation into serialized blocks of slices to reduce memory usage.
+            If True, interprets `W` as an adjacency matrix and computes a neighbor-aggregated
+            embedding.
+        max_parallel_slices : int, optional
+            Limits the number of slices processed in parallel. Reduces memory usage by computing
+            the embedding in smaller blocks without changing the result.
 
         Returns
         -------
         torch.Tensor
-            The embedding tensor of shape `(d_out,)` or with additional batch dimensions.
+            The embedding tensor. Shape depends on the mode:
+            - `(d_out,)` or `(..., d_out)` in standard mode.
+            - `(..., num_slices, num_frequencies)` in Cartesian mode if `collapse_output_axes=False`.
+            - `(..., num_slices * num_frequencies)` in Cartesian mode if `collapse_output_axes=True`.
 
         Notes
         -----
-        If `n_slices` and `n_frequencies` were specified during construction, the output
-        shape is either `(..., n_slices, n_frequencies)` or `(..., n_slices * n_frequencies)`
-        depending on `collapse_frequencies`.
+        Multisets and distributions:
+            If `X` is `(n, d_in)` and `W` is `(n,)`, the pair represents a weighted point cloud.
+            Weights must be non-negative with positive total mass.
+            If `W` is `'unit'` or `'uniform'`, uniform weights are used internally.
+
+        Batching:
+            Input tensors may include leading batch dimensions. For `X` of shape `(..., n, d_in)`
+            and `W` of shape `(..., n)`, the output shape is `(..., d_out)`.
+
+        Graph mode:
+            When `graph_mode=True`, `W` must be of shape `(..., n_recipients, n)` and `X` of
+            shape `(..., n, d_in)` or broadcastable to that. The output will be
+            `(..., n_recipients, d_out)`, where each vector represents a weighted embedding of
+            neighboring nodes. This avoids expanding `X` across `n_recipients` explicitly.
+
+        Cartesian mode:
+            If `d_out` is not specified but `num_slices` and `num_frequencies` are, the embedding
+            is computed over a Cartesian product. The output shape is:
+                - `(..., num_slices, num_frequencies)` if `collapse_output_axes=False`
+                - `(..., num_slices * num_frequencies)` if `collapse_output_axes=True`
+
+        Slice serialization:
+            If `max_parallel_slices=t` is set, the computation is performed in blocks of size `t`,
+            reducing memory complexity by a factor of `num_slices / t`. The output remains unchanged.
 
         See Also
         --------
-        FSWEmbedding.__init__ : Constructor for configuration options.
+        FSWEmbedding.__init__ : Constructor for model configuration options.
         """
 
 
-        # Simple use:
-        # X sized (n,d_in) represents a multiset of n points in R^d_in.
-        # If W sized (n,) is provided, then (X,W) represents a distribution, with each point X[i,:]
-        # assigned the weight W[i].
-        # The weights are normalized internally so they do not have to sum up to 1, but they must be nonnegative
-        # and contain at least one nonzero.
-        # If W is not provided, it is assumed to be uniform weights 1/n.
-        # The output embedding is of size (d_out,).
-
-        # Batches:
-        # Batches of distributions as above can be provided via X of size (<batch_dims>, n, d_in) and W (<batch_dims>, n).
-        # Here the output will be of size (<batch_dims>, d_out).
-
-        # Graph mode: (Requires that W be given explicitly)
-        # If graph_mode=True, then the points in X are shared between all batches along the last batch dimension.
-        # That is, forward(X,W,graph_mode=True) produces (more efficiently) the same result as forward(X_expand, W),
-        # where d_in = X.shape[-1]  and  X_expand = X.unsqueeze(dim=-3).expand( tuple(W.shape) + (d_in,) ).
-        # A common usage for this feature is when W sized (n,n) represents an adjacency matrix of a graph,
-        # and X sized (n,d_in) represents vertex features. Then the output of embed(X,W,graph_mode=True) will be of size (n,d_out),
-        # with each of its [i,:] rows representing the embedding of the features of all neighbours of vertex i, with weights
-        # given by their edge weights.
-        # The input in graph mode can be batched as follows: W of size (<batch_dims>, n) with X of size (batch_dims[:-1], d_in)
-        # Note that batch_dims[-1] is not required to equal n, i.e. it is possible to process subblocks of adjacency matrices.
-
-        # Output:
-        # X_emb: The Sliced-Wasserstein embedding of the input distributions.
-        #
-        # By default, the output size is (<batch_dims>, d_out), where each X_emb(j1,...,jk,:) contains the embedding of one distribution.
-        #
-        # If the parameters num_slices and num_frequencies are set on initialization, then the output is of size
-        # (<batch_dims>, num_slices, num_frequencies) or (<batch_dims>, num_slices*num_frequencies) - the former if
-        # the parameter 'collapse_output_axes ' is set to False (default), the latter if it is set to True.
-        #
-        # If serialize_num_slices = t (integer), then the computation is serialized to batches of size t.
-        # This does not affect the result, but reduces the momery complexity by a factor of <number of slices> / t
-
         # Verify slices and frequencies at each forward pass if they are learnable
-        if fsw_embedding_basic_safety_checks and self.learnable_slices:
+        if fsw_embedding_basic_safety_checks and self._learnable_slices:
             assert not torch.isnan(self.slice_vectors).any(), 'Slice vectors contain NaNs'
             assert not torch.isinf(self.slice_vectors).any(), 'Slice vectors contain infs'
             # Note: We allow them to contain zero vectors when they are learnable, in case i.e. when sparsity is desired
             # assert not (self.slice_vectors == 0).all(dim=1).any(), 'Slice vectors contain a zero vector'
 
-        if fsw_embedding_basic_safety_checks and self.learnable_frequencies:
+        if fsw_embedding_basic_safety_checks and self._learnable_frequencies:
             assert not torch.isnan(self.frequencies).any(), 'Frequencies contain NaNs'
             assert not torch.isinf(self.frequencies).any(), 'Frequencies contain infs'
 
@@ -1041,7 +978,7 @@ class FSWEmbedding(nn.Module):
 
         assert self._total_mass_padding_thresh > 0, 'total_mass_padding_thresh must be positive'
 
-        if self.d_edge > 0:
+        if self._d_edge > 0:
             assert graph_mode, 'd_edge > 0 (given at initialization) necessitates graph_mode=True on forward call'
             assert X_edge is not None, 'X_edge must be provided since d_edge > 0'
         else:
@@ -1078,6 +1015,7 @@ class FSWEmbedding(nn.Module):
                     W_vals = W
 
             if fsw_embedding_basic_safety_checks:
+                assert isinstance(W_vals, torch.Tensor)
                 assert not torch.isnan(W_vals).any(), "W cannot contain NaNs"
                 assert not torch.isinf(W_vals).any(), "All entries of W must be finite"
                 assert (W_vals >= 0).all(), "All entries of W must be nonnegative"
@@ -1093,7 +1031,7 @@ class FSWEmbedding(nn.Module):
 
                 assert X_edge.is_coalesced(), 'Sparse X_edge must be coalesced'
                 assert X_edge.dense_dim() in (0,1), 'X_edge.dense_dim() must be 1 or 0'
-                assert (self.d_edge == 1) or (X_edge.dense_dim() == 1), 'X_edge.dense_dim() must be 1 since d_edge > 1'
+                assert (self._d_edge == 1) or (X_edge.dense_dim() == 1), 'X_edge.dense_dim() must be 1 since d_edge > 1'
 
                 if fsw_embedding_basic_safety_checks:
                     X_edge_vals = X_edge.values()
@@ -1149,8 +1087,8 @@ class FSWEmbedding(nn.Module):
                 assert isinstance(X_edge, torch.Tensor) # For PyCharm to know
 
                 # Verify that X_edge has the right shape and is compatible with W
-                assert (((self.d_edge == 1) and (X_edge.shape == W.shape)) or
-                        ((X_edge.dim() == W.dim()+1) and (X_edge.shape[0:-1] == W.shape) and (X_edge.shape[-1] == self.d_edge))), (
+                assert (((self._d_edge == 1) and (X_edge.shape == W.shape)) or
+                        ((X_edge.dim() == W.dim()+1) and (X_edge.shape[0:-1] == W.shape) and (X_edge.shape[-1] == self._d_edge))), (
                     "Shape mismatch between X_edge and W: if W.shape = (b1,b2,...,bk,nRecipients,n) then X.shape should be (b1,b2,...,bk,nRecipients,n,d_edge) (with the possible exception (b1,b2,...,bk,nRecipients,n) when d_edge=1" )
 
                 if X_edge.is_sparse:
@@ -1174,21 +1112,23 @@ class FSWEmbedding(nn.Module):
         ambspace_axis = element_axis + 1
         slice_axis     = ambspace_axis
         # noinspection PyUnusedLocal
-        freq_axis     = slice_axis +1 if self.cartesian_mode else slice_axis
+        freq_axis     = slice_axis +1 if self._cartesian_mode else slice_axis
         output_slice_axis = element_axis # In the output, the element axis is replaced by the slice axis
 
         output_shape_before_collapse_and_totmass_augmentation =  batch_dims + (nRecipients,) if graph_mode else batch_dims
-        output_shape_before_collapse_and_totmass_augmentation += (self.num_slices, self.num_frequencies) if self.cartesian_mode else (self.num_slices, )
+        output_shape_before_collapse_and_totmass_augmentation += (self._num_slices, self._num_frequencies) if self._cartesian_mode else (self._num_slices,)
 
         ### D. Input is ok. Start working.
 
         # Calculate W_sum, which contains the total mass of the input measures
         if W.is_sparse:
+            assert isinstance(W, torch.Tensor)
             slice_info_W = sp.get_slice_info(W, -1, calc_nnz_per_slice=False,
                                              use_custom_cuda_extension_if_available=self._use_custom_cuda_extension_if_available, fail_if_cuda_extension_load_fails=self._fail_if_cuda_extension_load_fails)
             W_sum = ag.sum_sparseToDense.apply(W, -1, slice_info_W, self._use_custom_cuda_extension_if_available, self._fail_if_cuda_extension_load_fails)
 
         else:
+            assert isinstance(W, torch.Tensor)
             W_sum = torch.sum(W, dim=-1, keepdim=True)
 
         # Total-mass deficit to be compensated for by padding
@@ -1209,15 +1149,16 @@ class FSWEmbedding(nn.Module):
 
                 if X_edge is not None:
                     X_edge_pad_inds = W_pad.indices()
-                    X_edge_pad_vals = torch.zeros((nRecipients, self.d_edge), device=X.device, dtype=X.dtype)
+                    X_edge_pad_vals = torch.zeros((nRecipients, self._d_edge), device=X.device, dtype=X.dtype)
                     X_edge_pad_shape = replace_in_tuple(tuple(X_edge.shape), -2, 1)
 
                     X_edge_pad = sp.sparse_coo_tensor_coalesced(indices=X_edge_pad_inds, values=X_edge_pad_vals, size = X_edge_pad_shape)
                     X_edge = ag.concat_sparse.apply(X_edge, X_edge_pad)
             else:
+                assert isinstance(W, torch.Tensor)
                 W = torch.cat( (W, W_pad), dim=-1 )
                 if X_edge is not None:
-                    zshape = list(W.shape)+[self.d_edge, ]
+                    zshape = list(W.shape)+[self._d_edge, ]
                     zshape[-2] = 1
                     if X_edge.dim() == W.dim():
                         X_edge = X_edge.unsqueeze(-1)
@@ -1243,60 +1184,66 @@ class FSWEmbedding(nn.Module):
         if self._d_out == 0:
             X_emb = torch.zeros(size=output_shape_before_collapse_and_totmass_augmentation, dtype=self.dtype, device=self.device)
 
-        elif (serialize_num_slices is None) or (serialize_num_slices >= self.num_slices):
-            X_emb = FSWEmbedding._forward_helper(X, W, self.slice_vectors, self.frequencies, graph_mode, X_edge, self.cartesian_mode, batch_dims,
+        elif (max_parallel_slices is None) or (max_parallel_slices >= self._num_slices):
+            X_emb = FSWEmbedding._forward_helper(X, W, self.slice_vectors, self.frequencies, graph_mode, X_edge, self._cartesian_mode, batch_dims,
                                                  use_custom_cuda_extension_if_available = self._use_custom_cuda_extension_if_available,
                                                  fail_if_cuda_extension_load_fails = self._fail_if_cuda_extension_load_fails)
 
         else:
-            assert isinstance(serialize_num_slices, int) and (serialize_num_slices >= 1), 'serialize_num_slices must be None or a positive integer'
+            assert isinstance(max_parallel_slices, int) and (max_parallel_slices >= 1), 'max_parallel_slices must be None or a positive integer'
 
-            nIter = (self.num_slices // serialize_num_slices) if (self.num_slices % serialize_num_slices == 0) else (1 + self.num_slices // serialize_num_slices)
+            nIter = (self._num_slices // max_parallel_slices) if (self._num_slices % max_parallel_slices == 0) else (1 + self._num_slices // max_parallel_slices)
 
             X_emb = torch.empty(size=output_shape_before_collapse_and_totmass_augmentation, dtype=self.dtype, device=self.device)
 
             for iIter in range(nIter):
-                inds_curr = torch.arange(iIter*serialize_num_slices, min( self.num_slices, (iIter+1)*serialize_num_slices), dtype=torch.int64, device=self.device)
-                slice_vecs_curr = self.slice_vectors[inds_curr,:]
-                freqs_curr = self.frequencies if self.cartesian_mode else self.frequencies[inds_curr]
+                inds_curr = torch.arange(iIter * max_parallel_slices, min(self._num_slices, (iIter + 1) * max_parallel_slices), dtype=torch.int64, device=self.device)
+                slice_vecs_curr = self.slice_vectors[inds_curr, :]
+                freqs_curr = self.frequencies if self._cartesian_mode else self.frequencies[inds_curr]
 
-                out_curr = FSWEmbedding._forward_helper(X, W, slice_vecs_curr, freqs_curr, graph_mode, X_edge, self.cartesian_mode, batch_dims,
+                out_curr = FSWEmbedding._forward_helper(X, W, slice_vecs_curr, freqs_curr, graph_mode, X_edge, self._cartesian_mode, batch_dims,
                                                         use_custom_cuda_extension_if_available = self._use_custom_cuda_extension_if_available,
                                                         fail_if_cuda_extension_load_fails = self._fail_if_cuda_extension_load_fails)
 
                 assign_at(X_emb, out_curr, output_slice_axis, inds_curr)
 
-        if self.cartesian_mode and self.collapse_output_axes :
+        if self._cartesian_mode and self._collapse_output_axes :
             X_emb = torch.flatten(X_emb, start_dim=element_axis, end_dim=element_axis+1)
 
         if self._encode_total_mass:
-            if self._total_mass_encoding_function == 'identity':
-                total_mass = W_sum
-            elif self._total_mass_encoding_function == 'sqrt':
-                # x/(sqrt(x+1)+1) is a numerically-safe formulation of sqrt(1+x)-1
-                # note that we don't use sqrt(1+x) since we need the function to vanish at x=0,
-                # and we don't use sqrt(x) since we need it to have a gradient at x=0.
-                total_mass = 2*( W_sum / ( torch.sqrt(W_sum + 1) + 1) )
-            elif self._total_mass_encoding_function == 'log':
-                total_mass = torch.log1p(W_sum)
-            else:
-                raise RuntimeError('This should not happen')
+            match self._total_mass_encoding_function:
+                case TotalMassEncodingFunction.IDENTITY:
+                    total_mass = W_sum
+                case TotalMassEncodingFunction.SQRT:
+                    # x/(sqrt(x+1)+1) is a numerically-safe formulation of sqrt(1+x)-1
+                    # note that we don't use sqrt(1+x) since we need the function to vanish at x=0,
+                    # and we don't use sqrt(x) since we need it to have a gradient at x=0.
+                    total_mass = 2*( W_sum / ( torch.sqrt(W_sum + 1) + 1) )
+                case TotalMassEncodingFunction.LOG:
+                    total_mass = torch.log1p(W_sum)
+                case _:
+                    raise RuntimeError(f"Unsupported encoding function: {self._total_mass_encoding_function}")
             
             del W_sum
             
-            if self._total_mass_encoding_method == 'plain':
-                assert isinstance(total_mass, torch.Tensor) # to silence PyCharm
-                assert isinstance(X_emb, torch.Tensor) # to silence PyCharm
-                X_emb = torch.cat( (total_mass, X_emb), dim=-1)
-            elif self._total_mass_encoding_method == 'homog':
-                X_emb_norm = torch.mean(X_emb.abs(), dim=-1, keepdim=True)
-                X_emb = torch.cat( (total_mass * X_emb_norm, X_emb), dim=-1)
-            elif self._total_mass_encoding_method == 'homog_alt':
-                X_emb_norm = torch.mean(X_emb.abs(), dim=-1, keepdim=True)
-                X_emb = torch.cat((FSWEmbedding._total_mass_homog_alt_encoding_part1(total_mass) * X_emb_norm,
-                                   FSWEmbedding._total_mass_homog_alt_encoding_part2(total_mass) * X_emb), dim=-1)
-            else:
-                raise RuntimeError('This should not happen')
+            match self._total_mass_encoding_method:
+                case TotalMassEncodingMethod.DECOUPLED:
+                    assert isinstance(total_mass, torch.Tensor) # to silence PyCharm
+                    assert isinstance(X_emb, torch.Tensor) # to silence PyCharm
+                    X_emb = torch.cat( (total_mass, X_emb), dim=-1)
+                case TotalMassEncodingMethod.SCALED:
+                    assert isinstance(total_mass, torch.Tensor) # to silence PyCharm
+                    assert isinstance(X_emb, torch.Tensor) # to silence PyCharm
+                    X_emb = torch.cat( (total_mass, total_mass*X_emb), dim=-1)
+                case TotalMassEncodingMethod.HOMOGENEOUS:
+                    X_emb_norm = torch.mean(X_emb.abs(), dim=-1, keepdim=True)
+                    X_emb = torch.cat( (total_mass * X_emb_norm, X_emb), dim=-1)
+                case TotalMassEncodingMethod.HOMOGENEOUS_LEGACY:
+                    X_emb_norm = torch.mean(X_emb.abs(), dim=-1, keepdim=True)
+                    X_emb = torch.cat((FSWEmbedding._total_mass_homog_alt_encoding_part1(total_mass) * X_emb_norm,
+                                       FSWEmbedding._total_mass_homog_alt_encoding_part2(total_mass) * X_emb), dim=-1)
+                case _:  # fallback
+                    raise RuntimeError(f"Unsupported encoding method: {self._total_mass_encoding_method}")
 
         # Add bias
         if self._enable_bias:
@@ -1552,7 +1499,7 @@ class FSWEmbedding(nn.Module):
 
 
     def _get_mutual_coherence(self):
-        gram = self.slice_vectors @ self.slice_vectors.transpose(0,1)
+        gram = self.slice_vectors @ self.slice_vectors.transpose(0, 1)
         inds = range(self._d_out)
         gram[inds,inds] = 0
 
@@ -1635,10 +1582,16 @@ def assign_at(target, source, dim, inds):
     target.scatter_(dim=dim, index=scatter_inds, src=source)
     
 
+_T = TypeVar("_T")
+_U = TypeVar("_U")
 
-def ifnone(a,b):
-    return a if (a is not None) else b
+@overload
+def ifnone(a: None, b: _T) -> _T: ...
+@overload
+def ifnone(a: _T, b: _U) -> _T: ...
 
+def ifnone(a, b):
+    return a if a is not None else b
 
 
 #############################################################################################################
@@ -2015,8 +1968,8 @@ class ag:
                 ctx.save_for_backward(A_save, B_save)
                 ctx.broadcast_dims = broadcast_dims
                 ctx.slice_info = slice_info if ctx.needs_input_grad[1] else None
-                ctx._use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
-                ctx._fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
+                ctx.use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
+                ctx.fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
 
             sp.verify_coalescence(out)
             return out
@@ -2049,8 +2002,8 @@ class ag:
                     out_B = sp.same_shape_prod(A, grad_output)
                         
                     out_B = sp.sum_sparse(out_B, dim=broadcast_dims, slice_info=slice_info,
-                                          use_custom_cuda_extension_if_available=ctx._use_custom_cuda_extension_if_available,
-                                          fail_if_cuda_extension_load_fails=ctx._fail_if_cuda_extension_load_fails).to_dense()
+                                          use_custom_cuda_extension_if_available=ctx.use_custom_cuda_extension_if_available,
+                                          fail_if_cuda_extension_load_fails=ctx.fail_if_cuda_extension_load_fails).to_dense()
                 else:
                     # 0 seconds
                     # In this case, B didn't need to be broadcast to A, so all of A,B,grad_output have the same shape and are not huge
@@ -2089,8 +2042,8 @@ class ag:
                 ctx.save_for_backward(A_save, B_save)
                 ctx.broadcast_dims = broadcast_dims
                 ctx.slice_info = slice_info
-                ctx._use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
-                ctx._fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
+                ctx.use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
+                ctx.fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
 
             sp.verify_coalescence(out)
             return out
@@ -2117,8 +2070,8 @@ class ag:
                     # 0 seconds
                     out_B = sp.same_shape_prod(A, grad_output) # This is still sparse and can be huge
                     out_B = sp.sum_sparse(out_B, dim=broadcast_dims, slice_info=slice_info,
-                                          use_custom_cuda_extension_if_available=ctx._use_custom_cuda_extension_if_available,
-                                          fail_if_cuda_extension_load_fails=ctx._fail_if_cuda_extension_load_fails).to_dense()
+                                          use_custom_cuda_extension_if_available=ctx.use_custom_cuda_extension_if_available,
+                                          fail_if_cuda_extension_load_fails=ctx.fail_if_cuda_extension_load_fails).to_dense()
                     out_B = -out_B / torch.square(B)
                 else:
                     # In this case, B didn't need to be broadcast to A, so all of A,B,grad_output have the same shape and are not huge
@@ -2152,8 +2105,8 @@ class ag:
             if True in ctx.needs_input_grad:
                 ctx.broadcast_dims = broadcast_dims
                 ctx.slice_info = slice_info if ctx.needs_input_grad[1] else None
-                ctx._use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
-                ctx._fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
+                ctx.use_custom_cuda_extension_if_available = use_custom_cuda_extension_if_available
+                ctx.fail_if_cuda_extension_load_fails = fail_if_cuda_extension_load_fails
 
             return out
 
@@ -2174,8 +2127,8 @@ class ag:
                 if len(broadcast_dims) > 0:
                     # If broadcasting happened, we need to sum over the broadcast dimensions
                     out_B = sp.sum_sparse(grad_output, dim=broadcast_dims, slice_info=slice_info,
-                                          use_custom_cuda_extension_if_available=ctx._use_custom_cuda_extension_if_available,
-                                          fail_if_cuda_extension_load_fails=ctx._fail_if_cuda_extension_load_fails).to_dense()
+                                          use_custom_cuda_extension_if_available=ctx.use_custom_cuda_extension_if_available,
+                                          fail_if_cuda_extension_load_fails=ctx.fail_if_cuda_extension_load_fails).to_dense()
                 else:
                     # No broadcasting needed, so just convert to dense
                     out_B = grad_output.to_dense()
@@ -2629,8 +2582,8 @@ class ag:
             if ctx.needs_input_grad[0]:
                 ctx.dim = dim
                 ctx.slice_info = slice_info
-                ctx._use_custom_cuda_extension_if_available=use_custom_cuda_extension_if_available
-                ctx._fail_if_cuda_extension_load_fails=fail_if_cuda_extension_load_fails
+                ctx.use_custom_cuda_extension_if_available=use_custom_cuda_extension_if_available
+                ctx.fail_if_cuda_extension_load_fails=fail_if_cuda_extension_load_fails
 
             sp.verify_coalescence(out)
             return out
@@ -2647,8 +2600,8 @@ class ag:
             dim = ctx.dim
             slice_info = ctx.slice_info
             grad_input = sp.cumsum_sparse(grad_output, dim=dim, slice_info=slice_info, reverse=True,
-                                          use_custom_cuda_extension_if_available=ctx._use_custom_cuda_extension_if_available,
-                                          fail_if_cuda_extension_load_fails=ctx._fail_if_cuda_extension_load_fails)
+                                          use_custom_cuda_extension_if_available=ctx.use_custom_cuda_extension_if_available,
+                                          fail_if_cuda_extension_load_fails=ctx.fail_if_cuda_extension_load_fails)
 
             sp.verify_coalescence(grad_input)
 
