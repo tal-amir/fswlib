@@ -1,0 +1,85 @@
+        # Simple use:
+        # X sized (n,d_in) represents a multiset of n points in R^d_in.
+        # If W sized (n,) is provided, then (X,W) represents a distribution, with each point X[i,:]
+        # assigned the weight W[i].
+        # The weights are normalized internally so they do not have to sum up to 1, but they must be nonnegative
+        # and contain at least one nonzero.
+        # If W is not provided, it is assumed to be uniform weights 1/n.
+        # The output embedding is of size (d_out,).
+
+        # Batches:
+        # Batches of distributions as above can be provided via X of size (<batch_dims>, n, d_in) and W (<batch_dims>, n).
+        # Here the output will be of size (<batch_dims>, d_out).
+
+        # Graph mode: (Requires that W be given explicitly)
+        # If graph_mode=True, then the points in X are shared between all batches along the last batch dimension.
+        # That is, forward(X,W,graph_mode=True) produces (more efficiently) the same result as forward(X_expand, W),
+        # where d_in = X.shape[-1]  and  X_expand = X.unsqueeze(dim=-3).expand( tuple(W.shape) + (d_in,) ).
+        # A common usage for this feature is when W sized (n,n) represents an adjacency matrix of a graph,
+        # and X sized (n,d_in) represents vertex features. Then the output of embed(X,W,graph_mode=True) will be of size (n,d_out),
+        # with each of its [i,:] rows representing the embedding of the features of all neighbours of vertex i, with weights
+        # given by their edge weights.
+        # The input in graph mode can be batched as follows: W of size (<batch_dims>, n) with X of size (batch_dims[:-1], d_in)
+        # Note that batch_dims[-1] is not required to equal n, i.e. it is possible to process subblocks of adjacency matrices.
+
+        # Output:
+        # X_emb: The Sliced-Wasserstein embedding of the input distributions.
+        #
+        # By default, the output size is (<batch_dims>, d_out), where each X_emb(j1,...,jk,:) contains the embedding of one distribution.
+        #
+        # If the parameters num_slices and num_frequencies are set on initialization, then the output is of size
+        # (<batch_dims>, num_slices, num_frequencies) or (<batch_dims>, num_slices*num_frequencies) - the former if
+        # the parameter 'collapse_output_axes ' is set to False (default), the latter if it is set to True.
+        #
+        # If serialize_num_slices = t (integer), then the computation is serialized to batches of size t.
+        # This does not affect the result, but reduces the momery complexity by a factor of <number of slices> / t
+
+
+''' Maps multisets in R^d_in to vectors in R^d_out using the Fourier Sliced-Wasserstrin Embedding.
+    Also supports weighted point-clouds in R^d_in, which are regarded as discrete distributions over R^d_in.
+
+    The Euclidean distance between two embeddings approximates the Sliced-Wasserstein distance
+    distance the input distributions:
+                ||embed(X1,W1)-embed(X2,W2)||_2  =<approx>=  sqrt(d_out) * SW((X1,W1),(X2,W2))
+
+    To guarantee that the embedding is injective with at most n input points, use
+    d_out >= 2*n*d_in+1 for multisets and d_out >= 2n(d_in+1)+1 for distributions.
+
+    The input point tensor X should be of size (<batch_dims>, n, d_in), where <batch_dims> can be
+    any list of dimensions. The accompanying weights W should be of size (<batch_dims>, n).
+    The output is of size (<batch_dims>, d_out).
+
+    If W is not provided, all weights are assumed to be uniform 1/n, with n being the number
+    of points in X.
+
+    The weights should be non-negative. They do not have to be normalized, as they are normalized
+    internally, but they should have a positive sum.
+
+    Graph mode
+    ----------
+    If graph_mode=True, W is treated as a conjugacy matrix of a graph with vertex features given in X.
+    If X is of size (<batch_dims>, n, d_in), then W should be of size (<batch_dims>, nRecipients, n),
+    with W[<batch_indices>, i, j] containing the weight of the edge from vertex j to vertex i.
+    The output is then of size (<batch_dims>, nRecipients, d_out), with each vector output[<batch indices>, i, :]
+    holding the embedding of all feature vectors of neighbors of vertex i, with the corresponding weights being
+    the weights of the edges leading from them to i.
+
+    Note that W does not have to be square; hence the number of message recipients needs not be equal to the number
+    of senders.
+
+    Cartesian mode
+    --------------
+    If d_out=None and instead num_slices and num_frequencies are provided, the embedding is computed with a Cartesian product of the
+    slices and frequencies. The output shape is then (<batch_dims>, num_slices, num_frequencies), or in graph mode
+    (<batch_dims>, nRecipients, num_slices, num_frequencies).
+
+    If collapse_output_axes =True, then the frequency axis is collaped to the slice axis, resulting in output size
+    (<batch_dims>, num_slices x num_frequencies), or in graph mode (<batch_dims>, nRecipients, num_slices x num_frequencies).
+
+    Sparse W
+    --------
+    The input W can be sparse. In some use cases this could lead to a considerable reduction in running time and memory
+    complexity. The most common use scenario is in graph mode, when W represents the adjacency matrix of a graph with
+    a large number of vertices and a relatively low number of edges.
+'''
+
