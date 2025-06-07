@@ -87,7 +87,23 @@ batch_dim_str = "×".join(str(b) for b in batch_dims)
 print(f"\nBatch of {batch_dim_str} multisets, each of size {n}:")
 print("Xb shape:", Xb.shape)
 print("embed(Xb) shape:", Xb_emb.shape)
+```
 
+Output:
+```
+Dimension of multiset elements: 15
+Embedding dimension: 123
+
+One multiset X of size 50:
+X shape: torch.Size([50, 15])
+embed(X) shape: torch.Size([123])
+
+Batch of 5×3×7×9 multisets, each of size 50:
+Xb shape: torch.Size([5, 3, 7, 9, 50, 15])
+embed(Xb) shape: torch.Size([5, 3, 7, 9, 123])
+```
+
+```python
 # --- Encoding multiset size (total mass) ---
 # By default, the embedding is invariant to the input multiset size, since it
 # treats inputs as *probability measures*.
@@ -115,7 +131,6 @@ X2_emb_aware = embed_total_mass_aware(X2)
 diff_invariant = torch.norm(X1_emb - X2_emb).item()
 diff_aware = torch.norm(X1_emb_aware - X2_emb_aware).item()
 
-print()
 print("Two different-size multisets with identical element proportions:")
 print("X₁ = {v₁, v₂, v₃},   X₂ = {v₁, v₁, v₂, v₂, v₃, v₃}")
 print("Embedding difference: ‖Embed(X₁) − Embed(X₂)‖₂")
@@ -125,17 +140,6 @@ print(f"Without total mass encoding:  {diff_invariant:.2e}")
 
 Output:
 ```
-Dimension of multiset elements: 15
-Embedding dimension: 123
-
-One multiset X of size 50:
-X shape: torch.Size([50, 15])
-embed(X) shape: torch.Size([123])
-
-Batch of 5×3×7×9 multisets, each of size 50:
-Xb shape: torch.Size([5, 3, 7, 9, 50, 15])
-embed(Xb) shape: torch.Size([5, 3, 7, 9, 123])
-
 Two different-size multisets with identical element proportions:
 X₁ = {v₁, v₂, v₃},   X₂ = {v₁, v₁, v₂, v₂, v₃, v₃}
 Embedding difference: ‖Embed(X₁) − Embed(X₂)‖₂
