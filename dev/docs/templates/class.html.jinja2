@@ -1,15 +1,13 @@
-{% extends "default/class.html.jinja2" %}
+{% extends "default/module.html.jinja2" %}
 
-{# --- Replace the page header --- #}
 {% block header %}
-<h1 style="color: red;">🔧 CUSTOM TEMPLATE ACTIVE: {{ module.name }}</h1>
+<h1>🔧 Custom API for {{ module.name }}</h1>
 {% endblock %}
 
-{# --- Sort members: methods first, then properties, then fields --- #}
 {% block members %}
   {% set methods = [] %}
   {% set properties = [] %}
-  {% set fields = [] %}
+  {% set others = [] %}
 
   {% for member in cls.members %}
     {% if member.kind == "method" %}
@@ -17,11 +15,16 @@
     {% elif member.kind == "property" %}
       {% do properties.append(member) %}
     {% else %}
-      {% do fields.append(member) %}
+      {% do others.append(member) %}
     {% endif %}
   {% endfor %}
 
+  <h2>Methods</h2>
   {{ self.render_members(methods) }}
+
+  <h2>Properties</h2>
   {{ self.render_members(properties) }}
-  {{ self.render_members(fields) }}
+
+  <h2>Other Fields</h2>
+  {{ self.render_members(others) }}
 {% endblock %}
