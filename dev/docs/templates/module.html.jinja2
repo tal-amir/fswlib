@@ -30,14 +30,14 @@
         {% endfor %}
 
         {# PROPERTIES SECOND #}
-        {% for m in members if is_public(m) and m.kind == "property" | trim %}
+        {% for m in members if is_public(m) and m.kind == "variable" and m.is_property | trim %}
             <li>
-                <a class="property" href="#{{ m.qualname }}">{{ m.name }}</a>
+                <a class="method" href="#{{ m.qualname }}">{{ m.name }}</a>
             </li>
         {% endfor %}
 
         {# METHODS FIRST #}
-        {% for m in members if is_public(m) and m.kind == "variable" | trim %}
+        {% for m in members if is_public(m) and m.kind == "variable" and not m.is_property | trim %}
             <li>
                 <a class="method" href="#{{ m.qualname }}">{{ m.name }}</a>
             </li>

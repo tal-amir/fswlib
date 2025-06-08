@@ -144,6 +144,22 @@
                 </ul>
 
             </li>
+            <li>
+                    <a class="class" href="#FrequencyInitMethod">FrequencyInitMethod</a>
+                            <ul class="memberlist">
+
+
+
+                        <li>
+                            <a class="method" href="#FrequencyInitMethod.RANDOM">RANDOM</a>
+                        </li>
+                        <li>
+                            <a class="method" href="#FrequencyInitMethod.EVEN">EVEN</a>
+                        </li>
+
+                </ul>
+
+            </li>
 
 
 
@@ -292,7 +308,7 @@ Part of the <code>fswlib</code> package: <a href="https://pypi.org/project/fswli
 </span><span id="L-102"><a href="#L-102"><span class="linenos"> 102</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">ctypes</span>
 </span><span id="L-103"><a href="#L-103"><span class="linenos"> 103</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
 </span><span id="L-104"><a href="#L-104"><span class="linenos"> 104</span></a>
-</span><span id="L-105"><a href="#L-105"><span class="linenos"> 105</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;FSWEmbedding&quot;</span><span class="p">,</span> <span class="s2">&quot;TotalMassEncodingFunction&quot;</span><span class="p">,</span> <span class="s2">&quot;TotalMassEncodingMethod&quot;</span><span class="p">]</span>
+</span><span id="L-105"><a href="#L-105"><span class="linenos"> 105</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;FSWEmbedding&quot;</span><span class="p">,</span> <span class="s2">&quot;TotalMassEncodingFunction&quot;</span><span class="p">,</span> <span class="s2">&quot;TotalMassEncodingMethod&quot;</span><span class="p">,</span> <span class="s2">&quot;FrequencyInitMethod&quot;</span><span class="p">]</span>
 </span><span id="L-106"><a href="#L-106"><span class="linenos"> 106</span></a>
 </span><span id="L-107"><a href="#L-107"><span class="linenos"> 107</span></a><span class="c1"># Name of custom CUDA extension binary</span>
 </span><span id="L-108"><a href="#L-108"><span class="linenos"> 108</span></a><span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;Windows&quot;</span><span class="p">:</span>
@@ -5364,7 +5380,7 @@ layouts, learnable parameters, and optional CUDA acceleration via a custom exten
                                         <input id="FSWEmbedding.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
-        <span class="name">FSWEmbedding</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">d_in</span><span class="p">:</span> <span class="nb">int</span>,</span><span class="param">	<span class="n">d_out</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">num_slices</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">num_frequencies</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">collapse_output_axes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">d_edge</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>,</span><span class="param">	<span class="n">encode_total_mass</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">total_mass_encoding_function</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="#TotalMassEncodingFunction">TotalMassEncodingFunction</a></span> <span class="o">=</span> <span class="s1">&#39;identity&#39;</span>,</span><span class="param">	<span class="n">total_mass_encoding_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a></span> <span class="o">=</span> <span class="s1">&#39;decoupled&#39;</span>,</span><span class="param">	<span class="n">total_mass_padding_thresh</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">1.0</span>,</span><span class="param">	<span class="n">learnable_slices</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">learnable_frequencies</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">frequency_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">fswlib</span><span class="o">.</span><span class="n">fsw_embedding</span><span class="o">.</span><span class="n">fsw_embedding</span><span class="o">.</span><span class="n">FrequencyInitMethod</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">FrequencyInitMethod</span><span class="o">.</span><span class="n">RANDOM</span><span class="p">:</span> <span class="s1">&#39;random&#39;</span><span class="o">&gt;</span>,</span><span class="param">	<span class="n">minimize_slice_coherence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">enable_bias</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>,</span><span class="param">	<span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">use_custom_cuda_extension_if_available</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">fail_if_cuda_extension_load_fails</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">report</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">report_on_coherence_minimization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></span>)</span>
+        <span class="name">FSWEmbedding</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">d_in</span><span class="p">:</span> <span class="nb">int</span>,</span><span class="param">	<span class="n">d_out</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">num_slices</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">num_frequencies</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">collapse_output_axes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">d_edge</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>,</span><span class="param">	<span class="n">encode_total_mass</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">total_mass_encoding_function</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="#TotalMassEncodingFunction">TotalMassEncodingFunction</a></span> <span class="o">=</span> <span class="s1">&#39;identity&#39;</span>,</span><span class="param">	<span class="n">total_mass_encoding_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a></span> <span class="o">=</span> <span class="s1">&#39;decoupled&#39;</span>,</span><span class="param">	<span class="n">total_mass_padding_thresh</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">1.0</span>,</span><span class="param">	<span class="n">learnable_slices</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">learnable_frequencies</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">frequency_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="#FrequencyInitMethod">FrequencyInitMethod</a></span> <span class="o">=</span> <span class="o">&lt;</span><span class="n"><a href="#FrequencyInitMethod.RANDOM">FrequencyInitMethod.RANDOM</a></span><span class="p">:</span> <span class="s1">&#39;random&#39;</span><span class="o">&gt;</span>,</span><span class="param">	<span class="n">minimize_slice_coherence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">enable_bias</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>,</span><span class="param">	<span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">use_custom_cuda_extension_if_available</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">fail_if_cuda_extension_load_fails</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">report</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">report_on_coherence_minimization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></span>)</span>
 
                 <label class="view-source-button" for="FSWEmbedding.__init__-view-source"><span>View Source</span></label>
 
@@ -5669,7 +5685,7 @@ If True, prints diagnostics during slice coherence minimization.</li>
 
 <h6 id="see-also">See Also</h6>
 
-<p><code>FrequencyInitMethod</code>: 
+<p><code><a href="#FrequencyInitMethod">FrequencyInitMethod</a></code>: 
 Enum for selecting frequency initialization strategies.<br />
 <code><a href="#TotalMassEncodingFunction">TotalMassEncodingFunction</a></code>: 
 Enum for total mass transformations.<br />
@@ -5784,7 +5800,7 @@ Dictionary of keyword arguments matching the <code><a href="#FSWEmbedding.__init
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">reset_parameters</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">frequency_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">fswlib</span><span class="o">.</span><span class="n">fsw_embedding</span><span class="o">.</span><span class="n">fsw_embedding</span><span class="o">.</span><span class="n">FrequencyInitMethod</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">minimize_slice_coherence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">report</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">report_on_coherence_minimization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></span><span class="return-annotation">):</span></span>
+        <span class="name">reset_parameters</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">frequency_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="#FrequencyInitMethod">FrequencyInitMethod</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">minimize_slice_coherence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">report</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">report_on_coherence_minimization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></span><span class="return-annotation">):</span></span>
 
                 <label class="view-source-button" for="FSWEmbedding.reset_parameters-view-source"><span>View Source</span></label>
 
@@ -7093,6 +7109,99 @@ International Conference on Learning Representations (ICLR), 2025.
                                 <dl>
                                     <div><dt><a href="#EnumWithResolve">EnumWithResolve</a></dt>
                                 <dd id="TotalMassEncodingMethod.resolve" class="function"><a href="#EnumWithResolve.resolve">resolve</a></dd>
+
+            </div>
+                                </dl>
+                            </div>
+                </section>
+                <section id="FrequencyInitMethod">
+                            <input id="FrequencyInitMethod-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr class">
+            
+    <span class="def">class</span>
+    <span class="name">FrequencyInitMethod</span><wbr>(<span class="base"><a href="#EnumWithResolve">EnumWithResolve</a></span>):
+
+                <label class="view-source-button" for="FrequencyInitMethod-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#FrequencyInitMethod"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="FrequencyInitMethod-231"><a href="#FrequencyInitMethod-231"><span class="linenos">231</span></a><span class="k">class</span><span class="w"> </span><span class="nc">FrequencyInitMethod</span><span class="p">(</span><span class="n">EnumWithResolve</span><span class="p">):</span>
+</span><span id="FrequencyInitMethod-232"><a href="#FrequencyInitMethod-232"><span class="linenos">232</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="FrequencyInitMethod-233"><a href="#FrequencyInitMethod-233"><span class="linenos">233</span></a><span class="sd">    Strategy for initializing frequencies in the FSW embedding.</span>
+</span><span id="FrequencyInitMethod-234"><a href="#FrequencyInitMethod-234"><span class="linenos">234</span></a>
+</span><span id="FrequencyInitMethod-235"><a href="#FrequencyInitMethod-235"><span class="linenos">235</span></a><span class="sd">    This enumeration specifies how the frequencies in the FSW embedding are</span>
+</span><span id="FrequencyInitMethod-236"><a href="#FrequencyInitMethod-236"><span class="linenos">236</span></a><span class="sd">    initialized.</span>
+</span><span id="FrequencyInitMethod-237"><a href="#FrequencyInitMethod-237"><span class="linenos">237</span></a>
+</span><span id="FrequencyInitMethod-238"><a href="#FrequencyInitMethod-238"><span class="linenos">238</span></a><span class="sd">    Attributes</span>
+</span><span id="FrequencyInitMethod-239"><a href="#FrequencyInitMethod-239"><span class="linenos">239</span></a><span class="sd">    ----------</span>
+</span><span id="FrequencyInitMethod-240"><a href="#FrequencyInitMethod-240"><span class="linenos">240</span></a><span class="sd">    RANDOM : str</span>
+</span><span id="FrequencyInitMethod-241"><a href="#FrequencyInitMethod-241"><span class="linenos">241</span></a><span class="sd">        Frequencies are sampled independently at random from the distribution</span>
+</span><span id="FrequencyInitMethod-242"><a href="#FrequencyInitMethod-242"><span class="linenos">242</span></a><span class="sd">        D_ξ, as defined in Section 3 of our paper.</span>
+</span><span id="FrequencyInitMethod-243"><a href="#FrequencyInitMethod-243"><span class="linenos">243</span></a><span class="sd">    EVEN : str</span>
+</span><span id="FrequencyInitMethod-244"><a href="#FrequencyInitMethod-244"><span class="linenos">244</span></a><span class="sd">        Frequencies are spaced deterministically for efficient coverage of the frequency domain,</span>
+</span><span id="FrequencyInitMethod-245"><a href="#FrequencyInitMethod-245"><span class="linenos">245</span></a><span class="sd">        with spacing inversely proportional to the density function f_ξ.</span>
+</span><span id="FrequencyInitMethod-246"><a href="#FrequencyInitMethod-246"><span class="linenos">246</span></a>
+</span><span id="FrequencyInitMethod-247"><a href="#FrequencyInitMethod-247"><span class="linenos">247</span></a><span class="sd">    See Also</span>
+</span><span id="FrequencyInitMethod-248"><a href="#FrequencyInitMethod-248"><span class="linenos">248</span></a><span class="sd">    --------</span>
+</span><span id="FrequencyInitMethod-249"><a href="#FrequencyInitMethod-249"><span class="linenos">249</span></a><span class="sd">    FSWEmbedding.__init__ : Where this method is selected and used.</span>
+</span><span id="FrequencyInitMethod-250"><a href="#FrequencyInitMethod-250"><span class="linenos">250</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="FrequencyInitMethod-251"><a href="#FrequencyInitMethod-251"><span class="linenos">251</span></a>
+</span><span id="FrequencyInitMethod-252"><a href="#FrequencyInitMethod-252"><span class="linenos">252</span></a>    <span class="n">RANDOM</span> <span class="o">=</span> <span class="s2">&quot;random&quot;</span>
+</span><span id="FrequencyInitMethod-253"><a href="#FrequencyInitMethod-253"><span class="linenos">253</span></a>    <span class="n">EVEN</span> <span class="o">=</span> <span class="s2">&quot;even&quot;</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Strategy for initializing frequencies in the FSW embedding.</p>
+
+<p>This enumeration specifies how the frequencies in the FSW embedding are
+initialized.</p>
+
+<h6 id="attributes">Attributes</h6>
+
+<ul>
+<li><strong>RANDOM</strong> (str):
+Frequencies are sampled independently at random from the distribution
+D_ξ, as defined in Section 3 of our paper.</li>
+<li><strong>EVEN</strong> (str):
+Frequencies are spaced deterministically for efficient coverage of the frequency domain,
+with spacing inversely proportional to the density function f_ξ.</li>
+</ul>
+
+<h6 id="see-also">See Also</h6>
+
+<p><code><a href="#FSWEmbedding.__init__">FSWEmbedding.__init__</a></code>:  Where this method is selected and used.  </p>
+</div>
+
+
+                            <div id="FrequencyInitMethod.RANDOM" class="classattr">
+                                <div class="attr variable">
+            <span class="name">RANDOM</span>        =
+<span class="default_value">&lt;<a href="#FrequencyInitMethod.RANDOM">FrequencyInitMethod.RANDOM</a>: &#39;random&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#FrequencyInitMethod.RANDOM"></a>
+    
+    
+
+                            </div>
+                            <div id="FrequencyInitMethod.EVEN" class="classattr">
+                                <div class="attr variable">
+            <span class="name">EVEN</span>        =
+<span class="default_value">&lt;<a href="#FrequencyInitMethod.EVEN">FrequencyInitMethod.EVEN</a>: &#39;even&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#FrequencyInitMethod.EVEN"></a>
+    
+    
+
+                            </div>
+                            <div class="inherited">
+                                <h5>Inherited Members</h5>
+                                <dl>
+                                    <div><dt><a href="#EnumWithResolve">EnumWithResolve</a></dt>
+                                <dd id="FrequencyInitMethod.resolve" class="function"><a href="#EnumWithResolve.resolve">resolve</a></dd>
 
             </div>
                                 </dl>

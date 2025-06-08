@@ -102,7 +102,7 @@ import time
 import ctypes
 import platform
 
-__all__ = ["FSWEmbedding", "TotalMassEncodingFunction", "TotalMassEncodingMethod"]
+__all__ = ["FSWEmbedding", "TotalMassEncodingFunction", "TotalMassEncodingMethod", "FrequencyInitMethod"]
 
 # Name of custom CUDA extension binary
 if platform.system() == "Windows":
