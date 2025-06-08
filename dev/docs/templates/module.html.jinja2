@@ -1,56 +1,85 @@
 {% extends "default/module.html.jinja2" %}
-{% block title %}{{ module.modulename }}FSWLIB documentation{% endblock %}
+{% block title %}{{ module.modulename }}aa FSWLIB documentation{% endblock %}
 
 {% block nav_members %}
     {% if module.members %}
         <h2>FSWLIB documentation</h2>
-        {{ nav_members(module.members.values()) }}
+
+        {# Prepare sorted member groups #}
+        {% set all_members = module.members.values() %}
+        {% set methods = all_members | selectattr("kind", "equalto", "method") | sort(attribute="name") | list %}
+        {% set properties = all_members | selectattr("kind", "equalto", "property") | sort(attribute="name") | list %}
+        {% set others = all_members | rejectattr("kind", "in", ["method", "property"]) | sort(attribute="name") | list %}
+
+        {# Render each section separately #}
+        {% if methods %}
+            <h3>Methods</h3>
+            {{ nav_members(methods) }}
+        {% endif %}
+
+        {% if properties %}
+            <h3>Properties</h3>
+            {{ nav_members(properties) }}
+        {% endif %}
+
+        {% if others %}
+            <h3>Other Members</h3>
+            {{ nav_members(others) }}
+        {% endif %}
     {% endif %}
 {% endblock %}
 
-
-
 {% block content %}
-    <main class="pdoc">
-        {{ super() }}  {# You can omit this if replacing everything #}
+<main class="pdoc">
+    {% block module_info %}
+        <section class="module-info">
+            {{ module_name() }}
+            {{ docstring(module) }}
+            {{ view_source_state(module) }}
+            {{ view_source_button(module) }}
+            {{ view_source_code(module) }}
+        </section>
+    {% endblock %}
 
-        {% block module_contents %}
-            {# Your reordered class member logic here #}
-            {% for m in module.flattened_own_members if is_public(m) | trim %}
-                <section id="{{ m.qualname or m.name }}">
-                    {{ member(m) }}
-                    {% if m.kind == "class" %}
-                        {# METHODS #}
-                        {% for m in m.own_members if m.kind == "method" and is_public(m) | trim %}
-                            <div id="{{ m.qualname }}" class="classattr">
-                                {{ member(m) }}
-                            </div>
-                        {% endfor %}
-                        {# PROPERTIES #}
-                        {% for m in m.own_members if m.kind == "property" and is_public(m) | trim %}
-                            <div id="{{ m.qualname }}" class="classattr">
-                                {{ member(m) }}
-                            </div>
-                        {% endfor %}
-                        {# OTHER NON-CLASS MEMBERS #}
-                        {% for m in m.own_members if m.kind not in ["method", "property", "class"] and is_public(m) | trim %}
-                            <div id="{{ m.qualname }}" class="classattr">
-                                {{ member(m) }}
-                            </div>
-                        {% endfor %}
-                        {# INHERITED MEMBERS #}
-                        {% set inherited_members = inherited(m) | trim %}
-                        {% if inherited_members %}
-                            <div class="inherited">
-                                <h5>Inherited Members</h5>
-                                <dl>
-                                    {{ inherited_members }}
-                                </dl>
-                            </div>
-                        {% endif %}
+    {% block module_contents %}
+        {% for m in module.flattened_own_members if is_public(m) | trim %}
+            <section id="{{ m.qualname or m.name }}">
+                {{ member(m) }}
+                {% if m.kind == "class" %}
+                    {# Prepare sorted groups of class members #}
+                    {% set members = m.own_members | selectattr("kind", "ne", "class") | selectattr("name", "ne", "__init__") | list %}
+                    {% set methods = members | selectattr("kind", "equalto", "method") | sort(attribute="name") | list %}
+                    {% set properties = members | selectattr("kind", "equalto", "property") | sort(attribute="name") | list %}
+                    {% set others = members | rejectattr("kind", "in", ["method", "property"]) | sort(attribute="name") | list %}
+
+                    {% for cm in methods %}
+                        <div id="{{ cm.qualname }}" class="classattr">
+                            {{ member(cm) }}
+                        </div>
+                    {% endfor %}
+                    {% for cm in properties %}
+                        <div id="{{ cm.qualname }}" class="classattr">
+                            {{ member(cm) }}
+                        </div>
+                    {% endfor %}
+                    {% for cm in others %}
+                        <div id="{{ cm.qualname }}" class="classattr">
+                            {{ member(cm) }}
+                        </div>
+                    {% endfor %}
+
+                    {% set inherited_members = inherited(m) | trim %}
+                    {% if inherited_members %}
+                        <div class="inherited">
+                            <h5>Inherited Members</h5>
+                            <dl>
+                                {{ inherited_members }}
+                            </dl>
+                        </div>
                     {% endif %}
-                </section>
-            {% endfor %}
-        {% endblock %}
-    </main>
+                {% endif %}
+            </section>
+        {% endfor %}
+    {% endblock %}
+</main>
 {% endblock %}
