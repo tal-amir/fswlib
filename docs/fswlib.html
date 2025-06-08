@@ -140,6 +140,63 @@
 
             </li>
             <li>
+                    <a class="class" href="#TotalMassEncodingTransformation">TotalMassEncodingTransformation</a>
+                            <ul class="memberlist">
+
+
+
+                        <li>
+                            <a class="method" href="#TotalMassEncodingTransformation.IDENTITY">IDENTITY</a>
+                        </li>
+                        <li>
+                            <a class="method" href="#TotalMassEncodingTransformation.SQRT">SQRT</a>
+                        </li>
+                        <li>
+                            <a class="method" href="#TotalMassEncodingTransformation.LOG">LOG</a>
+                        </li>
+
+                </ul>
+
+            </li>
+            <li>
+                    <a class="class" href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a>
+                            <ul class="memberlist">
+
+
+
+                        <li>
+                            <a class="method" href="#TotalMassEncodingMethod.DECOUPLED">DECOUPLED</a>
+                        </li>
+                        <li>
+                            <a class="method" href="#TotalMassEncodingMethod.SCALED">SCALED</a>
+                        </li>
+                        <li>
+                            <a class="method" href="#TotalMassEncodingMethod.HOMOGENEOUS">HOMOGENEOUS</a>
+                        </li>
+                        <li>
+                            <a class="method" href="#TotalMassEncodingMethod.HOMOGENEOUS_LEGACY">HOMOGENEOUS_LEGACY</a>
+                        </li>
+
+                </ul>
+
+            </li>
+            <li>
+                    <a class="class" href="#FrequencyInitMethod">FrequencyInitMethod</a>
+                            <ul class="memberlist">
+
+
+
+                        <li>
+                            <a class="method" href="#FrequencyInitMethod.RANDOM">RANDOM</a>
+                        </li>
+                        <li>
+                            <a class="method" href="#FrequencyInitMethod.EVEN">EVEN</a>
+                        </li>
+
+                </ul>
+
+            </li>
+            <li>
                     <a class="function" href="#test_fsw_embedding">test_fsw_embedding</a>
             </li>
 
@@ -354,15 +411,21 @@ EMail: <a href="mailto:talamir@technion.ac.il">talamir@technion.ac.il</a></p>
 
                         <label class="view-source-button" for="mod-fswlib-view-source"><span>View Source</span></label>
 
-                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">1</span></a><span class="c1"># src/fswlib/__init__.py</span>
-</span><span id="L-2"><a href="#L-2"><span class="linenos">2</span></a><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-3"><a href="#L-3"><span class="linenos">3</span></a><span class="sd">.. include:: ../../README.md</span>
-</span><span id="L-4"><a href="#L-4"><span class="linenos">4</span></a><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-5"><a href="#L-5"><span class="linenos">5</span></a>
-</span><span id="L-6"><a href="#L-6"><span class="linenos">6</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">.fsw_embedding.fsw_embedding</span><span class="w"> </span><span class="kn">import</span> <span class="n">FSWEmbedding</span><span class="p">,</span> <span class="n">FSWCustomCudaExtensionLoadWarning</span><span class="p">,</span> <span class="n">FSWCustomCudaExtensionLoadError</span>
-</span><span id="L-7"><a href="#L-7"><span class="linenos">7</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">.fsw_embedding.test_fsw_embedding</span><span class="w"> </span><span class="kn">import</span> <span class="n">main</span> <span class="k">as</span> <span class="n">test_fsw_embedding</span>
-</span><span id="L-8"><a href="#L-8"><span class="linenos">8</span></a>
-</span><span id="L-9"><a href="#L-9"><span class="linenos">9</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;FSWEmbedding&quot;</span><span class="p">,</span> <span class="s2">&quot;FSWCustomCudaExtensionLoadWarning&quot;</span><span class="p">,</span> <span class="s2">&quot;FSWCustomCudaExtensionLoadError&quot;</span><span class="p">,</span> <span class="s2">&quot;test_fsw_embedding&quot;</span><span class="p">]</span>
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos"> 1</span></a><span class="c1"># src/fswlib/__init__.py</span>
+</span><span id="L-2"><a href="#L-2"><span class="linenos"> 2</span></a><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a><span class="sd">.. include:: ../../README.md</span>
+</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a>
+</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">.fsw_embedding.fsw_embedding</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">FSWEmbedding</span><span class="p">,</span>
+</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a>                                          <span class="n">TotalMassEncodingTransformation</span><span class="p">,</span>
+</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a>                                          <span class="n">TotalMassEncodingMethod</span><span class="p">,</span>
+</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a>                                          <span class="n">FrequencyInitMethod</span><span class="p">,</span>
+</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a>                                          <span class="n">FSWCustomCudaExtensionLoadWarning</span><span class="p">,</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a>                                          <span class="n">FSWCustomCudaExtensionLoadError</span><span class="p">)</span>
+</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>
+</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">.fsw_embedding.test_fsw_embedding</span><span class="w"> </span><span class="kn">import</span> <span class="n">main</span> <span class="k">as</span> <span class="n">test_fsw_embedding</span>
+</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a>
+</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;FSWEmbedding&quot;</span><span class="p">,</span> <span class="s2">&quot;FSWCustomCudaExtensionLoadWarning&quot;</span><span class="p">,</span> <span class="s2">&quot;FSWCustomCudaExtensionLoadError&quot;</span><span class="p">,</span> <span class="s2">&quot;TotalMassEncodingTransformation&quot;</span><span class="p">,</span> <span class="s2">&quot;TotalMassEncodingMethod&quot;</span><span class="p">,</span> <span class="s2">&quot;FrequencyInitMethod&quot;</span><span class="p">,</span> <span class="s2">&quot;test_fsw_embedding&quot;</span><span class="p">]</span>
 </span></pre></div>
 
 
@@ -1695,7 +1758,7 @@ layouts, learnable parameters, and optional CUDA acceleration via a custom exten
                                         <input id="FSWEmbedding.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
-        <span class="name">FSWEmbedding</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">d_in</span><span class="p">:</span> <span class="nb">int</span>,</span><span class="param">	<span class="n">d_out</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">num_slices</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">num_frequencies</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">collapse_output_axes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">d_edge</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>,</span><span class="param">	<span class="n">encode_total_mass</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">total_mass_encoding_transformation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="fswlib/fsw_embedding/fsw_embedding.html#TotalMassEncodingTransformation">fswlib.fsw_embedding.fsw_embedding.TotalMassEncodingTransformation</a></span> <span class="o">=</span> <span class="s1">&#39;identity&#39;</span>,</span><span class="param">	<span class="n">total_mass_encoding_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="fswlib/fsw_embedding/fsw_embedding.html#TotalMassEncodingMethod">fswlib.fsw_embedding.fsw_embedding.TotalMassEncodingMethod</a></span> <span class="o">=</span> <span class="s1">&#39;decoupled&#39;</span>,</span><span class="param">	<span class="n">total_mass_padding_thresh</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">1.0</span>,</span><span class="param">	<span class="n">learnable_slices</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">learnable_frequencies</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">frequency_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="fswlib/fsw_embedding/fsw_embedding.html#FrequencyInitMethod">fswlib.fsw_embedding.fsw_embedding.FrequencyInitMethod</a></span> <span class="o">=</span> <span class="s1">&#39;random&#39;</span>,</span><span class="param">	<span class="n">minimize_slice_coherence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">enable_bias</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>,</span><span class="param">	<span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">use_custom_cuda_extension_if_available</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">fail_if_cuda_extension_load_fails</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">report</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">report_on_coherence_minimization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></span>)</span>
+        <span class="name">FSWEmbedding</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">d_in</span><span class="p">:</span> <span class="nb">int</span>,</span><span class="param">	<span class="n">d_out</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">num_slices</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">num_frequencies</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">collapse_output_axes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">d_edge</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>,</span><span class="param">	<span class="n">encode_total_mass</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">total_mass_encoding_transformation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="#TotalMassEncodingTransformation">TotalMassEncodingTransformation</a></span> <span class="o">=</span> <span class="s1">&#39;identity&#39;</span>,</span><span class="param">	<span class="n">total_mass_encoding_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a></span> <span class="o">=</span> <span class="s1">&#39;decoupled&#39;</span>,</span><span class="param">	<span class="n">total_mass_padding_thresh</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">1.0</span>,</span><span class="param">	<span class="n">learnable_slices</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">learnable_frequencies</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">frequency_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="#FrequencyInitMethod">FrequencyInitMethod</a></span> <span class="o">=</span> <span class="s1">&#39;random&#39;</span>,</span><span class="param">	<span class="n">minimize_slice_coherence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">enable_bias</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>,</span><span class="param">	<span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">use_custom_cuda_extension_if_available</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">fail_if_cuda_extension_load_fails</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">report</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">report_on_coherence_minimization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></span>)</span>
 
                 <label class="view-source-button" for="FSWEmbedding.__init__-view-source"><span>View Source</span></label>
 
@@ -2000,11 +2063,11 @@ If True, prints diagnostics during slice coherence minimization.</li>
 
 <h6 id="see-also">See Also</h6>
 
-<p><code>FrequencyInitMethod</code>: 
+<p><code><a href="#FrequencyInitMethod">FrequencyInitMethod</a></code>: 
 Enum for selecting frequency initialization strategies.<br />
-<code>TotalMassEncodingTransformation</code>: 
+<code><a href="#TotalMassEncodingTransformation">TotalMassEncodingTransformation</a></code>: 
 Enum for total mass transformations.<br />
-<code>TotalMassEncodingMethod</code>: 
+<code><a href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a></code>: 
 Enum for strategies to incorporate total mass into the embedding.  </p>
 </div>
 
@@ -2115,7 +2178,7 @@ Dictionary of keyword arguments matching the <code><a href="#FSWEmbedding.__init
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">reset_parameters</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">frequency_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="fswlib/fsw_embedding/fsw_embedding.html#FrequencyInitMethod">fswlib.fsw_embedding.fsw_embedding.FrequencyInitMethod</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">minimize_slice_coherence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">report</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">report_on_coherence_minimization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></span><span class="return-annotation">):</span></span>
+        <span class="name">reset_parameters</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">frequency_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="#FrequencyInitMethod">FrequencyInitMethod</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">minimize_slice_coherence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">report</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">report_on_coherence_minimization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></span><span class="return-annotation">):</span></span>
 
                 <label class="view-source-button" for="FSWEmbedding.reset_parameters-view-source"><span>View Source</span></label>
 
@@ -2421,7 +2484,7 @@ module.to(device='cuda')
                             <div id="FSWEmbedding.total_mass_encoding_transformation" class="classattr">
                                         <input id="FSWEmbedding.total_mass_encoding_transformation-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
-            <span class="name">total_mass_encoding_transformation</span><span class="annotation">: <a href="fswlib/fsw_embedding/fsw_embedding.html#TotalMassEncodingTransformation">fswlib.fsw_embedding.fsw_embedding.TotalMassEncodingTransformation</a></span>
+            <span class="name">total_mass_encoding_transformation</span><span class="annotation">: <a href="#TotalMassEncodingTransformation">TotalMassEncodingTransformation</a></span>
 
                 <label class="view-source-button" for="FSWEmbedding.total_mass_encoding_transformation-view-source"><span>View Source</span></label>
 
@@ -2442,7 +2505,7 @@ module.to(device='cuda')
                             <div id="FSWEmbedding.total_mass_encoding_method" class="classattr">
                                         <input id="FSWEmbedding.total_mass_encoding_method-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
-            <span class="name">total_mass_encoding_method</span><span class="annotation">: <a href="fswlib/fsw_embedding/fsw_embedding.html#TotalMassEncodingMethod">fswlib.fsw_embedding.fsw_embedding.TotalMassEncodingMethod</a></span>
+            <span class="name">total_mass_encoding_method</span><span class="annotation">: <a href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a></span>
 
                 <label class="view-source-button" for="FSWEmbedding.total_mass_encoding_method-view-source"><span>View Source</span></label>
 
@@ -3161,6 +3224,341 @@ the embedding in smaller blocks without changing the result.</li>
 </div>
 
 
+                </section>
+                <section id="TotalMassEncodingTransformation">
+                            <input id="TotalMassEncodingTransformation-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr class">
+            
+    <span class="def">class</span>
+    <span class="name">TotalMassEncodingTransformation</span><wbr>(<span class="base"><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve">fswlib.fsw_embedding.fsw_embedding.EnumWithResolve</a></span>):
+
+                <label class="view-source-button" for="TotalMassEncodingTransformation-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#TotalMassEncodingTransformation"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="TotalMassEncodingTransformation-168"><a href="#TotalMassEncodingTransformation-168"><span class="linenos">168</span></a><span class="k">class</span><span class="w"> </span><span class="nc">TotalMassEncodingTransformation</span><span class="p">(</span><span class="n">EnumWithResolve</span><span class="p">):</span>
+</span><span id="TotalMassEncodingTransformation-169"><a href="#TotalMassEncodingTransformation-169"><span class="linenos">169</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Transformation applied to the total mass before incorporating into the embedding.</span>
+</span><span id="TotalMassEncodingTransformation-170"><a href="#TotalMassEncodingTransformation-170"><span class="linenos">170</span></a>
+</span><span id="TotalMassEncodingTransformation-171"><a href="#TotalMassEncodingTransformation-171"><span class="linenos">171</span></a><span class="sd">    Each option defines a different transformation applied to the total mass of an input measure/multiset</span>
+</span><span id="TotalMassEncodingTransformation-172"><a href="#TotalMassEncodingTransformation-172"><span class="linenos">172</span></a><span class="sd">    before it is incorporated into the embedding vector.</span>
+</span><span id="TotalMassEncodingTransformation-173"><a href="#TotalMassEncodingTransformation-173"><span class="linenos">173</span></a>
+</span><span id="TotalMassEncodingTransformation-174"><a href="#TotalMassEncodingTransformation-174"><span class="linenos">174</span></a><span class="sd">    Attributes</span>
+</span><span id="TotalMassEncodingTransformation-175"><a href="#TotalMassEncodingTransformation-175"><span class="linenos">175</span></a><span class="sd">    ----------</span>
+</span><span id="TotalMassEncodingTransformation-176"><a href="#TotalMassEncodingTransformation-176"><span class="linenos">176</span></a><span class="sd">    IDENTITY : str</span>
+</span><span id="TotalMassEncodingTransformation-177"><a href="#TotalMassEncodingTransformation-177"><span class="linenos">177</span></a><span class="sd">        f(x) = x; no transformation.</span>
+</span><span id="TotalMassEncodingTransformation-178"><a href="#TotalMassEncodingTransformation-178"><span class="linenos">178</span></a><span class="sd">    SQRT : str</span>
+</span><span id="TotalMassEncodingTransformation-179"><a href="#TotalMassEncodingTransformation-179"><span class="linenos">179</span></a><span class="sd">        f(x) = sqrt(1 + x) - 1; mild nonlinearity.</span>
+</span><span id="TotalMassEncodingTransformation-180"><a href="#TotalMassEncodingTransformation-180"><span class="linenos">180</span></a><span class="sd">    LOG : str</span>
+</span><span id="TotalMassEncodingTransformation-181"><a href="#TotalMassEncodingTransformation-181"><span class="linenos">181</span></a><span class="sd">        f(x) = log(1 + x); stronger compression of large values.</span>
+</span><span id="TotalMassEncodingTransformation-182"><a href="#TotalMassEncodingTransformation-182"><span class="linenos">182</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="TotalMassEncodingTransformation-183"><a href="#TotalMassEncodingTransformation-183"><span class="linenos">183</span></a>    <span class="n">IDENTITY</span> <span class="o">=</span> <span class="s1">&#39;identity&#39;</span>
+</span><span id="TotalMassEncodingTransformation-184"><a href="#TotalMassEncodingTransformation-184"><span class="linenos">184</span></a>    <span class="n">SQRT</span> <span class="o">=</span> <span class="s1">&#39;sqrt&#39;</span>
+</span><span id="TotalMassEncodingTransformation-185"><a href="#TotalMassEncodingTransformation-185"><span class="linenos">185</span></a>    <span class="n">LOG</span> <span class="o">=</span> <span class="s1">&#39;log&#39;</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Transformation applied to the total mass before incorporating into the embedding.</p>
+
+<p>Each option defines a different transformation applied to the total mass of an input measure/multiset
+before it is incorporated into the embedding vector.</p>
+
+<h6 id="attributes">Attributes</h6>
+
+<ul>
+<li><strong>IDENTITY</strong> (str):
+f(x) = x; no transformation.</li>
+<li><strong>SQRT</strong> (str):
+f(x) = sqrt(1 + x) - 1; mild nonlinearity.</li>
+<li><strong>LOG</strong> (str):
+f(x) = log(1 + x); stronger compression of large values.</li>
+</ul>
+</div>
+
+
+                            <div id="TotalMassEncodingTransformation.IDENTITY" class="classattr">
+                                <div class="attr variable">
+            <span class="name">IDENTITY</span>        =
+<span class="default_value">&lt;<a href="#TotalMassEncodingTransformation.IDENTITY">TotalMassEncodingTransformation.IDENTITY</a>: &#39;identity&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#TotalMassEncodingTransformation.IDENTITY"></a>
+    
+    
+
+                            </div>
+                            <div id="TotalMassEncodingTransformation.SQRT" class="classattr">
+                                <div class="attr variable">
+            <span class="name">SQRT</span>        =
+<span class="default_value">&lt;<a href="#TotalMassEncodingTransformation.SQRT">TotalMassEncodingTransformation.SQRT</a>: &#39;sqrt&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#TotalMassEncodingTransformation.SQRT"></a>
+    
+    
+
+                            </div>
+                            <div id="TotalMassEncodingTransformation.LOG" class="classattr">
+                                <div class="attr variable">
+            <span class="name">LOG</span>        =
+<span class="default_value">&lt;<a href="#TotalMassEncodingTransformation.LOG">TotalMassEncodingTransformation.LOG</a>: &#39;log&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#TotalMassEncodingTransformation.LOG"></a>
+    
+    
+
+                            </div>
+                            <div class="inherited">
+                                <h5>Inherited Members</h5>
+                                <dl>
+                                    <div><dt><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve">fswlib.fsw_embedding.fsw_embedding.EnumWithResolve</a></dt>
+                                <dd id="TotalMassEncodingTransformation.resolve" class="function"><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve.resolve">resolve</a></dd>
+
+            </div>
+                                </dl>
+                            </div>
+                </section>
+                <section id="TotalMassEncodingMethod">
+                            <input id="TotalMassEncodingMethod-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr class">
+            
+    <span class="def">class</span>
+    <span class="name">TotalMassEncodingMethod</span><wbr>(<span class="base"><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve">fswlib.fsw_embedding.fsw_embedding.EnumWithResolve</a></span>):
+
+                <label class="view-source-button" for="TotalMassEncodingMethod-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#TotalMassEncodingMethod"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="TotalMassEncodingMethod-189"><a href="#TotalMassEncodingMethod-189"><span class="linenos">189</span></a><span class="k">class</span><span class="w"> </span><span class="nc">TotalMassEncodingMethod</span><span class="p">(</span><span class="n">EnumWithResolve</span><span class="p">):</span>
+</span><span id="TotalMassEncodingMethod-190"><a href="#TotalMassEncodingMethod-190"><span class="linenos">190</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="TotalMassEncodingMethod-191"><a href="#TotalMassEncodingMethod-191"><span class="linenos">191</span></a><span class="sd">    Strategies for incorporating total mass into the embedding.</span>
+</span><span id="TotalMassEncodingMethod-192"><a href="#TotalMassEncodingMethod-192"><span class="linenos">192</span></a>
+</span><span id="TotalMassEncodingMethod-193"><a href="#TotalMassEncodingMethod-193"><span class="linenos">193</span></a><span class="sd">    Each method defines a different way of incorporating the total mass of an input measure</span>
+</span><span id="TotalMassEncodingMethod-194"><a href="#TotalMassEncodingMethod-194"><span class="linenos">194</span></a><span class="sd">    (or the size of an input multiset), with the FSW embedding of its normalized form, into a single output vector.</span>
+</span><span id="TotalMassEncodingMethod-195"><a href="#TotalMassEncodingMethod-195"><span class="linenos">195</span></a><span class="sd">    For further discussion, see Appendix A.1 of the reference below.</span>
+</span><span id="TotalMassEncodingMethod-196"><a href="#TotalMassEncodingMethod-196"><span class="linenos">196</span></a>
+</span><span id="TotalMassEncodingMethod-197"><a href="#TotalMassEncodingMethod-197"><span class="linenos">197</span></a><span class="sd">    Attributes</span>
+</span><span id="TotalMassEncodingMethod-198"><a href="#TotalMassEncodingMethod-198"><span class="linenos">198</span></a><span class="sd">    ----------</span>
+</span><span id="TotalMassEncodingMethod-199"><a href="#TotalMassEncodingMethod-199"><span class="linenos">199</span></a><span class="sd">    DECOUPLED : str</span>
+</span><span id="TotalMassEncodingMethod-200"><a href="#TotalMassEncodingMethod-200"><span class="linenos">200</span></a><span class="sd">        The total mass is appended as a separate component to the embedding vector,</span>
+</span><span id="TotalMassEncodingMethod-201"><a href="#TotalMassEncodingMethod-201"><span class="linenos">201</span></a><span class="sd">        which is computed from the normalized input. See Equation (18).</span>
+</span><span id="TotalMassEncodingMethod-202"><a href="#TotalMassEncodingMethod-202"><span class="linenos">202</span></a>
+</span><span id="TotalMassEncodingMethod-203"><a href="#TotalMassEncodingMethod-203"><span class="linenos">203</span></a><span class="sd">    SCALED : str</span>
+</span><span id="TotalMassEncodingMethod-204"><a href="#TotalMassEncodingMethod-204"><span class="linenos">204</span></a><span class="sd">        Similar to DECOUPLED, but the embedding of the normalized input is scaled</span>
+</span><span id="TotalMassEncodingMethod-205"><a href="#TotalMassEncodingMethod-205"><span class="linenos">205</span></a><span class="sd">        by the total mass. Using the notation of Equation (18), this yields:</span>
+</span><span id="TotalMassEncodingMethod-206"><a href="#TotalMassEncodingMethod-206"><span class="linenos">206</span></a>
+</span><span id="TotalMassEncodingMethod-207"><a href="#TotalMassEncodingMethod-207"><span class="linenos">207</span></a><span class="sd">            Êₘ(μ) = [ μ(Ω), μ(Ω) · Êₘ₋₁(μ_ρ) ]</span>
+</span><span id="TotalMassEncodingMethod-208"><a href="#TotalMassEncodingMethod-208"><span class="linenos">208</span></a>
+</span><span id="TotalMassEncodingMethod-209"><a href="#TotalMassEncodingMethod-209"><span class="linenos">209</span></a><span class="sd">    HOMOGENEOUS : str</span>
+</span><span id="TotalMassEncodingMethod-210"><a href="#TotalMassEncodingMethod-210"><span class="linenos">210</span></a><span class="sd">        A method that encodes the total mass while preserving homogeneity</span>
+</span><span id="TotalMassEncodingMethod-211"><a href="#TotalMassEncodingMethod-211"><span class="linenos">211</span></a><span class="sd">        with respect to the elements of the input multiset. See Equation (19).</span>
+</span><span id="TotalMassEncodingMethod-212"><a href="#TotalMassEncodingMethod-212"><span class="linenos">212</span></a>
+</span><span id="TotalMassEncodingMethod-213"><a href="#TotalMassEncodingMethod-213"><span class="linenos">213</span></a><span class="sd">    HOMOGENEOUS_LEGACY : str</span>
+</span><span id="TotalMassEncodingMethod-214"><a href="#TotalMassEncodingMethod-214"><span class="linenos">214</span></a><span class="sd">        An alternative, legacy version of the homogeneous method, retained</span>
+</span><span id="TotalMassEncodingMethod-215"><a href="#TotalMassEncodingMethod-215"><span class="linenos">215</span></a><span class="sd">        for reference and compatibility.</span>
+</span><span id="TotalMassEncodingMethod-216"><a href="#TotalMassEncodingMethod-216"><span class="linenos">216</span></a>
+</span><span id="TotalMassEncodingMethod-217"><a href="#TotalMassEncodingMethod-217"><span class="linenos">217</span></a><span class="sd">    Reference</span>
+</span><span id="TotalMassEncodingMethod-218"><a href="#TotalMassEncodingMethod-218"><span class="linenos">218</span></a><span class="sd">    ---------</span>
+</span><span id="TotalMassEncodingMethod-219"><a href="#TotalMassEncodingMethod-219"><span class="linenos">219</span></a><span class="sd">    Tal Amir, Nadav Dym.</span>
+</span><span id="TotalMassEncodingMethod-220"><a href="#TotalMassEncodingMethod-220"><span class="linenos">220</span></a><span class="sd">    &quot;Fourier Sliced-Wasserstein Embedding for Multisets and Measures.&quot;</span>
+</span><span id="TotalMassEncodingMethod-221"><a href="#TotalMassEncodingMethod-221"><span class="linenos">221</span></a><span class="sd">    International Conference on Learning Representations (ICLR), 2025.</span>
+</span><span id="TotalMassEncodingMethod-222"><a href="#TotalMassEncodingMethod-222"><span class="linenos">222</span></a><span class="sd">    https://iclr.cc/virtual/2025/poster/30562</span>
+</span><span id="TotalMassEncodingMethod-223"><a href="#TotalMassEncodingMethod-223"><span class="linenos">223</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="TotalMassEncodingMethod-224"><a href="#TotalMassEncodingMethod-224"><span class="linenos">224</span></a>    <span class="n">DECOUPLED</span> <span class="o">=</span> <span class="s1">&#39;decoupled&#39;</span>
+</span><span id="TotalMassEncodingMethod-225"><a href="#TotalMassEncodingMethod-225"><span class="linenos">225</span></a>    <span class="n">SCALED</span> <span class="o">=</span> <span class="s1">&#39;scaled&#39;</span>
+</span><span id="TotalMassEncodingMethod-226"><a href="#TotalMassEncodingMethod-226"><span class="linenos">226</span></a>    <span class="n">HOMOGENEOUS</span> <span class="o">=</span> <span class="s1">&#39;homogeneous&#39;</span>
+</span><span id="TotalMassEncodingMethod-227"><a href="#TotalMassEncodingMethod-227"><span class="linenos">227</span></a>    <span class="n">HOMOGENEOUS_LEGACY</span> <span class="o">=</span> <span class="s1">&#39;homogeneous_legacy&#39;</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Strategies for incorporating total mass into the embedding.</p>
+
+<p>Each method defines a different way of incorporating the total mass of an input measure
+(or the size of an input multiset), with the FSW embedding of its normalized form, into a single output vector.
+For further discussion, see Appendix A.1 of the reference below.</p>
+
+<h6 id="attributes">Attributes</h6>
+
+<ul>
+<li><strong>DECOUPLED</strong> (str):
+The total mass is appended as a separate component to the embedding vector,
+which is computed from the normalized input. See Equation (18).</li>
+<li><p><strong>SCALED</strong> (str):
+Similar to DECOUPLED, but the embedding of the normalized input is scaled
+by the total mass. Using the notation of Equation (18), this yields:</p>
+
+<pre><code>Êₘ(μ) = [ μ(Ω), μ(Ω) · Êₘ₋₁(μ_ρ) ]
+</code></pre></li>
+<li><strong>HOMOGENEOUS</strong> (str):
+A method that encodes the total mass while preserving homogeneity
+with respect to the elements of the input multiset. See Equation (19).</li>
+<li><strong>HOMOGENEOUS_LEGACY</strong> (str):
+An alternative, legacy version of the homogeneous method, retained
+for reference and compatibility.</li>
+</ul>
+
+<h6 id="reference">Reference</h6>
+
+<p>Tal Amir, Nadav Dym.
+"Fourier Sliced-Wasserstein Embedding for Multisets and Measures."
+International Conference on Learning Representations (ICLR), 2025.
+<a href="https://iclr.cc/virtual/2025/poster/30562">https://iclr.cc/virtual/2025/poster/30562</a></p>
+</div>
+
+
+                            <div id="TotalMassEncodingMethod.DECOUPLED" class="classattr">
+                                <div class="attr variable">
+            <span class="name">DECOUPLED</span>        =
+<span class="default_value">&lt;<a href="#TotalMassEncodingMethod.DECOUPLED">TotalMassEncodingMethod.DECOUPLED</a>: &#39;decoupled&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#TotalMassEncodingMethod.DECOUPLED"></a>
+    
+    
+
+                            </div>
+                            <div id="TotalMassEncodingMethod.SCALED" class="classattr">
+                                <div class="attr variable">
+            <span class="name">SCALED</span>        =
+<span class="default_value">&lt;<a href="#TotalMassEncodingMethod.SCALED">TotalMassEncodingMethod.SCALED</a>: &#39;scaled&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#TotalMassEncodingMethod.SCALED"></a>
+    
+    
+
+                            </div>
+                            <div id="TotalMassEncodingMethod.HOMOGENEOUS" class="classattr">
+                                <div class="attr variable">
+            <span class="name">HOMOGENEOUS</span>        =
+<span class="default_value">&lt;<a href="#TotalMassEncodingMethod.HOMOGENEOUS">TotalMassEncodingMethod.HOMOGENEOUS</a>: &#39;homogeneous&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#TotalMassEncodingMethod.HOMOGENEOUS"></a>
+    
+    
+
+                            </div>
+                            <div id="TotalMassEncodingMethod.HOMOGENEOUS_LEGACY" class="classattr">
+                                <div class="attr variable">
+            <span class="name">HOMOGENEOUS_LEGACY</span>        =
+<span class="default_value">&lt;<a href="#TotalMassEncodingMethod.HOMOGENEOUS_LEGACY">TotalMassEncodingMethod.HOMOGENEOUS_LEGACY</a>: &#39;homogeneous_legacy&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#TotalMassEncodingMethod.HOMOGENEOUS_LEGACY"></a>
+    
+    
+
+                            </div>
+                            <div class="inherited">
+                                <h5>Inherited Members</h5>
+                                <dl>
+                                    <div><dt><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve">fswlib.fsw_embedding.fsw_embedding.EnumWithResolve</a></dt>
+                                <dd id="TotalMassEncodingMethod.resolve" class="function"><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve.resolve">resolve</a></dd>
+
+            </div>
+                                </dl>
+                            </div>
+                </section>
+                <section id="FrequencyInitMethod">
+                            <input id="FrequencyInitMethod-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr class">
+            
+    <span class="def">class</span>
+    <span class="name">FrequencyInitMethod</span><wbr>(<span class="base"><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve">fswlib.fsw_embedding.fsw_embedding.EnumWithResolve</a></span>):
+
+                <label class="view-source-button" for="FrequencyInitMethod-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#FrequencyInitMethod"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="FrequencyInitMethod-231"><a href="#FrequencyInitMethod-231"><span class="linenos">231</span></a><span class="k">class</span><span class="w"> </span><span class="nc">FrequencyInitMethod</span><span class="p">(</span><span class="n">EnumWithResolve</span><span class="p">):</span>
+</span><span id="FrequencyInitMethod-232"><a href="#FrequencyInitMethod-232"><span class="linenos">232</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="FrequencyInitMethod-233"><a href="#FrequencyInitMethod-233"><span class="linenos">233</span></a><span class="sd">    Strategy for initializing frequencies in the FSW embedding.</span>
+</span><span id="FrequencyInitMethod-234"><a href="#FrequencyInitMethod-234"><span class="linenos">234</span></a>
+</span><span id="FrequencyInitMethod-235"><a href="#FrequencyInitMethod-235"><span class="linenos">235</span></a><span class="sd">    This enumeration specifies how the frequencies in the FSW embedding are</span>
+</span><span id="FrequencyInitMethod-236"><a href="#FrequencyInitMethod-236"><span class="linenos">236</span></a><span class="sd">    initialized.</span>
+</span><span id="FrequencyInitMethod-237"><a href="#FrequencyInitMethod-237"><span class="linenos">237</span></a>
+</span><span id="FrequencyInitMethod-238"><a href="#FrequencyInitMethod-238"><span class="linenos">238</span></a><span class="sd">    Attributes</span>
+</span><span id="FrequencyInitMethod-239"><a href="#FrequencyInitMethod-239"><span class="linenos">239</span></a><span class="sd">    ----------</span>
+</span><span id="FrequencyInitMethod-240"><a href="#FrequencyInitMethod-240"><span class="linenos">240</span></a><span class="sd">    RANDOM : str</span>
+</span><span id="FrequencyInitMethod-241"><a href="#FrequencyInitMethod-241"><span class="linenos">241</span></a><span class="sd">        Frequencies are sampled independently at random from the distribution</span>
+</span><span id="FrequencyInitMethod-242"><a href="#FrequencyInitMethod-242"><span class="linenos">242</span></a><span class="sd">        D_ξ, as defined in Section 3 of our paper.</span>
+</span><span id="FrequencyInitMethod-243"><a href="#FrequencyInitMethod-243"><span class="linenos">243</span></a><span class="sd">    EVEN : str</span>
+</span><span id="FrequencyInitMethod-244"><a href="#FrequencyInitMethod-244"><span class="linenos">244</span></a><span class="sd">        Frequencies are spaced deterministically for efficient coverage of the frequency domain,</span>
+</span><span id="FrequencyInitMethod-245"><a href="#FrequencyInitMethod-245"><span class="linenos">245</span></a><span class="sd">        with spacing inversely proportional to the density function f_ξ.</span>
+</span><span id="FrequencyInitMethod-246"><a href="#FrequencyInitMethod-246"><span class="linenos">246</span></a>
+</span><span id="FrequencyInitMethod-247"><a href="#FrequencyInitMethod-247"><span class="linenos">247</span></a><span class="sd">    See Also</span>
+</span><span id="FrequencyInitMethod-248"><a href="#FrequencyInitMethod-248"><span class="linenos">248</span></a><span class="sd">    --------</span>
+</span><span id="FrequencyInitMethod-249"><a href="#FrequencyInitMethod-249"><span class="linenos">249</span></a><span class="sd">    FSWEmbedding.__init__ : Where this method is selected and used.</span>
+</span><span id="FrequencyInitMethod-250"><a href="#FrequencyInitMethod-250"><span class="linenos">250</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="FrequencyInitMethod-251"><a href="#FrequencyInitMethod-251"><span class="linenos">251</span></a>
+</span><span id="FrequencyInitMethod-252"><a href="#FrequencyInitMethod-252"><span class="linenos">252</span></a>    <span class="n">RANDOM</span> <span class="o">=</span> <span class="s2">&quot;random&quot;</span>
+</span><span id="FrequencyInitMethod-253"><a href="#FrequencyInitMethod-253"><span class="linenos">253</span></a>    <span class="n">EVEN</span> <span class="o">=</span> <span class="s2">&quot;even&quot;</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Strategy for initializing frequencies in the FSW embedding.</p>
+
+<p>This enumeration specifies how the frequencies in the FSW embedding are
+initialized.</p>
+
+<h6 id="attributes">Attributes</h6>
+
+<ul>
+<li><strong>RANDOM</strong> (str):
+Frequencies are sampled independently at random from the distribution
+D_ξ, as defined in Section 3 of our paper.</li>
+<li><strong>EVEN</strong> (str):
+Frequencies are spaced deterministically for efficient coverage of the frequency domain,
+with spacing inversely proportional to the density function f_ξ.</li>
+</ul>
+
+<h6 id="see-also">See Also</h6>
+
+<p><code><a href="#FSWEmbedding.__init__">FSWEmbedding.__init__</a></code>:  Where this method is selected and used.  </p>
+</div>
+
+
+                            <div id="FrequencyInitMethod.RANDOM" class="classattr">
+                                <div class="attr variable">
+            <span class="name">RANDOM</span>        =
+<span class="default_value">&lt;<a href="#FrequencyInitMethod.RANDOM">FrequencyInitMethod.RANDOM</a>: &#39;random&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#FrequencyInitMethod.RANDOM"></a>
+    
+    
+
+                            </div>
+                            <div id="FrequencyInitMethod.EVEN" class="classattr">
+                                <div class="attr variable">
+            <span class="name">EVEN</span>        =
+<span class="default_value">&lt;<a href="#FrequencyInitMethod.EVEN">FrequencyInitMethod.EVEN</a>: &#39;even&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#FrequencyInitMethod.EVEN"></a>
+    
+    
+
+                            </div>
+                            <div class="inherited">
+                                <h5>Inherited Members</h5>
+                                <dl>
+                                    <div><dt><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve">fswlib.fsw_embedding.fsw_embedding.EnumWithResolve</a></dt>
+                                <dd id="FrequencyInitMethod.resolve" class="function"><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve.resolve">resolve</a></dd>
+
+            </div>
+                                </dl>
+                            </div>
                 </section>
                 <section id="test_fsw_embedding">
                             <input id="test_fsw_embedding-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
