@@ -618,6 +618,14 @@ class FSWEmbedding(nn.Module):
 
 
     def to(self, *args, **kwargs):
+        """Moves the module to the specified device or dtype.
+
+        Example:
+            module.to(torch.float32)
+            module.to(device='cuda')
+
+        See also: torch.nn.Module.to()
+        """
         if 'dtype' in kwargs:
             arg = kwargs['dtype']
 
