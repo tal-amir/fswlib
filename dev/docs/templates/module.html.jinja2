@@ -1,54 +1,18 @@
 {% extends "default/module.html.jinja2" %}
-{% block title %}{{ module.modulename }}aa FSWLIB documentation{% endblock %}
+{% block title %}{{ module.modulename }}FSWLIB documentation{% endblock %}
 
 {% block nav_members %}
     {% if module.members %}
-        <h2>aa FSWLIB Documentation</h2>
-        {{ nav_members(module.members.values()) }}
+        <h2>FSWLIB documentation</h2>
+
+        {# METHODS #}
+        {{ nav_members(module.members.values() | selectattr("kind", "equalto", "method")) }}
+
+        {# PROPERTIES #}
+        {{ nav_members(module.members.values() | selectattr("kind", "equalto", "property")) }}
+
+        {# OTHER (fields, classes, etc.) #}
+        {{ nav_members(module.members.values() | rejectattr("kind", "in", ["method", "property"])) }}
+
     {% endif %}
-{% endblock %}
-
-{% block content %}
-    <main class="pdoc">
-        {{ super() }}  {# You can omit this if replacing everything #}
-
-        {% block module_contents %}
-            {# Your reordered class member logic here #}
-            {% for m in module.flattened_own_members if is_public(m) | trim %}
-                <section id="{{ m.qualname or m.name }}">
-                    {{ member(m) }}
-                    {% if m.kind == "class" %}
-                        {# METHODS #}
-                        {% for m in m.own_members if m.kind == "method" and is_public(m) | trim %}
-                            <div id="{{ m.qualname }}" class="classattr">
-                                {{ member(m) }}
-                            </div>
-                        {% endfor %}
-                        {# PROPERTIES #}
-                        {% for m in m.own_members if m.kind == "property" and is_public(m) | trim %}
-                            <div id="{{ m.qualname }}" class="classattr">
-                                {{ member(m) }}
-                            </div>
-                        {% endfor %}
-                        {# OTHER NON-CLASS MEMBERS #}
-                        {% for m in m.own_members if m.kind not in ["method", "property", "class"] and is_public(m) | trim %}
-                            <div id="{{ m.qualname }}" class="classattr">
-                                {{ member(m) }}
-                            </div>
-                        {% endfor %}
-                        {# INHERITED MEMBERS #}
-                        {% set inherited_members = inherited(m) | trim %}
-                        {% if inherited_members %}
-                            <div class="inherited">
-                                <h5>Inherited Members</h5>
-                                <dl>
-                                    {{ inherited_members }}
-                                </dl>
-                            </div>
-                        {% endif %}
-                    {% endif %}
-                </section>
-            {% endfor %}
-        {% endblock %}
-    </main>
 {% endblock %}
