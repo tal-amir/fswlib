@@ -18,7 +18,7 @@ embed_total_mass_aware =     FSWEmbedding(d_in=d, d_out=m, encode_total_mass=Tru
                                           device=device, dtype=dtype)
 config2 = {
     "d_in":d, "d_out":m, "encode_total_mass":True,
-                                          "total_mass_encoding_method":'decoupled',
+                                          "total_mass_encoding_method":'homogeneous_scaled',
                                           "total_mass_encoding_transformation":'identity',
                                           "device":device, "dtype":dtype
 }
