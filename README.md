@@ -174,6 +174,7 @@ If you use this library in your research, please cite our paper:
 
 ## 👨🏻‍🔧 Maintainer
 
-This library is maintained by [**Tal Amir**](https://tal-amir.github.io)  
-Contact: [talamir@technion.ac.il](mailto:talamir@technion.ac.il)
+This library is maintained by **Tal Amir**  
+Homepage: [https://tal-amir.github.io](https://tal-amir.github.io)  
+EMail: [talamir@technion.ac.il](mailto:talamir@technion.ac.il)
 
