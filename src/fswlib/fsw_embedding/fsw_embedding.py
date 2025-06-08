@@ -211,6 +211,10 @@ class TotalMassEncodingMethod(EnumWithResolve):
         with respect to the elements of the input multiset. See Equation (19).
         $$ \\hat{E}^{\\textup{FSW}}_{m}\\left(\\mu\\right) = \\left[ \\lVert E^{\\textup{FSW}}_{m-1}\\left(\\mu_{\\rho}\\right) \\rVert \\cdot \\mu\\left(\\Omega\\right), \\;  E^{\\textup{FSW}}_{m-1}\\left(\\mu_{\\rho}\\right) \\right] $$
 
+    HOMOGENEOUS_SCALED : str
+        Similar to `SCALED`, but preserves homogeneity.
+        $$ \\hat{E}^{\\textup{FSW}}_{m}\\left(\\mu\\right) = \\left[ \\lVert E^{\\textup{FSW}}_{m-1}\\left(\\mu_{\\rho}\\right) \\rVert, \\;  \\mu\\left(\\Omega\\right) \\cdot E^{\\textup{FSW}}_{m-1}\\left(\\mu_{\\rho}\\right) \\right] $$
+
     HOMOGENEOUS_LEGACY : str
         An alternative, legacy version of the homogeneous method, retained
         for reference and compatibility.
@@ -225,6 +229,7 @@ class TotalMassEncodingMethod(EnumWithResolve):
     DECOUPLED = 'decoupled'
     SCALED = 'scaled'
     HOMOGENEOUS = 'homogeneous'
+    HOMOGENEOUS_SCALED = 'homogeneous_scaled'
     HOMOGENEOUS_LEGACY = 'homogeneous_legacy'
 
 
