@@ -20,6 +20,19 @@
             <img src="./dev/docs/logo/logo.png" class="logo" alt="project logo"/>
 
 
+            <h2>Contents</h2>
+            <ul>
+  <li><a href="#fourier-sliced-wasserstein-fsw-embedding-a-pytorch-based-library">Fourier Sliced-Wasserstein (FSW) embedding — a PyTorch-based library</a>
+  <ul>
+    <li><a href="#requirements">📦 Requirements</a></li>
+    <li><a href="#installation">🔧 Installation</a></li>
+    <li><a href="#usage-example">📘 Usage Example</a></li>
+    <li><a href="#citation">📄 Citation</a></li>
+    <li><a href="#links">🔗 Links</a></li>
+    <li><a href="#maintainer">👨🏻‍🔧 Maintainer</a></li>
+  </ul></li>
+</ul>
+
 
 
         <h2>fswlib documentation</h2>
@@ -146,16 +159,207 @@
                     <h1 class="modulename">
 fswlib    </h1>
 
-                
+                        <div class="docstring"><h1 id="fourier-sliced-wasserstein-fsw-embedding-a-pytorch-based-library">Fourier Sliced-Wasserstein (FSW) embedding — a PyTorch-based library</h1>
+
+<p>This package provides an implementation of the <strong>Fourier Sliced-Wasserstein (FSW) embedding</strong> for multisets and measures, introduced in our <a href="https://iclr.cc/virtual/2025/poster/30562">ICLR 2025 paper</a>:</p>
+
+<blockquote>
+  <p><strong>Fourier Sliced-Wasserstein Embedding for Multisets and Measures</strong><br />
+  Tal Amir, Nadav Dym<br />
+  <em>International Conference on Learning Representations (ICLR), 2025</em></p>
+</blockquote>
+
+<hr />
+
+<h2 id="requirements">📦 Requirements</h2>
+
+<ul>
+<li><strong>Python</strong> ≥ 3.10.3 (released March 2022)  </li>
+<li><strong>PyTorch</strong> ≥ 2.1.0 (released October 2023)  </li>
+<li><strong>NumPy</strong> ≥ 1.24.4 (released June 2023)  </li>
+</ul>
+
+<p>The core package has been tested on <strong>Linux</strong> and <strong>Windows</strong>.<br />
+It may also run on <strong>macOS (CPU only)</strong>, though this has not been verified.  </p>
+
+<hr />
+
+<h2 id="installation">🔧 Installation</h2>
+
+<p>To install the package:</p>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>fswlib
+</code></pre>
+</div>
+
+<p>The core package runs on both <strong>CPU</strong> and <strong>CUDA-enabled GPUs</strong>, using PyTorch's standard CUDA backend.  </p>
+
+<p>In addition, it includes an optional <strong>custom CUDA extension</strong> that can provide up to 2× speedup for sparse weight matrices (e.g., sparse graphs). This extension is currently supported only on <strong>Linux</strong>.</p>
+
+<p>To compile the optional extension, run:</p>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code>fswlib-build
+</code></pre>
+</div>
+
+<hr />
+
+<h2 id="usage-example">📘 Usage Example</h2>
+
+<p>Below is a basic usage example of the <code><a href="#FSWEmbedding">FSWEmbedding</a></code> class.  </p>
+
+<p>For more examples, see the <code>examples/</code> <a href="https://github.com/tal-amir/fswlib/tree/main/examples">directory</a>.<br />
+Full API documentation is available at <a href="https://tal-amir.github.io/fswlib">https://tal-amir.github.io/fswlib</a>.</p>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fswlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">FSWEmbedding</span>
+
+<span class="c1"># Configuration</span>
+<span class="n">device</span> <span class="o">=</span> <span class="s1">&#39;cuda&#39;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;cpu&#39;</span>
+<span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span>
+<span class="n">d</span> <span class="o">=</span> <span class="mi">15</span>     <span class="c1"># Dimension of multiset elements</span>
+<span class="n">n</span> <span class="o">=</span> <span class="mi">50</span>     <span class="c1"># Multiset size</span>
+<span class="n">m</span> <span class="o">=</span> <span class="mi">123</span>    <span class="c1"># Embedding output dimension</span>
+
+<span class="c1"># Create FSW embedding module for multisets/measures over ℝ^d</span>
+<span class="n">embed</span> <span class="o">=</span> <span class="n">FSWEmbedding</span><span class="p">(</span><span class="n">d_in</span><span class="o">=</span><span class="n">d</span><span class="p">,</span> <span class="n">d_out</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+
+<span class="c1"># --- Single input multiset ---</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">d</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+<span class="n">W</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>  <span class="c1"># Optional weights</span>
+
+<span class="n">X_emb</span> <span class="o">=</span> <span class="n">embed</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span>  <span class="c1"># Embeds a weighted multiset</span>
+<span class="n">X_emb</span> <span class="o">=</span> <span class="n">embed</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>     <span class="c1"># Embeds X assuming uniform weights</span>
+
+<span class="c1"># --- A batch of input multisets ---</span>
+<span class="n">batch_dims</span> <span class="o">=</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">9</span><span class="p">)</span>
+<span class="n">Xb</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">batch_dims</span><span class="o">+</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">d</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+<span class="n">Wb</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">batch_dims</span><span class="o">+</span><span class="p">(</span><span class="n">n</span><span class="p">,),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+<span class="n">Xb_emb</span> <span class="o">=</span> <span class="n">embed</span><span class="p">(</span><span class="n">Xb</span><span class="p">,</span> <span class="n">Wb</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dimension of multiset elements: </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Embedding dimension: </span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">One multiset X of size </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;X shape:&quot;</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;embed(X) shape:&quot;</span><span class="p">,</span> <span class="n">X_emb</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="n">batch_dim_str</span> <span class="o">=</span> <span class="s2">&quot;×&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">batch_dims</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Batch of </span><span class="si">{</span><span class="n">batch_dim_str</span><span class="si">}</span><span class="s2"> multisets, each of size </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Xb shape:&quot;</span><span class="p">,</span> <span class="n">Xb</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;embed(Xb) shape:&quot;</span><span class="p">,</span> <span class="n">Xb_emb</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p>Output:</p>
+
+<pre><code>Dimension of multiset elements: 15
+Embedding dimension: 123
+
+One multiset X of size 50:
+X shape: torch.Size([50, 15])
+embed(X) shape: torch.Size([123])
+
+Batch of 5×3×7×9 multisets, each of size 50:
+Xb shape: torch.Size([5, 3, 7, 9, 50, 15])
+embed(Xb) shape: torch.Size([5, 3, 7, 9, 123])
+</code></pre>
+
+<p>The example below illustrates the difference between the core embedding, which is invariant to the input multiset size, and an embedding that explicitly encodes it.</p>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="c1"># --- Encoding multiset size (total mass) ---</span>
+<span class="c1"># By default, the embedding is invariant to the input multiset size, since it</span>
+<span class="c1"># treats inputs as *probability measures*.</span>
+<span class="c1"># Set `encode_total_mass = True` to make the embedding encode the size of the</span>
+<span class="c1"># input multisets, or, more generally, the total mass (i.e. sum of weights).</span>
+<span class="n">embed_total_mass_invariant</span> <span class="o">=</span> <span class="n">FSWEmbedding</span><span class="p">(</span><span class="n">d_in</span><span class="o">=</span><span class="n">d</span><span class="p">,</span> <span class="n">d_out</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+<span class="n">embed_total_mass_aware</span> <span class="o">=</span>     <span class="n">FSWEmbedding</span><span class="p">(</span><span class="n">d_in</span><span class="o">=</span><span class="n">d</span><span class="p">,</span> <span class="n">d_out</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">encode_total_mass</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+
+<span class="c1"># Two multisets of different size but identical element proportions</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+<span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">v3</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+<span class="n">X1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">v3</span><span class="p">])</span>
+<span class="n">X2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">v1</span><span class="p">,</span> <span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">v3</span><span class="p">,</span> <span class="n">v3</span><span class="p">])</span>
+
+<span class="c1"># Embedding *without* total mass encoding</span>
+<span class="n">X1_emb</span> <span class="o">=</span> <span class="n">embed_total_mass_invariant</span><span class="p">(</span><span class="n">X1</span><span class="p">)</span>
+<span class="n">X2_emb</span> <span class="o">=</span> <span class="n">embed_total_mass_invariant</span><span class="p">(</span><span class="n">X2</span><span class="p">)</span>
+
+<span class="c1"># Embedding *with* total mass encoding</span>
+<span class="n">X1_emb_aware</span> <span class="o">=</span> <span class="n">embed_total_mass_aware</span><span class="p">(</span><span class="n">X1</span><span class="p">)</span>
+<span class="n">X2_emb_aware</span> <span class="o">=</span> <span class="n">embed_total_mass_aware</span><span class="p">(</span><span class="n">X2</span><span class="p">)</span>
+
+<span class="c1"># Measure the differences</span>
+<span class="n">diff_invariant</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">X1_emb</span> <span class="o">-</span> <span class="n">X2_emb</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+<span class="n">diff_aware</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">X1_emb_aware</span> <span class="o">-</span> <span class="n">X2_emb_aware</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Two different-size multisets with identical element proportions:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;X₁ = {v1, v2, v3},   X₂ = {v1, v1, v2, v2, v3, v3}&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Embedding difference: ‖Embed(X₁) − Embed(X₂)‖₂&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;With total mass encoding:     </span><span class="si">{</span><span class="n">diff_aware</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Without total mass encoding:  </span><span class="si">{</span><span class="n">diff_invariant</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p>Output:</p>
+
+<pre><code>Two different-size multisets with identical element proportions:
+X₁ = {v1, v2, v3},   X₂ = {v1, v1, v2, v2, v3, v3}
+Embedding difference: ‖Embed(X₁) − Embed(X₂)‖₂
+With total mass encoding:     3.0
+Without total mass encoding:  5.09e-07
+</code></pre>
+
+<hr />
+
+<h2 id="citation">📄 Citation</h2>
+
+<p>If you use this library in your research, please cite our paper:</p>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="nc">@inproceedings</span><span class="p">{</span><span class="nl">amir2025fsw</span><span class="p">,</span>
+<span class="w">  </span><span class="na">title</span><span class="p">=</span><span class="s">{Fourier Sliced-{W}asserstein Embedding for Multisets and Measures}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">author</span><span class="p">=</span><span class="s">{Tal Amir and Nadav Dym}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">booktitle</span><span class="p">=</span><span class="s">{International Conference on Learning Representations (ICLR)}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">year</span><span class="p">=</span><span class="s">{2025}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<hr />
+
+<h2 id="links">🔗 Links</h2>
+
+<ul>
+<li><strong>Paper</strong>: <a href="https://iclr.cc/virtual/2025/poster/30562">ICLR 2025</a>  </li>
+<li><strong>Code</strong>: <a href="https://github.com/tal-amir/fswlib">GitHub repository</a></li>
+</ul>
+
+<hr />
+
+<h2 id="maintainer">👨🏻‍🔧 Maintainer</h2>
+
+<p>This library is maintained by <a href="https://tal-amir.github.io"><strong>Tal Amir</strong></a><br />
+Contact: <a href="mailto:talamir@technion.ac.il">talamir@technion.ac.il</a></p>
+</div>
+
                         <input id="mod-fswlib-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 
                         <label class="view-source-button" for="mod-fswlib-view-source"><span>View Source</span></label>
 
                         <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">1</span></a><span class="c1"># src/fswlib/__init__.py</span>
-</span><span id="L-2"><a href="#L-2"><span class="linenos">2</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">.fsw_embedding.fsw_embedding</span><span class="w"> </span><span class="kn">import</span> <span class="n">FSWEmbedding</span><span class="p">,</span> <span class="n">FSWCustomCudaExtensionLoadWarning</span><span class="p">,</span> <span class="n">FSWCustomCudaExtensionLoadError</span>
-</span><span id="L-3"><a href="#L-3"><span class="linenos">3</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">.fsw_embedding.test_fsw_embedding</span><span class="w"> </span><span class="kn">import</span> <span class="n">main</span> <span class="k">as</span> <span class="n">test_fsw_embedding</span>
-</span><span id="L-4"><a href="#L-4"><span class="linenos">4</span></a>
-</span><span id="L-5"><a href="#L-5"><span class="linenos">5</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;FSWEmbedding&quot;</span><span class="p">,</span> <span class="s2">&quot;FSWCustomCudaExtensionLoadWarning&quot;</span><span class="p">,</span> <span class="s2">&quot;FSWCustomCudaExtensionLoadError&quot;</span><span class="p">,</span> <span class="s2">&quot;test_fsw_embedding&quot;</span><span class="p">]</span>
+</span><span id="L-2"><a href="#L-2"><span class="linenos">2</span></a><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-3"><a href="#L-3"><span class="linenos">3</span></a><span class="sd">.. include:: ../../README.md</span>
+</span><span id="L-4"><a href="#L-4"><span class="linenos">4</span></a><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-5"><a href="#L-5"><span class="linenos">5</span></a>
+</span><span id="L-6"><a href="#L-6"><span class="linenos">6</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">.fsw_embedding.fsw_embedding</span><span class="w"> </span><span class="kn">import</span> <span class="n">FSWEmbedding</span><span class="p">,</span> <span class="n">FSWCustomCudaExtensionLoadWarning</span><span class="p">,</span> <span class="n">FSWCustomCudaExtensionLoadError</span>
+</span><span id="L-7"><a href="#L-7"><span class="linenos">7</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">.fsw_embedding.test_fsw_embedding</span><span class="w"> </span><span class="kn">import</span> <span class="n">main</span> <span class="k">as</span> <span class="n">test_fsw_embedding</span>
+</span><span id="L-8"><a href="#L-8"><span class="linenos">8</span></a>
+</span><span id="L-9"><a href="#L-9"><span class="linenos">9</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;FSWEmbedding&quot;</span><span class="p">,</span> <span class="s2">&quot;FSWCustomCudaExtensionLoadWarning&quot;</span><span class="p">,</span> <span class="s2">&quot;FSWCustomCudaExtensionLoadError&quot;</span><span class="p">,</span> <span class="s2">&quot;test_fsw_embedding&quot;</span><span class="p">]</span>
 </span></pre></div>
 
 
