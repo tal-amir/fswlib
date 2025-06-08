@@ -3446,7 +3446,7 @@ $f(x) = \log(1 + x)$; stronger compression of large values.</li>
 </span><span id="TotalMassEncodingMethod-191"><a href="#TotalMassEncodingMethod-191"><span class="linenos">191</span></a><span class="sd">    Strategies for incorporating total mass into the embedding.</span>
 </span><span id="TotalMassEncodingMethod-192"><a href="#TotalMassEncodingMethod-192"><span class="linenos">192</span></a>
 </span><span id="TotalMassEncodingMethod-193"><a href="#TotalMassEncodingMethod-193"><span class="linenos">193</span></a><span class="sd">    Each method defines a different way of incorporating the total mass $\\mu\\left(\\Omega\\right) = \\sum_{i=1}^n w_i$ of an input measure</span>
-</span><span id="TotalMassEncodingMethod-194"><a href="#TotalMassEncodingMethod-194"><span class="linenos">194</span></a><span class="sd">    $\\mu = \\sum_{i=1}^n \\w_i delta_{x_i}$ (i.e. the multiset size if $\\mu$ is a multiset) with the FSW embedding of the normalized input $\\mu_{\\rho}$ into a single output vector.</span>
+</span><span id="TotalMassEncodingMethod-194"><a href="#TotalMassEncodingMethod-194"><span class="linenos">194</span></a><span class="sd">    $\\mu = \\sum_{i=1}^n w_i \\delta_{\\mathbf{x}^{(i)}}$ (i.e. the multiset size if $\\mu$ is a multiset) with the FSW embedding of the normalized input $\\mu_{\\rho}$ into a single output vector.</span>
 </span><span id="TotalMassEncodingMethod-195"><a href="#TotalMassEncodingMethod-195"><span class="linenos">195</span></a><span class="sd">    For further discussion, see Appendix A.1 of the reference below.</span>
 </span><span id="TotalMassEncodingMethod-196"><a href="#TotalMassEncodingMethod-196"><span class="linenos">196</span></a>
 </span><span id="TotalMassEncodingMethod-197"><a href="#TotalMassEncodingMethod-197"><span class="linenos">197</span></a><span class="sd">    Attributes</span>
@@ -3478,7 +3478,7 @@ $f(x) = \log(1 + x)$; stronger compression of large values.</li>
 </span><span id="TotalMassEncodingMethod-223"><a href="#TotalMassEncodingMethod-223"><span class="linenos">223</span></a><span class="sd">    Notes</span>
 </span><span id="TotalMassEncodingMethod-224"><a href="#TotalMassEncodingMethod-224"><span class="linenos">224</span></a><span class="sd">    -----</span>
 </span><span id="TotalMassEncodingMethod-225"><a href="#TotalMassEncodingMethod-225"><span class="linenos">225</span></a><span class="sd">    In practice, $\\mu\\left(\\Omega\\right)$ in the above expressions is replaced by $f \\left( \\mu\\left(\\Omega\\right) \\right)$,</span>
-</span><span id="TotalMassEncodingMethod-226"><a href="#TotalMassEncodingMethod-226"><span class="linenos">226</span></a><span class="sd">    where $f$ is the function defined by the parameter `total_mass_encoding_function`.</span>
+</span><span id="TotalMassEncodingMethod-226"><a href="#TotalMassEncodingMethod-226"><span class="linenos">226</span></a><span class="sd">    where $f$ is the function defined by `TotalMassEncodingFunction`.</span>
 </span><span id="TotalMassEncodingMethod-227"><a href="#TotalMassEncodingMethod-227"><span class="linenos">227</span></a>
 </span><span id="TotalMassEncodingMethod-228"><a href="#TotalMassEncodingMethod-228"><span class="linenos">228</span></a><span class="sd">    Reference</span>
 </span><span id="TotalMassEncodingMethod-229"><a href="#TotalMassEncodingMethod-229"><span class="linenos">229</span></a><span class="sd">    ---------</span>
@@ -3498,7 +3498,7 @@ $f(x) = \log(1 + x)$; stronger compression of large values.</li>
             <div class="docstring"><p>Strategies for incorporating total mass into the embedding.</p>
 
 <p>Each method defines a different way of incorporating the total mass $\mu\left(\Omega\right) = \sum_{i=1}^n w_i$ of an input measure
-$\mu = \sum_{i=1}^n \w_i delta_{x_i}$ (i.e. the multiset size if $\mu$ is a multiset) with the FSW embedding of the normalized input $\mu_{\rho}$ into a single output vector.
+$\mu = \sum_{i=1}^n w_i \delta_{\mathbf{x}^{(i)}}$ (i.e. the multiset size if $\mu$ is a multiset) with the FSW embedding of the normalized input $\mu_{\rho}$ into a single output vector.
 For further discussion, see Appendix A.1 of the reference below.</p>
 
 <h6 id="attributes">Attributes</h6>
@@ -3528,7 +3528,7 @@ for reference and compatibility.</li>
 <h6 id="notes">Notes</h6>
 
 <p>In practice, $\mu\left(\Omega\right)$ in the above expressions is replaced by $f \left( \mu\left(\Omega\right) \right)$,
-where $f$ is the function defined by the parameter <code>total_mass_encoding_function</code>.</p>
+where $f$ is the function defined by <code>TotalMassEncodingFunction</code>.</p>
 
 <h6 id="reference">Reference</h6>
 

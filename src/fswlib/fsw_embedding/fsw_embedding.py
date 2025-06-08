@@ -190,7 +190,7 @@ class TotalMassEncodingMethod(EnumWithResolve):
     Strategies for incorporating total mass into the embedding.
 
     Each method defines a different way of incorporating the total mass $\\mu\\left(\\Omega\\right) = \\sum_{i=1}^n w_i$ of an input measure
-    $\\mu = \\sum_{i=1}^n \\w_i delta_{x_i}$ (i.e. the multiset size if $\\mu$ is a multiset) with the FSW embedding of the normalized input $\\mu_{\\rho}$ into a single output vector.
+    $\\mu = \\sum_{i=1}^n w_i \\delta_{\\mathbf{x}^{(i)}}$ (i.e. the multiset size if $\\mu$ is a multiset) with the FSW embedding of the normalized input $\\mu_{\\rho}$ into a single output vector.
     For further discussion, see Appendix A.1 of the reference below.
 
     Attributes
@@ -222,7 +222,7 @@ class TotalMassEncodingMethod(EnumWithResolve):
     Notes
     -----
     In practice, $\\mu\\left(\\Omega\\right)$ in the above expressions is replaced by $f \\left( \\mu\\left(\\Omega\\right) \\right)$,
-    where $f$ is the function defined by the parameter `total_mass_encoding_function`.
+    where $f$ is the function defined by `TotalMassEncodingFunction`.
 
     Reference
     ---------
