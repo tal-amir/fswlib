@@ -4,82 +4,44 @@
 {% block nav_members %}
     {% if module.members %}
         <h2>FSWLIB documentation</h2>
-
-        {# Prepare sorted member groups #}
-        {% set all_members = module.members.values() %}
-        {% set methods = all_members | selectattr("kind", "equalto", "method") | sort(attribute="name") | list %}
-        {% set properties = all_members | selectattr("kind", "equalto", "property") | sort(attribute="name") | list %}
-        {% set others = all_members | rejectattr("kind", "in", ["method", "property"]) | sort(attribute="name") | list %}
-
-        {# Render each section separately #}
-        {% if methods %}
-            <h3>Methods</h3>
-            {{ nav_members(methods) }}
-        {% endif %}
-
-        {% if properties %}
-            <h3>Properties</h3>
-            {{ nav_members(properties) }}
-        {% endif %}
-
-        {% if others %}
-            <h3>Other Members</h3>
-            {{ nav_members(others) }}
-        {% endif %}
+        {{ nav_ordered_members(module.members.values()) }}
     {% endif %}
 {% endblock %}
 
-{% block content %}
-<main class="pdoc">
-    {% block module_info %}
-        <section class="module-info">
-            {{ module_name() }}
-            {{ docstring(module) }}
-            {{ view_source_state(module) }}
-            {{ view_source_button(module) }}
-            {{ view_source_code(module) }}
-        </section>
-    {% endblock %}
+{% defaultmacro nav_ordered_members(members) %}
+    <ul class="memberlist">
 
-    {% block module_contents %}
-        {% for m in module.flattened_own_members if is_public(m) | trim %}
-            <section id="{{ m.qualname or m.name }}">
-                {{ member(m) }}
-                {% if m.kind == "class" %}
-                    {# Prepare sorted groups of class members #}
-                    {% set members = m.own_members | selectattr("kind", "ne", "class") | selectattr("name", "ne", "__init__") | list %}
-                    {% set methods = members | selectattr("kind", "equalto", "method") | sort(attribute="name") | list %}
-                    {% set properties = members | selectattr("kind", "equalto", "property") | sort(attribute="name") | list %}
-                    {% set others = members | rejectattr("kind", "in", ["method", "property"]) | sort(attribute="name") | list %}
-
-                    {% for cm in methods %}
-                        <div id="{{ cm.qualname }}" class="classattr">
-                            {{ member(cm) }}
-                        </div>
-                    {% endfor %}
-                    {% for cm in properties %}
-                        <div id="{{ cm.qualname }}" class="classattr">
-                            {{ member(cm) }}
-                        </div>
-                    {% endfor %}
-                    {% for cm in others %}
-                        <div id="{{ cm.qualname }}" class="classattr">
-                            {{ member(cm) }}
-                        </div>
-                    {% endfor %}
-
-                    {% set inherited_members = inherited(m) | trim %}
-                    {% if inherited_members %}
-                        <div class="inherited">
-                            <h5>Inherited Members</h5>
-                            <dl>
-                                {{ inherited_members }}
-                            </dl>
-                        </div>
-                    {% endif %}
-                {% endif %}
-            </section>
+        {# METHODS FIRST #}
+        {% for m in members if is_public(m) and m.kind == "method" | trim %}
+            <li>
+                <a class="method" href="#{{ m.qualname }}">{{ m.name }}</a>
+            </li>
         {% endfor %}
-    {% endblock %}
-</main>
-{% endblock %}
+
+        {# PROPERTIES SECOND #}
+        {% for m in members if is_public(m) and m.kind == "property" | trim %}
+            <li>
+                <a class="property" href="#{{ m.qualname }}">{{ m.name }}</a>
+            </li>
+        {% endfor %}
+
+        {# OTHER MEMBERS LAST (including classes, modules, etc.) #}
+        {% for m in members if is_public(m) and m.kind not in ["method", "property"] | trim %}
+            <li>
+                {% if m.kind == "class" %}
+                    <a class="class" href="#{{ m.qualname }}">{{ m.qualname }}</a>
+                    {% if m.own_members %}
+                        {{ nav_ordered_members(m.own_members) | indent(12) }}
+                    {% endif %}
+                {% elif m.kind == "module" %}
+                    <a class="module" href="#{{ m.name }}">{{ m.name }}</a>
+                {% elif m.name == "__init__" %}
+                    <a class="function" href="#{{ m.qualname }}">{{ m.qualname.split(".")[-2] }}</a>
+                {% else %}
+                    <a class="{{ m.kind }}" href="#{{ m.qualname }}">{{ m.name }}</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+
+    </ul>
+{% enddefaultmacro %}
