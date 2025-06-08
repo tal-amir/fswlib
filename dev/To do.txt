@@ -1,7 +1,5 @@
 Now:
-    - Add homogeneous_scaled method: Ehat(X) = ( ||E(Xrho)||, total_mass * E(Xrho) )
-    - Total mass scaling: a. Verify that ||E(x)|| is multiplied by 1/sqrt(m).
-                          b. Add total_mass_scaling_factor, which is float
+    - Add optional batch normalization to the total mass encoding?
     - See how I can make git monitor the whole docs subdirectory
     - Create example_graph.py script with an example of using FSWEmbedding in graph mode
     - Create example_training.py, where a simple module of embed+MLP will be created and trained to distinguish
@@ -11,12 +9,13 @@ Now:
       dimensions, and for each dimension, the STD will be estimated.
       Show the difference between optimized and unoptimized embedding parameters.
 
-    v - Replace string enums by Enum or Literal
-    v - Settle the issue on how modules' extra parameters (e.g. some boolean fields of the class) are saved and loaded.
-    v - For each constructor input argument, think carefully of its name and default value.
-    v - For each field, decide whether to expose it as a property or hide it
-    v - Check whether the .to() code is inherited properly, and whether .reset_parameters() should also be inherited, and
-        whether its implementation is ok.
+    v Add homogeneous_scaled method: Ehat(X) = ( ||E(Xrho)||, total_mass * E(Xrho) )
+    v Replace string enums by Enum or Literal
+    v Settle the issue on how modules' extra parameters (e.g. some boolean fields of the class) are saved and loaded.
+    v For each constructor input argument, think carefully of its name and default value.
+    v For each field, decide whether to expose it as a property or hide it
+    v Check whether the .to() code is inherited properly, and whether .reset_parameters() should also be inherited, and
+      whether its implementation is ok.
 
 Later:
     - Read and improve all the generated HTML documentation:

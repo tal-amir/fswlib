@@ -1272,10 +1272,12 @@ class FSWEmbedding(nn.Module):
 
             assert isinstance(total_mass, torch.Tensor) # to silence PyCharm
 
-            needs_emb_norm = self._total_mass_encoding_method in {TotalMassEncodingMethod.HOMOGENEOUS, TotalMassEncodingMethod.HOMOGENEOUS_SCALED, TotalMassEncodingMethod.HOMOGENEOUS_LEGACY}
+            needs_emb_norm = (self._total_mass_encoding_method in
+                              {TotalMassEncodingMethod.HOMOGENEOUS,
+                               TotalMassEncodingMethod.HOMOGENEOUS_SCALED,
+                               TotalMassEncodingMethod.HOMOGENEOUS_LEGACY})
 
             if needs_emb_norm:
-                #X_emb_norm = torch.mean(X_emb.abs(), dim=-1, keepdim=True)
                 X_emb_norm = torch.linalg.norm(X_emb, ord=2, dim=-1, keepdim=True) / (X_emb.shape[-1] ** 0.5)
             else:
                 X_emb_norm = None

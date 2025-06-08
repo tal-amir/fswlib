@@ -3,8 +3,8 @@
 This package provides an implementation of the **Fourier Sliced-Wasserstein (FSW) embedding**, introduced in our [ICLR 2025 paper](https://iclr.cc/virtual/2025/poster/30562)
 
 > **Fourier Sliced-Wasserstein Embedding for Multisets and Measures**  
-> *Tal Amir, Nadav Dym*  
-> *International Conference on Learning Representations (ICLR), 2025*
+> Tal Amir and Nadav Dym.  
+> *International Conference on Learning Representations (ICLR)*, 2025.
 
 ---
 
