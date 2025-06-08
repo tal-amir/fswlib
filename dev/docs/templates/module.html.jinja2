@@ -1,9 +1,9 @@
 {% extends "default/module.html.jinja2" %}
-{% block title %}{{ module.modulename }}aa FSWLIB documentation{% endblock %}
+{% block title %}{{ module.modulename }}fswlib documentation{% endblock %}
 
 {% block nav_members %}
     {% if module.members %}
-        <h2>FSWLIB documentation</h2>
+        <h2>fswlib documentation</h2>
         {{ nav_ordered_members(module.members.values()) }}
     {% endif %}
 {% endblock %}

@@ -1,2 +1,2 @@
 # pdoc -t ./dev/docs/templates -o ./docs -d numpy ./src/fswlib/fsw_embedding/fsw_embedding.py
-pdoc -t ./dev/docs/templates -o ./docs -d numpy ./src/fswlib/__init__.py
+pdoc -t ./dev/docs/templates --logo ./dev/docs/logo/logo.png -o ./docs -d numpy ./src/fswlib/__init__.py
