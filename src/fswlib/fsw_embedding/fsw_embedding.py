@@ -1269,25 +1269,34 @@ class FSWEmbedding(nn.Module):
                     raise RuntimeError(f"Unsupported encoding function: {self._total_mass_encoding_transformation}")
             
             del W_sum
-            
+
+            assert isinstance(total_mass, torch.Tensor) # to silence PyCharm
+
+            needs_emb_norm = self._total_mass_encoding_method in {TotalMassEncodingMethod.HOMOGENEOUS, TotalMassEncodingMethod.HOMOGENEOUS_SCALED, TotalMassEncodingMethod.HOMOGENEOUS_LEGACY}
+
+            if needs_emb_norm:
+                #X_emb_norm = torch.mean(X_emb.abs(), dim=-1, keepdim=True)
+                X_emb_norm = torch.linalg.norm(X_emb, ord=2, dim=-1, keepdim=True) / (X_emb.shape[-1] ** 0.5)
+            else:
+                X_emb_norm = None
+
             match self._total_mass_encoding_method:
                 case TotalMassEncodingMethod.DECOUPLED:
-                    assert isinstance(total_mass, torch.Tensor) # to silence PyCharm
-                    assert isinstance(X_emb, torch.Tensor) # to silence PyCharm
                     X_emb = torch.cat( (total_mass, X_emb), dim=-1)
                 case TotalMassEncodingMethod.SCALED:
-                    assert isinstance(total_mass, torch.Tensor) # to silence PyCharm
-                    assert isinstance(X_emb, torch.Tensor) # to silence PyCharm
                     X_emb = torch.cat( (total_mass, total_mass*X_emb), dim=-1)
                 case TotalMassEncodingMethod.HOMOGENEOUS:
-                    X_emb_norm = torch.mean(X_emb.abs(), dim=-1, keepdim=True)
                     X_emb = torch.cat( (total_mass * X_emb_norm, X_emb), dim=-1)
+                case TotalMassEncodingMethod.HOMOGENEOUS_SCALED:
+                    assert isinstance(X_emb_norm, torch.Tensor) # to silence PyCharm
+                    X_emb = torch.cat( (X_emb_norm, total_mass*X_emb), dim=-1)
                 case TotalMassEncodingMethod.HOMOGENEOUS_LEGACY:
-                    X_emb_norm = torch.mean(X_emb.abs(), dim=-1, keepdim=True)
                     X_emb = torch.cat((FSWEmbedding._total_mass_homogeneous_legacy_encoding_part1(total_mass) * X_emb_norm,
                                        FSWEmbedding._total_mass_homogeneous_legacy_encoding_part2(total_mass) * X_emb), dim=-1)
                 case _:  # fallback
                     raise RuntimeError(f"Unsupported encoding method: {self._total_mass_encoding_method}")
+
+            del X_emb_norm
 
         # Add bias
         if self._enable_bias:

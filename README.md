@@ -1,9 +1,9 @@
 # fswlib: A PyTorch Library for the Fourier Sliced-Wasserstein (FSW) Embedding
 
-This package provides an implementation of the **Fourier Sliced-Wasserstein (FSW) embedding** for multisets and measures, introduced in our [ICLR 2025 paper](https://iclr.cc/virtual/2025/poster/30562):
+This package provides an implementation of the **Fourier Sliced-Wasserstein (FSW) embedding**, introduced in our [ICLR 2025 paper](https://iclr.cc/virtual/2025/poster/30562)
 
 > **Fourier Sliced-Wasserstein Embedding for Multisets and Measures**  
-> Tal Amir, Nadav Dym  
+> *Tal Amir, Nadav Dym*  
 > *International Conference on Learning Representations (ICLR), 2025*
 
 ---
@@ -27,7 +27,6 @@ To install the package:
 ```bash
 pip install fswlib
 ```
-
 The core package runs on both **CPU** and **CUDA-enabled GPUs**, using PyTorch's standard CUDA backend.  
 
 In addition, it includes an optional **custom CUDA extension** that can provide up to 2× speedup for sparse weight matrices (e.g., sparse graphs). This extension is currently supported only on **Linux**.

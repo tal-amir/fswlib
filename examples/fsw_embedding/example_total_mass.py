@@ -14,12 +14,12 @@ m = 5    # Embedding output dimension
 embed_total_mass_invariant = FSWEmbedding(d_in=d, d_out=m, device=device, dtype=dtype)
 embed_total_mass_aware =     FSWEmbedding(d_in=d, d_out=m, encode_total_mass=True,
                                           total_mass_encoding_method='homogeneous_legacy',
-                                          total_mass_encoding_function='identity',
+                                          total_mass_encoding_transformation='identity',
                                           device=device, dtype=dtype)
 config2 = {
     "d_in":d, "d_out":m, "encode_total_mass":True,
-                                          "total_mass_encoding_method":'homogeneous_legacy',
-                                          "total_mass_encoding_function":'identity',
+                                          "total_mass_encoding_method":'decoupled',
+                                          "total_mass_encoding_transformation":'identity',
                                           "device":device, "dtype":dtype
 }
 embed_total_mass_aware = FSWEmbedding.from_config(config2)
