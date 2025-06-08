@@ -12,7 +12,7 @@
     <ul class="memberlist">
 
         {# METHODS FIRST #}
-        {% for m in members if is_public(m) and m.kind == "method" | trim %}
+        {% for m in members if is_public(m) and m.kind == "variable" | trim %}
             <li>
                 <a class="method" href="#{{ m.qualname }}">{{ m.name }}</a>
             </li>
@@ -26,7 +26,7 @@
         {% endfor %}
 
         {# OTHER MEMBERS LAST (including classes, modules, etc.) #}
-        {% for m in members if is_public(m) and m.kind not in ["method", "property"] | trim %}
+        {% for m in members if is_public(m) and m.kind not in ["variable", "property"] | trim %}
             <li>
                 {% if m.kind == "class" %}
                     <a class="class" href="#{{ m.qualname }}">{{ m.qualname }}</a>
