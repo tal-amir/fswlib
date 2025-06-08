@@ -140,6 +140,19 @@
 
             </li>
             <li>
+                    <a class="class" href="#EnumWithResolve">EnumWithResolve</a>
+                            <ul class="memberlist">
+
+                        <li>
+                                <a class="function" href="#EnumWithResolve.resolve">resolve</a>
+                        </li>
+
+
+
+                </ul>
+
+            </li>
+            <li>
                     <a class="class" href="#TotalMassEncodingTransformation">TotalMassEncodingTransformation</a>
                             <ul class="memberlist">
 
@@ -419,13 +432,14 @@ EMail: <a href="mailto:talamir@technion.ac.il">talamir@technion.ac.il</a></p>
 </span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">.fsw_embedding.fsw_embedding</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">FSWEmbedding</span><span class="p">,</span>
 </span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a>                                          <span class="n">TotalMassEncodingTransformation</span><span class="p">,</span>
 </span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a>                                          <span class="n">TotalMassEncodingMethod</span><span class="p">,</span>
-</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a>                                          <span class="n">FrequencyInitMethod</span><span class="p">,</span>
-</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a>                                          <span class="n">FSWCustomCudaExtensionLoadWarning</span><span class="p">,</span>
-</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a>                                          <span class="n">FSWCustomCudaExtensionLoadError</span><span class="p">)</span>
-</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>
-</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">.fsw_embedding.test_fsw_embedding</span><span class="w"> </span><span class="kn">import</span> <span class="n">main</span> <span class="k">as</span> <span class="n">test_fsw_embedding</span>
-</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a>
-</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;FSWEmbedding&quot;</span><span class="p">,</span> <span class="s2">&quot;FSWCustomCudaExtensionLoadWarning&quot;</span><span class="p">,</span> <span class="s2">&quot;FSWCustomCudaExtensionLoadError&quot;</span><span class="p">,</span> <span class="s2">&quot;TotalMassEncodingTransformation&quot;</span><span class="p">,</span> <span class="s2">&quot;TotalMassEncodingMethod&quot;</span><span class="p">,</span> <span class="s2">&quot;FrequencyInitMethod&quot;</span><span class="p">,</span> <span class="s2">&quot;test_fsw_embedding&quot;</span><span class="p">]</span>
+</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a>                                          <span class="n">EnumWithResolve</span><span class="p">,</span>
+</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a>                                          <span class="n">FrequencyInitMethod</span><span class="p">,</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a>                                          <span class="n">FSWCustomCudaExtensionLoadWarning</span><span class="p">,</span>
+</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>                                          <span class="n">FSWCustomCudaExtensionLoadError</span><span class="p">)</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a>
+</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">.fsw_embedding.test_fsw_embedding</span><span class="w"> </span><span class="kn">import</span> <span class="n">main</span> <span class="k">as</span> <span class="n">test_fsw_embedding</span>
+</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a>
+</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;FSWEmbedding&quot;</span><span class="p">,</span> <span class="s2">&quot;FSWCustomCudaExtensionLoadWarning&quot;</span><span class="p">,</span> <span class="s2">&quot;FSWCustomCudaExtensionLoadError&quot;</span><span class="p">,</span> <span class="s2">&quot;EnumWithResolve&quot;</span><span class="p">,</span> <span class="s2">&quot;TotalMassEncodingTransformation&quot;</span><span class="p">,</span> <span class="s2">&quot;TotalMassEncodingMethod&quot;</span><span class="p">,</span> <span class="s2">&quot;FrequencyInitMethod&quot;</span><span class="p">,</span> <span class="s2">&quot;test_fsw_embedding&quot;</span><span class="p">]</span>
 </span></pre></div>
 
 
@@ -3225,12 +3239,82 @@ the embedding in smaller blocks without changing the result.</li>
 
 
                 </section>
+                <section id="EnumWithResolve">
+                            <input id="EnumWithResolve-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr class">
+            
+    <span class="def">class</span>
+    <span class="name">EnumWithResolve</span><wbr>(<span class="base">enum.Enum</span>):
+
+                <label class="view-source-button" for="EnumWithResolve-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#EnumWithResolve"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="EnumWithResolve-146"><a href="#EnumWithResolve-146"><span class="linenos">146</span></a><span class="k">class</span><span class="w"> </span><span class="nc">EnumWithResolve</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+</span><span id="EnumWithResolve-147"><a href="#EnumWithResolve-147"><span class="linenos">147</span></a>    <span class="nd">@classmethod</span>
+</span><span id="EnumWithResolve-148"><a href="#EnumWithResolve-148"><span class="linenos">148</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">_E</span><span class="p">],</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_E</span><span class="p">:</span>
+</span><span id="EnumWithResolve-149"><a href="#EnumWithResolve-149"><span class="linenos">149</span></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="bp">cls</span><span class="p">):</span>
+</span><span id="EnumWithResolve-150"><a href="#EnumWithResolve-150"><span class="linenos">150</span></a>            <span class="k">return</span> <span class="n">obj</span>
+</span><span id="EnumWithResolve-151"><a href="#EnumWithResolve-151"><span class="linenos">151</span></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="EnumWithResolve-152"><a href="#EnumWithResolve-152"><span class="linenos">152</span></a>            <span class="k">try</span><span class="p">:</span>
+</span><span id="EnumWithResolve-153"><a href="#EnumWithResolve-153"><span class="linenos">153</span></a>                <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+</span><span id="EnumWithResolve-154"><a href="#EnumWithResolve-154"><span class="linenos">154</span></a>            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+</span><span id="EnumWithResolve-155"><a href="#EnumWithResolve-155"><span class="linenos">155</span></a>                <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">cls</span><span class="p">]</span>
+</span><span id="EnumWithResolve-156"><a href="#EnumWithResolve-156"><span class="linenos">156</span></a>                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="EnumWithResolve-157"><a href="#EnumWithResolve-157"><span class="linenos">157</span></a>                    <span class="sa">f</span><span class="s2">&quot;Invalid string &#39;</span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s2">&#39; for </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">. Valid options: </span><span class="si">{</span><span class="n">valid</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="EnumWithResolve-158"><a href="#EnumWithResolve-158"><span class="linenos">158</span></a>                <span class="p">)</span>
+</span><span id="EnumWithResolve-159"><a href="#EnumWithResolve-159"><span class="linenos">159</span></a>        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span id="EnumWithResolve-160"><a href="#EnumWithResolve-160"><span class="linenos">160</span></a>            <span class="sa">f</span><span class="s2">&quot;Expected a string or </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> instance, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
+</span><span id="EnumWithResolve-161"><a href="#EnumWithResolve-161"><span class="linenos">161</span></a>        <span class="p">)</span>
+</span><span id="EnumWithResolve-162"><a href="#EnumWithResolve-162"><span class="linenos">162</span></a>
+</span><span id="EnumWithResolve-163"><a href="#EnumWithResolve-163"><span class="linenos">163</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="EnumWithResolve-164"><a href="#EnumWithResolve-164"><span class="linenos">164</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the string value of the enum member.&quot;&quot;&quot;</span>
+</span><span id="EnumWithResolve-165"><a href="#EnumWithResolve-165"><span class="linenos">165</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+</span></pre></div>
+
+
+    
+
+                            <div id="EnumWithResolve.resolve" class="classattr">
+                                        <input id="EnumWithResolve.resolve-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+                    <div class="decorator decorator-classmethod">@classmethod</div>
+
+        <span class="def">def</span>
+        <span class="name">resolve</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="o">~</span><span class="n">_E</span><span class="p">]</span>, </span><span class="param"><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span></span><span class="return-annotation">) -> <span class="o">~</span><span class="n">_E</span>:</span></span>
+
+                <label class="view-source-button" for="EnumWithResolve.resolve-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#EnumWithResolve.resolve"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="EnumWithResolve.resolve-147"><a href="#EnumWithResolve.resolve-147"><span class="linenos">147</span></a>    <span class="nd">@classmethod</span>
+</span><span id="EnumWithResolve.resolve-148"><a href="#EnumWithResolve.resolve-148"><span class="linenos">148</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">_E</span><span class="p">],</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_E</span><span class="p">:</span>
+</span><span id="EnumWithResolve.resolve-149"><a href="#EnumWithResolve.resolve-149"><span class="linenos">149</span></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="bp">cls</span><span class="p">):</span>
+</span><span id="EnumWithResolve.resolve-150"><a href="#EnumWithResolve.resolve-150"><span class="linenos">150</span></a>            <span class="k">return</span> <span class="n">obj</span>
+</span><span id="EnumWithResolve.resolve-151"><a href="#EnumWithResolve.resolve-151"><span class="linenos">151</span></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="EnumWithResolve.resolve-152"><a href="#EnumWithResolve.resolve-152"><span class="linenos">152</span></a>            <span class="k">try</span><span class="p">:</span>
+</span><span id="EnumWithResolve.resolve-153"><a href="#EnumWithResolve.resolve-153"><span class="linenos">153</span></a>                <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+</span><span id="EnumWithResolve.resolve-154"><a href="#EnumWithResolve.resolve-154"><span class="linenos">154</span></a>            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+</span><span id="EnumWithResolve.resolve-155"><a href="#EnumWithResolve.resolve-155"><span class="linenos">155</span></a>                <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">cls</span><span class="p">]</span>
+</span><span id="EnumWithResolve.resolve-156"><a href="#EnumWithResolve.resolve-156"><span class="linenos">156</span></a>                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="EnumWithResolve.resolve-157"><a href="#EnumWithResolve.resolve-157"><span class="linenos">157</span></a>                    <span class="sa">f</span><span class="s2">&quot;Invalid string &#39;</span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s2">&#39; for </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">. Valid options: </span><span class="si">{</span><span class="n">valid</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="EnumWithResolve.resolve-158"><a href="#EnumWithResolve.resolve-158"><span class="linenos">158</span></a>                <span class="p">)</span>
+</span><span id="EnumWithResolve.resolve-159"><a href="#EnumWithResolve.resolve-159"><span class="linenos">159</span></a>        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span id="EnumWithResolve.resolve-160"><a href="#EnumWithResolve.resolve-160"><span class="linenos">160</span></a>            <span class="sa">f</span><span class="s2">&quot;Expected a string or </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> instance, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
+</span><span id="EnumWithResolve.resolve-161"><a href="#EnumWithResolve.resolve-161"><span class="linenos">161</span></a>        <span class="p">)</span>
+</span></pre></div>
+
+
+    
+
+                            </div>
+                </section>
                 <section id="TotalMassEncodingTransformation">
                             <input id="TotalMassEncodingTransformation-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr class">
             
     <span class="def">class</span>
-    <span class="name">TotalMassEncodingTransformation</span><wbr>(<span class="base"><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve">fswlib.fsw_embedding.fsw_embedding.EnumWithResolve</a></span>):
+    <span class="name">TotalMassEncodingTransformation</span><wbr>(<span class="base"><a href="#EnumWithResolve">fswlib.EnumWithResolve</a></span>):
 
                 <label class="view-source-button" for="TotalMassEncodingTransformation-view-source"><span>View Source</span></label>
 
@@ -3314,8 +3398,8 @@ f(x) = log(1 + x); stronger compression of large values.</li>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
-                                    <div><dt><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve">fswlib.fsw_embedding.fsw_embedding.EnumWithResolve</a></dt>
-                                <dd id="TotalMassEncodingTransformation.resolve" class="function"><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve.resolve">resolve</a></dd>
+                                    <div><dt><a href="#EnumWithResolve">EnumWithResolve</a></dt>
+                                <dd id="TotalMassEncodingTransformation.resolve" class="function"><a href="#EnumWithResolve.resolve">resolve</a></dd>
 
             </div>
                                 </dl>
@@ -3326,7 +3410,7 @@ f(x) = log(1 + x); stronger compression of large values.</li>
 <div class="attr class">
             
     <span class="def">class</span>
-    <span class="name">TotalMassEncodingMethod</span><wbr>(<span class="base"><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve">fswlib.fsw_embedding.fsw_embedding.EnumWithResolve</a></span>):
+    <span class="name">TotalMassEncodingMethod</span><wbr>(<span class="base"><a href="#EnumWithResolve">fswlib.EnumWithResolve</a></span>):
 
                 <label class="view-source-button" for="TotalMassEncodingMethod-view-source"><span>View Source</span></label>
 
@@ -3460,8 +3544,8 @@ International Conference on Learning Representations (ICLR), 2025.
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
-                                    <div><dt><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve">fswlib.fsw_embedding.fsw_embedding.EnumWithResolve</a></dt>
-                                <dd id="TotalMassEncodingMethod.resolve" class="function"><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve.resolve">resolve</a></dd>
+                                    <div><dt><a href="#EnumWithResolve">EnumWithResolve</a></dt>
+                                <dd id="TotalMassEncodingMethod.resolve" class="function"><a href="#EnumWithResolve.resolve">resolve</a></dd>
 
             </div>
                                 </dl>
@@ -3472,7 +3556,7 @@ International Conference on Learning Representations (ICLR), 2025.
 <div class="attr class">
             
     <span class="def">class</span>
-    <span class="name">FrequencyInitMethod</span><wbr>(<span class="base"><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve">fswlib.fsw_embedding.fsw_embedding.EnumWithResolve</a></span>):
+    <span class="name">FrequencyInitMethod</span><wbr>(<span class="base"><a href="#EnumWithResolve">fswlib.EnumWithResolve</a></span>):
 
                 <label class="view-source-button" for="FrequencyInitMethod-view-source"><span>View Source</span></label>
 
@@ -3553,8 +3637,8 @@ with spacing inversely proportional to the density function f_ξ.</li>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
-                                    <div><dt><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve">fswlib.fsw_embedding.fsw_embedding.EnumWithResolve</a></dt>
-                                <dd id="FrequencyInitMethod.resolve" class="function"><a href="fswlib/fsw_embedding/fsw_embedding.html#EnumWithResolve.resolve">resolve</a></dd>
+                                    <div><dt><a href="#EnumWithResolve">EnumWithResolve</a></dt>
+                                <dd id="FrequencyInitMethod.resolve" class="function"><a href="#EnumWithResolve.resolve">resolve</a></dd>
 
             </div>
                                 </dl>
