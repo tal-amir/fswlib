@@ -49,7 +49,7 @@ version_date = '2025-06-07'
 #    directly from a saved state_dict.
 
 # Changelog:
-# 2.12    added support for total_mass_encoding_function
+# 2.12    added support for total_mass_encoding_transformation
 # 2.11    fixed sparse padding bug
 # 2.1     added full edge-feature support
 # 2.09a   edge feature support is working (beta)
@@ -102,7 +102,7 @@ import time
 import ctypes
 import platform
 
-__all__ = ["FSWEmbedding", "TotalMassEncodingFunction", "TotalMassEncodingMethod", "FrequencyInitMethod"]
+__all__ = ["FSWEmbedding", "TotalMassEncodingTransformation", "TotalMassEncodingMethod", "FrequencyInitMethod"]
 
 # Name of custom CUDA extension binary
 if platform.system() == "Windows":
@@ -164,8 +164,8 @@ class EnumWithResolve(Enum):
         return self.value
 
 
-class TotalMassEncodingFunction(EnumWithResolve):
-    """Function applied to the total mass before embedding.
+class TotalMassEncodingTransformation(EnumWithResolve):
+    """Transformation applied to the total mass before incorporating into the embedding.
 
     Each option defines a different transformation applied to the total mass of an input measure/multiset
     before it is incorporated into the embedding vector.
@@ -278,7 +278,7 @@ class FSWEmbedding(nn.Module):
                  collapse_output_axes : bool = False,
                  d_edge: int = 0,
                  encode_total_mass: bool = False,
-                 total_mass_encoding_function: str | TotalMassEncodingFunction = 'identity',
+                 total_mass_encoding_transformation: str | TotalMassEncodingTransformation = 'identity',
                  total_mass_encoding_method: str | TotalMassEncodingMethod = 'decoupled',
                  total_mass_padding_thresh: float | int = 1.0,
                  learnable_slices: bool = False,
@@ -311,7 +311,7 @@ class FSWEmbedding(nn.Module):
             Dimension of edge feature vectors, used only for graph inputs.
         encode_total_mass : bool, default=False
             Whether to incorporate the total mass of the input measure into the embedding.
-        total_mass_encoding_function : str or TotalMassEncodingFunction, default='identity'
+        total_mass_encoding_transformation : str or TotalMassEncodingTransformation, default='identity'
             Transformation applied to the total mass before embedding ('identity', 'sqrt', 'log', or enum).
         total_mass_encoding_method : str or TotalMassEncodingMethod, default='decoupled'
             Strategy for combining the transformed total mass with the core embedding.
@@ -347,7 +347,7 @@ class FSWEmbedding(nn.Module):
         --------
         FrequencyInitMethod :
             Enum for selecting frequency initialization strategies.
-        TotalMassEncodingFunction :
+        TotalMassEncodingTransformation :
             Enum for total mass transformations.
         TotalMassEncodingMethod :
             Enum for strategies to incorporate total mass into the embedding.
@@ -380,8 +380,8 @@ class FSWEmbedding(nn.Module):
         self._total_mass_encoding_method = TotalMassEncodingMethod.resolve(total_mass_encoding_method)
         del total_mass_encoding_method
 
-        self._total_mass_encoding_function = TotalMassEncodingFunction.resolve(total_mass_encoding_function)
-        del total_mass_encoding_function
+        self._total_mass_encoding_transformation = TotalMassEncodingTransformation.resolve(total_mass_encoding_transformation)
+        del total_mass_encoding_transformation
 
         if self._d_edge == 0:
             input_space_name = 'R^%d' % self._d_in
@@ -618,7 +618,7 @@ class FSWEmbedding(nn.Module):
 
 
     def to(self, *args, **kwargs):
-        """Moves the module to the specified device or dtype, with validation.
+        """Moves the module to the specified device or dtype.
 
         Example:
 
@@ -683,9 +683,9 @@ class FSWEmbedding(nn.Module):
         return self._encode_total_mass
 
     @property
-    def total_mass_encoding_function(self) -> TotalMassEncodingFunction:
+    def total_mass_encoding_transformation(self) -> TotalMassEncodingTransformation:
         """Function applied to the total mass before it is stored."""
-        return self._total_mass_encoding_function
+        return self._total_mass_encoding_transformation
 
     @property
     def total_mass_encoding_method(self) -> TotalMassEncodingMethod:
@@ -1243,18 +1243,18 @@ class FSWEmbedding(nn.Module):
             X_emb = torch.flatten(X_emb, start_dim=element_axis, end_dim=element_axis+1)
 
         if self._encode_total_mass:
-            match self._total_mass_encoding_function:
-                case TotalMassEncodingFunction.IDENTITY:
+            match self._total_mass_encoding_transformation:
+                case TotalMassEncodingTransformation.IDENTITY:
                     total_mass = W_sum
-                case TotalMassEncodingFunction.SQRT:
+                case TotalMassEncodingTransformation.SQRT:
                     # x/(sqrt(x+1)+1) is a numerically-safe formulation of sqrt(1+x)-1
                     # note that we don't use sqrt(1+x) since we need the function to vanish at x=0,
                     # and we don't use sqrt(x) since we need it to have a gradient at x=0.
                     total_mass = 2*( W_sum / ( torch.sqrt(W_sum + 1) + 1) )
-                case TotalMassEncodingFunction.LOG:
+                case TotalMassEncodingTransformation.LOG:
                     total_mass = torch.log1p(W_sum)
                 case _:
-                    raise RuntimeError(f"Unsupported encoding function: {self._total_mass_encoding_function}")
+                    raise RuntimeError(f"Unsupported encoding function: {self._total_mass_encoding_transformation}")
             
             del W_sum
             

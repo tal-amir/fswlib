@@ -20,6 +20,7 @@ Later:
          provided as input arguments.
       2. Add some missing references to equations in the paper, e.g. in different Enum options for the total mass encoding
          method and function
+      3. Test pdoc's math support. Add math in the relevant places (e.g. total mass encoding methods)
     - Make the "create dummy bins" command available standalone
     - Add that dummy creation command and a cleanup to the prepare_for_upload script
     - Create examples and tests
