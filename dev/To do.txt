@@ -1,4 +1,5 @@
 Now:
+    - See how I can make git monitor the whole docs subdirectory
     - Create example_graph.py script with an example of using FSWEmbedding in graph mode
     - Create example_training.py, where a simple module of embed+MLP will be created and trained to distinguish
       spheres and simplices of different radii and randomly-rotated.
