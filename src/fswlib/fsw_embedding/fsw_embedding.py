@@ -199,17 +199,17 @@ class TotalMassEncodingMethod(EnumWithResolve):
         The total mass is appended as a separate component to the embedding vector,
         which is computed from the normalized input measure, as in Equation (18)
         in our paper:
-        $$ \\hat{E}^{\textup{FSW}}_{m}\\left(\\mu\\right) = \\left[ \\mu\\left(\\Omega\\right), E^{\textup{FSW}}_{m-1}\\left(\\mu\\right) \\right] $$
+        $$ \\hat{E}^{\\textup{FSW}}_{m}\\left(\\mu\\right) = \\left[ \\mu\\left(\\Omega\\right), E^{\\textup{FSW}}_{m-1}\\left(\\mu_{\\rho}\\right) \\right] $$
 
     SCALED : str
         Similar to DECOUPLED, but the embedding of the normalized input is scaled
         by the total mass. Using the notation of Equation (18), this yields:
-
-            Êₘ(μ) = [ μ(Ω), μ(Ω) · Êₘ₋₁(μ_ρ) ]
+        $$ \\hat{E}^{\\textup{FSW}}_{m}\\left(\\mu\\right) = \\left[ \\mu\\left(\\Omega\\right), \\mu\\left(\\Omega\\right) \\cdot E^{\\textup{FSW}}_{m-1}\\left(\\mu_{\\rho}\\right) \\right] $$
 
     HOMOGENEOUS : str
         A method that encodes the total mass while preserving homogeneity
         with respect to the elements of the input multiset. See Equation (19).
+        $$ \\hat{E}^{\\textup{FSW}}_{m}\\left(\\mu\\right) = \\left[ \\lVert E^{\\textup{FSW}}_{m-1}\\left(\\mu_{\\rho}\\right) \\rVert \\cdot \\mu\\left(\\Omega\\right), E^{\\textup{FSW}}_{m-1}\\left(\\mu_{\\rho}\\right) \\right] $$
 
     HOMOGENEOUS_LEGACY : str
         An alternative, legacy version of the homogeneous method, retained

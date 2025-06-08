@@ -3452,17 +3452,17 @@ f(x) = log(1 + x); stronger compression of large values.</li>
 </span><span id="TotalMassEncodingMethod-200"><a href="#TotalMassEncodingMethod-200"><span class="linenos">200</span></a><span class="sd">        The total mass is appended as a separate component to the embedding vector,</span>
 </span><span id="TotalMassEncodingMethod-201"><a href="#TotalMassEncodingMethod-201"><span class="linenos">201</span></a><span class="sd">        which is computed from the normalized input measure, as in Equation (18)</span>
 </span><span id="TotalMassEncodingMethod-202"><a href="#TotalMassEncodingMethod-202"><span class="linenos">202</span></a><span class="sd">        in our paper:</span>
-</span><span id="TotalMassEncodingMethod-203"><a href="#TotalMassEncodingMethod-203"><span class="linenos">203</span></a><span class="sd">        $$ \\hat{E}^{\textup{FSW}}_{m}\\left(\\mu\\right) = \\left[ \\mu\\left(\\Omega\\right), E^{\textup{FSW}}_{m-1}\\left(\\mu\\right) \\right] $$</span>
+</span><span id="TotalMassEncodingMethod-203"><a href="#TotalMassEncodingMethod-203"><span class="linenos">203</span></a><span class="sd">        $$ \\hat{E}^{\\textup{FSW}}_{m}\\left(\\mu\\right) = \\left[ \\mu\\left(\\Omega\\right), E^{\\textup{FSW}}_{m-1}\\left(\\mu_{\\rho}\\right) \\right] $$</span>
 </span><span id="TotalMassEncodingMethod-204"><a href="#TotalMassEncodingMethod-204"><span class="linenos">204</span></a>
 </span><span id="TotalMassEncodingMethod-205"><a href="#TotalMassEncodingMethod-205"><span class="linenos">205</span></a><span class="sd">    SCALED : str</span>
 </span><span id="TotalMassEncodingMethod-206"><a href="#TotalMassEncodingMethod-206"><span class="linenos">206</span></a><span class="sd">        Similar to DECOUPLED, but the embedding of the normalized input is scaled</span>
 </span><span id="TotalMassEncodingMethod-207"><a href="#TotalMassEncodingMethod-207"><span class="linenos">207</span></a><span class="sd">        by the total mass. Using the notation of Equation (18), this yields:</span>
-</span><span id="TotalMassEncodingMethod-208"><a href="#TotalMassEncodingMethod-208"><span class="linenos">208</span></a>
-</span><span id="TotalMassEncodingMethod-209"><a href="#TotalMassEncodingMethod-209"><span class="linenos">209</span></a><span class="sd">            Êₘ(μ) = [ μ(Ω), μ(Ω) · Êₘ₋₁(μ_ρ) ]</span>
-</span><span id="TotalMassEncodingMethod-210"><a href="#TotalMassEncodingMethod-210"><span class="linenos">210</span></a>
-</span><span id="TotalMassEncodingMethod-211"><a href="#TotalMassEncodingMethod-211"><span class="linenos">211</span></a><span class="sd">    HOMOGENEOUS : str</span>
-</span><span id="TotalMassEncodingMethod-212"><a href="#TotalMassEncodingMethod-212"><span class="linenos">212</span></a><span class="sd">        A method that encodes the total mass while preserving homogeneity</span>
-</span><span id="TotalMassEncodingMethod-213"><a href="#TotalMassEncodingMethod-213"><span class="linenos">213</span></a><span class="sd">        with respect to the elements of the input multiset. See Equation (19).</span>
+</span><span id="TotalMassEncodingMethod-208"><a href="#TotalMassEncodingMethod-208"><span class="linenos">208</span></a><span class="sd">        $$ \\hat{E}^{\\textup{FSW}}_{m}\\left(\\mu\\right) = \\left[ \\mu\\left(\\Omega\\right), \\mu\\left(\\Omega\\right) \\cdot E^{\\textup{FSW}}_{m-1}\\left(\\mu_{\\rho}\\right) \\right] $$</span>
+</span><span id="TotalMassEncodingMethod-209"><a href="#TotalMassEncodingMethod-209"><span class="linenos">209</span></a>
+</span><span id="TotalMassEncodingMethod-210"><a href="#TotalMassEncodingMethod-210"><span class="linenos">210</span></a><span class="sd">    HOMOGENEOUS : str</span>
+</span><span id="TotalMassEncodingMethod-211"><a href="#TotalMassEncodingMethod-211"><span class="linenos">211</span></a><span class="sd">        A method that encodes the total mass while preserving homogeneity</span>
+</span><span id="TotalMassEncodingMethod-212"><a href="#TotalMassEncodingMethod-212"><span class="linenos">212</span></a><span class="sd">        with respect to the elements of the input multiset. See Equation (19).</span>
+</span><span id="TotalMassEncodingMethod-213"><a href="#TotalMassEncodingMethod-213"><span class="linenos">213</span></a><span class="sd">        $$ \\hat{E}^{\\textup{FSW}}_{m}\\left(\\mu\\right) = \\left[ \\lVert E^{\\textup{FSW}}_{m-1}\\left(\\mu_{\\rho}\\right) \\rVert \\cdot \\mu\\left(\\Omega\\right), E^{\\textup{FSW}}_{m-1}\\left(\\mu_{\\rho}\\right) \\right] $$</span>
 </span><span id="TotalMassEncodingMethod-214"><a href="#TotalMassEncodingMethod-214"><span class="linenos">214</span></a>
 </span><span id="TotalMassEncodingMethod-215"><a href="#TotalMassEncodingMethod-215"><span class="linenos">215</span></a><span class="sd">    HOMOGENEOUS_LEGACY : str</span>
 </span><span id="TotalMassEncodingMethod-216"><a href="#TotalMassEncodingMethod-216"><span class="linenos">216</span></a><span class="sd">        An alternative, legacy version of the homogeneous method, retained</span>
@@ -3495,16 +3495,15 @@ For further discussion, see Appendix A.1 of the reference below.</p>
 The total mass is appended as a separate component to the embedding vector,
 which is computed from the normalized input measure, as in Equation (18)
 in our paper:
-$$ \hat{E}^{    extup{FSW}}_{m}\left(\mu\right) = \left[ \mu\left(\Omega\right), E^{    extup{FSW}}_{m-1}\left(\mu\right) \right] $$</li>
-<li><p><strong>SCALED</strong> (str):
+$$ \hat{E}^{\textup{FSW}}_{m}\left(\mu\right) = \left[ \mu\left(\Omega\right), E^{\textup{FSW}}_{m-1}\left(\mu_{\rho}\right) \right] $$</li>
+<li><strong>SCALED</strong> (str):
 Similar to DECOUPLED, but the embedding of the normalized input is scaled
-by the total mass. Using the notation of Equation (18), this yields:</p>
-
-<pre><code>Êₘ(μ) = [ μ(Ω), μ(Ω) · Êₘ₋₁(μ_ρ) ]
-</code></pre></li>
+by the total mass. Using the notation of Equation (18), this yields:
+$$ \hat{E}^{\textup{FSW}}_{m}\left(\mu\right) = \left[ \mu\left(\Omega\right), \mu\left(\Omega\right) \cdot E^{\textup{FSW}}_{m-1}\left(\mu_{\rho}\right) \right] $$</li>
 <li><strong>HOMOGENEOUS</strong> (str):
 A method that encodes the total mass while preserving homogeneity
-with respect to the elements of the input multiset. See Equation (19).</li>
+with respect to the elements of the input multiset. See Equation (19).
+$$ \hat{E}^{\textup{FSW}}_{m}\left(\mu\right) = \left[ \lVert E^{\textup{FSW}}_{m-1}\left(\mu_{\rho}\right) \rVert \cdot \mu\left(\Omega\right), E^{\textup{FSW}}_{m-1}\left(\mu_{\rho}\right) \right] $$</li>
 <li><strong>HOMOGENEOUS_LEGACY</strong> (str):
 An alternative, legacy version of the homogeneous method, retained
 for reference and compatibility.</li>
