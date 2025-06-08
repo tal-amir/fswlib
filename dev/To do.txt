@@ -4,7 +4,8 @@ Now:
       spheres and simplices of different radii and randomly-rotated.
       Show the use of learnable_slices and learnable_frequencies.
     - Create example_sliced_wasserstein.py, where the SW distance will be approximated with different embedding
-      dimensions, and for each dimension, the STD will be estimated
+      dimensions, and for each dimension, the STD will be estimated.
+      Show the difference between optimized and unoptimized embedding parameters.
 
     v - Replace string enums by Enum or Literal
     v - Settle the issue on how modules' extra parameters (e.g. some boolean fields of the class) are saved and loaded.

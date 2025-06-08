@@ -283,7 +283,7 @@ class FSWEmbedding(nn.Module):
                  total_mass_padding_thresh: float | int = 1.0,
                  learnable_slices: bool = False,
                  learnable_frequencies: bool = False,
-                 frequency_init: float | tuple[float,float] | str | FrequencyInitMethod = FrequencyInitMethod.RANDOM,
+                 frequency_init: float | tuple[float,float] | str | FrequencyInitMethod = 'random',
                  minimize_slice_coherence: bool = False,
                  enable_bias: bool = True,
                  device: torch.device | int | str | None = None,
@@ -618,9 +618,10 @@ class FSWEmbedding(nn.Module):
 
 
     def to(self, *args, **kwargs):
-        """Moves the module to the specified device or dtype.
+        """Moves the module to the specified device or dtype, with validation.
 
         Example:
+
             module.to(torch.float32)
             module.to(device='cuda')
 
