@@ -11,22 +11,8 @@
 {% defaultmacro nav_ordered_members(members) %}
     <ul class="memberlist">
 
-        {# METHODS FIRST #}
-        {% for m in members if is_public(m) and m.kind == "variable" | trim %}
-            <li>
-                <a class="method" href="#{{ m.qualname }}">{{ m.name }}</a>
-            </li>
-        {% endfor %}
-
-        {# PROPERTIES SECOND #}
-        {% for m in members if is_public(m) and m.kind == "property" | trim %}
-            <li>
-                <a class="property" href="#{{ m.qualname }}">{{ m.name }}</a>
-            </li>
-        {% endfor %}
-
         {# OTHER MEMBERS LAST (including classes, modules, etc.) #}
-        {% for m in members if is_public(m) and m.kind not in ["variable", "property"] | trim %}
+        {% for m in members if is_public(m) and m.kind not in ["property", "variable"] | trim %}
             <li>
                 {% if m.kind == "class" %}
                     <a class="class" href="#{{ m.qualname }}">{{ m.qualname }}</a>
@@ -40,6 +26,20 @@
                 {% else %}
                     <a class="{{ m.kind }}" href="#{{ m.qualname }}">{{ m.name }}</a>
                 {% endif %}
+            </li>
+        {% endfor %}
+
+        {# PROPERTIES SECOND #}
+        {% for m in members if is_public(m) and m.kind == "property" | trim %}
+            <li>
+                <a class="property" href="#{{ m.qualname }}">{{ m.name }}</a>
+            </li>
+        {% endfor %}
+
+        {# METHODS FIRST #}
+        {% for m in members if is_public(m) and m.kind == "variable" | trim %}
+            <li>
+                <a class="method" href="#{{ m.qualname }}">{{ m.name }}</a>
             </li>
         {% endfor %}
 
