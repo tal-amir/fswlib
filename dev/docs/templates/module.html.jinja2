@@ -8,11 +8,5 @@
         {# METHODS #}
         {{ nav_members(module.members.values() | selectattr("kind", "equalto", "method")) }}
 
-        {# PROPERTIES #}
-        {{ nav_members(module.members.values() | selectattr("kind", "equalto", "property")) }}
-
-        {# OTHER (fields, classes, etc.) #}
-        {{ nav_members(module.members.values() | rejectattr("kind", "in", ["method", "property"])) }}
-
     {% endif %}
 {% endblock %}
