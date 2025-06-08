@@ -197,7 +197,9 @@ class TotalMassEncodingMethod(EnumWithResolve):
     ----------
     DECOUPLED : str
         The total mass is appended as a separate component to the embedding vector,
-        which is computed from the normalized input. See Equation (18).
+        which is computed from the normalized input measure, as in Equation (18)
+        in our paper:
+        $$ \\hat{E}^{\textup{FSW}}_{m}\\left(\\mu\\right) = \\left[ \\mu\\left(\\Omega\\right), E^{\textup{FSW}}_{m-1}\\left(\\mu\\right) \\right] $$
 
     SCALED : str
         Similar to DECOUPLED, but the embedding of the normalized input is scaled

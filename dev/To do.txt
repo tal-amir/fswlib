@@ -1,4 +1,7 @@
 Now:
+    - Add homogeneous_scaled method: Ehat(X) = ( ||E(Xrho)||, total_mass * E(Xrho) )
+    - Total mass scaling: a. Verify that ||E(x)|| is multiplied by 1/sqrt(m).
+                          b. Add total_mass_scaling_factor, which is float
     - See how I can make git monitor the whole docs subdirectory
     - Create example_graph.py script with an example of using FSWEmbedding in graph mode
     - Create example_training.py, where a simple module of embed+MLP will be created and trained to distinguish
