@@ -270,21 +270,21 @@ class FSWEmbedding(nn.Module):
     r"""
     Fourier Sliced-Wasserstein (FSW) embedding module.
 
-    Maps input multisets (or discrete measures) in
+    Maps input multisets (or, more generally, discrete measures) in
     $\mathbb{R}^{d_\text{in}}$ to fixed-length vectors in
     $\mathbb{R}^{d_\text{out}}$ via the Fourier Sliced-Wasserstein
-    embedding [Amir & Dym, ICLR 2025].
+    embedding as described in [Amir & Dym, ICLR 2025].
 
     Features
     --------
-    • Works with arbitrary batch dimensions.
+    • **Batched inputs**: eupports arbitrary number of batch dimensions.
     • **Graph mode**: efficient message-aggregation, including sparse adjacency support.
-    • Supports full autograd/gradient back-propagation on CPU or CUDA.
+    • **Differentiability**: Full autograd/gradient support.
 
     See Also
     --------
-    FSWEmbedding.__init__ : Constructor parameters.
-    FSWEmbedding.forward : Input/output tensor shapes and options.
+    `FSWEmbedding.__init__` : Constructor parameters.
+    `FSWEmbedding.forward` : Input/output tensor shapes and options.
     """
 
 
@@ -313,58 +313,75 @@ class FSWEmbedding(nn.Module):
                  fail_if_cuda_extension_load_fails: bool = False,
                  report: bool = False,
                  report_on_coherence_minimization: bool = False):
-        """
+        r"""
         Initialize an FSWEmbedding module.
 
         Parameters
         ----------
         d_in : int
-            Dimensionality of input multiset elements.
+            Dimension of input multiset elements or, more generally, measure support points.
         d_out : int, optional
             Desired embedding dimension. If not specified, must provide both `num_slices` and `num_frequencies`.
         num_slices : int, optional
-            Number of slice directions to be used in Cartesian mode. Should be omitted if `d_out` is specified.
+            Number of slices. Should be omitted if `d_out` is specified.
         num_frequencies : int, optional
-            Number of frequencies per slice to be used in Cartesian mode. Should be omitted if `d_out` is specified.
+            Number of frequencies per slice. Should be omitted if `d_out` is specified.
         collapse_output_axes : bool, default=False
-            If True, flattens the slice and frequency dimensions into a single output axis. Only relevant in Cartesian mode.
+            If True, flattens the slice and frequency dimensions into a single output axis. Only relevant if
+            `num_slices` and `num_frequencies` are provided.
         d_edge : int, default=0
-            Dimension of edge feature vectors, used only for graph inputs.
+            Dimension of edge feature vectors. Used only for graph inputs.
         encode_total_mass : bool, default=False
-            Whether to incorporate the total mass of the input measure into the embedding.
+            Whether to incorporate the input multiset size (or, more generally, the _total mass_ of the input measure)
+            into the embedding output.
         total_mass_encoding_transformation : str or TotalMassEncodingTransformation, default='identity'
-            Transformation applied to the total mass before embedding ('identity', 'sqrt', 'log', or enum).
+            Transformation applied to the total mass before embedding ('identity', 'sqrt', or 'log').
+            See also: `TotalMassEncodingTransformation`
         total_mass_encoding_method : str or TotalMassEncodingMethod, default='decoupled'
-            Strategy for combining the transformed total mass with the core embedding.
+            Strategy for combining the transformed total mass with the core embedding
+            ('decoupled`, `scaled`, `homogeneous`, `homogeneous_scaled`, or `homogeneous_legacy`)
+            See also: `TotalMassEncodingMethod`
         total_mass_encoding_scale : float, default=1.0
-            Scaling factor for encoding the total mass. The encoded total mass is multiplied by this factor.
+            Scaling factor to apply to the total mass encoding. The encoded total mass is multiplied by this factor.
+            See also: `TotalMassEncodingMethod`
         total_mass_padding_thresh : float or int, default=1.0
-            Inputs with total mass below this threshold are padded at the origin to reach it.
+            Inputs with total mass below this threshold are padded with the zero vector to reach it; see
+            in [Amir and Dym, ICLR 2025], Appendix A.1.
+            See also: `TotalMassEncodingMethod`
         learnable_slices : bool, default=False
-            If True, slice directions are treated as learnable parameters.
+            If True, slice vectors are learnable parameters.
         learnable_frequencies : bool, default=False
-            If True, frequency values are learnable.
+            If True, frequency values are learnable parameters.
         frequency_init : float, str, tuple of float, or FrequencyInitMethod, default='random'
             Initialization scheme for frequencies:
-              - A float sets all frequencies to the same value.
-              - A tuple `(low, high)` sets evenly spaced values in that interval.
-              - A string ('random', 'even') or enum member may also be used.
+              - A float: sets all frequencies to the same value.
+              - A tuple `(low, high)` of floats: sets evenly spaced values in that interval.
+              - 'random': frequencies are drawn independently from the distribution $\mathcal{D_{\xi}}$, defined in
+                          [Amir and Dym, ICLR 2025], Section 3.
+              - 'even': frequencies are spaced evenly according to their distribution $\mathcal{D_{\xi}}$, with spaces
+                        inversely proportional to the density.
+            See also: `FrequencyInitMethod`
         minimize_slice_coherence : bool, default=False
-            If True, adds a regularizer to encourage low mutual coherence between slices.
+            If True, minimizes the _mutual coherence_ between slices for a more uniform cover of the unit sphere.
+            If False, slice vectors are drawn uniformly at random from the unit sphere.
         enable_bias : bool, default=True
-            Whether to add a learnable bias to the output embedding.
+            If True, adds a learnable bias vector to the output embedding. When enabled, the bias is initialized
+            to zero.
         device : torch.device, int, str, or None, optional
-            The device on which to allocate tensors (e.g., 'cpu', 'cuda', or an index).
+            The torch device on which to allocate tensors (e.g., 'cpu', 'cuda', or an index).
+            If not provided, the default device defined in Torch is used.
         dtype : torch.dtype, optional
-            Data type of all floating-point tensors (e.g., torch.float32).
+            Data type of input and output tensors (e.g., torch.float32).
+            If not provided, the default dtype defined in Torch is used.
         use_custom_cuda_extension_if_available : bool or None, optional
             Whether to use the custom CUDA kernel if present.
+            Default: Linux: True, all other systems: False
         fail_if_cuda_extension_load_fails : bool, default=False
             Whether to raise a runtime error (rather than a warning) if the CUDA extension failes to load.
         report : bool, default=False
-            If True, prints a summary of the configuration after initialization.
+            If True, prints a report with diagnostic information during initialization and forward computation.
         report_on_coherence_minimization : bool, default=False
-            If True, prints diagnostics during slice coherence minimization.
+            If True, prints special diagnostics during slice coherence minimization.
 
         See Also
         --------
