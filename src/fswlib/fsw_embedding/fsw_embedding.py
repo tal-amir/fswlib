@@ -271,8 +271,8 @@ class FSWEmbedding(nn.Module):
     Fourier Sliced-Wasserstein (FSW) embedding layer.
 
     Maps input multisets (or discrete measures) in
-    \(\mathbb{R}^{d_\text{in}}\) to fixed-length vectors in
-    \(\mathbb{R}^{d_\text{out}}\) via the Fourier Sliced-Wasserstein
+    $\mathbb{R}^{d_\text{in}}$ to fixed-length vectors in
+    $\mathbb{R}^{d_\text{out}}$ via the Fourier Sliced-Wasserstein
     embedding [Amir & Dym, ICLR 2025].
 
     Features
