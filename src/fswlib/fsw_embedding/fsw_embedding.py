@@ -242,7 +242,7 @@ class TotalMassEncodingMethod(EnumWithResolve):
 
 class FrequencyInitMethod(EnumWithResolve):
     """
-    Strategy for initializing frequencies in the FSW embedding.
+    Method for initializing frequencies in the FSW embedding.
 
     This enumeration specifies how the frequencies in the FSW embedding are
     initialized.
@@ -275,7 +275,8 @@ class FSWEmbedding(nn.Module):
     $\mathbb{R}^{d_\text{out}}$ via the Fourier Sliced-Wasserstein
     embedding [Amir & Dym, ICLR 2025].
 
-    ### Features
+    Features
+    --------
     • Works with arbitrary batch dimensions.
     • **Graph mode**: efficient message-aggregation, including sparse adjacency support.
     • Supports full autograd/gradient back-propagation on CPU or CUDA.
