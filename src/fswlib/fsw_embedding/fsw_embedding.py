@@ -339,7 +339,7 @@ class FSWEmbedding(nn.Module):
             See also: `TotalMassEncodingTransformation`
         total_mass_encoding_method : str or TotalMassEncodingMethod, default='decoupled'
             Strategy for combining the transformed total mass with the core embedding
-            ('decoupled`, `scaled`, `homogeneous`, `homogeneous_scaled`, or `homogeneous_legacy`)
+            ('decoupled', 'scaled', 'homogeneous', 'homogeneous_scaled', or 'homogeneous_legacy')
             See also: `TotalMassEncodingMethod`
         total_mass_encoding_scale : float, default=1.0
             Scaling factor to apply to the total mass encoding. The encoded total mass is multiplied by this factor.
