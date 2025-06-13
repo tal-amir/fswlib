@@ -267,20 +267,27 @@ class FrequencyInitMethod(EnumWithResolve):
 
 
 class FSWEmbedding(nn.Module):
+    r"""
+    Fourier Sliced-Wasserstein (FSW) embedding layer.
+
+    Maps input multisets (or discrete measures) in
+    \(\mathbb{R}^{d_\text{in}}\) to fixed-length vectors in
+    \(\mathbb{R}^{d_\text{out}}\) via the Fourier Sliced-Wasserstein
+    embedding [Amir & Dym, ICLR 2025].
+
+    Features
+    --------
+    • Works with arbitrary batch dimensions.
+    • **Graph mode**: efficient message-aggregation, including sparse adjacency support.
+    • Supports full autograd/gradient back-propagation on CPU or CUDA.
+
+    See Also
+    --------
+    FSWEmbedding.__init__ : Constructor parameters.
+    FSWEmbedding.forward : Input/output tensor shapes and options.
     """
-    Fourier Sliced-Wasserstein (FSW) embedding module.
 
-    Maps input multisets or discrete measures in ℝᵈⁱⁿ to vectors in ℝᵈᵒᵘᵗ using projections
-    onto 1D slices followed by a Fourier-based transformation. The output is a fixed-length
-    vector embedding that approximates the Sliced-Wasserstein distance between inputs.
 
-    This PyTorch-compatible module supports batched inputs, graph inputs, Cartesian frequency
-    layouts, learnable parameters, and optional CUDA acceleration via a custom extension.
-
-    For full details, see:
-        Tal Amir, Nadav Dym, "Fourier Sliced-Wasserstein Embedding for Multisets and Measures",
-        International Conference on Learning Representations (ICLR), 2025.
-    """
 
 
     def __init__(self,
