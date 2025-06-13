@@ -1,7 +1,11 @@
+{#  This file *extends* the built-in template and only overrides the parts we need. #}
 {% extends "default/frame.html.jinja2" %}
 
-{% block head_extra %}
-<style>
-  .pdoc h3 { font-weight: 700; }   /* or any style you prefer */
-</style>
+{#  Add extra <style> or <script> tags. #}
+{% block head %}
+    {{ super() }}         {# keep everything that pdoc already puts in <head> #}
+    <style>
+      /* Make all <h3> (e.g. “Features”, “See Also”) bold-er */
+      .pdoc h3 { font-weight: 700; }
+    </style>
 {% endblock %}
