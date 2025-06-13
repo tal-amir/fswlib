@@ -556,7 +556,7 @@ EMail: <a href="mailto:talamir@technion.ac.il">talamir@technion.ac.il</a></p>
 </span><span id="FSWEmbedding-340"><a href="#FSWEmbedding-340"><span class="linenos"> 340</span></a><span class="sd">            See also: `TotalMassEncodingTransformation`</span>
 </span><span id="FSWEmbedding-341"><a href="#FSWEmbedding-341"><span class="linenos"> 341</span></a><span class="sd">        total_mass_encoding_method : str or TotalMassEncodingMethod, default=&#39;decoupled&#39;</span>
 </span><span id="FSWEmbedding-342"><a href="#FSWEmbedding-342"><span class="linenos"> 342</span></a><span class="sd">            Strategy for combining the transformed total mass with the core embedding</span>
-</span><span id="FSWEmbedding-343"><a href="#FSWEmbedding-343"><span class="linenos"> 343</span></a><span class="sd">            (&#39;decoupled&#39;, &#39;scaled&#39;, &#39;homogeneous&#39;, &#39;homogeneous_scaled&#39;, or &#39;homogeneous_legacy&#39;)  </span>
+</span><span id="FSWEmbedding-343"><a href="#FSWEmbedding-343"><span class="linenos"> 343</span></a><span class="sd">            (&#39;decoupled&#39;, &#39;scaled&#39;, &#39;homogeneous&#39;, &#39;homogeneous_scaled&#39;, or &#39;homogeneous_legacy&#39;)</span>
 </span><span id="FSWEmbedding-344"><a href="#FSWEmbedding-344"><span class="linenos"> 344</span></a><span class="sd">            See also: `TotalMassEncodingMethod`</span>
 </span><span id="FSWEmbedding-345"><a href="#FSWEmbedding-345"><span class="linenos"> 345</span></a><span class="sd">        total_mass_encoding_scale : float, default=1.0</span>
 </span><span id="FSWEmbedding-346"><a href="#FSWEmbedding-346"><span class="linenos"> 346</span></a><span class="sd">            Scaling factor to apply to the total mass encoding. The encoded total mass is multiplied by this factor.</span>
@@ -1908,7 +1908,7 @@ embedding as described in [Amir &amp; Dym, ICLR 2025].</p>
 </span><span id="FSWEmbedding.__init__-340"><a href="#FSWEmbedding.__init__-340"><span class="linenos">340</span></a><span class="sd">            See also: `TotalMassEncodingTransformation`</span>
 </span><span id="FSWEmbedding.__init__-341"><a href="#FSWEmbedding.__init__-341"><span class="linenos">341</span></a><span class="sd">        total_mass_encoding_method : str or TotalMassEncodingMethod, default=&#39;decoupled&#39;</span>
 </span><span id="FSWEmbedding.__init__-342"><a href="#FSWEmbedding.__init__-342"><span class="linenos">342</span></a><span class="sd">            Strategy for combining the transformed total mass with the core embedding</span>
-</span><span id="FSWEmbedding.__init__-343"><a href="#FSWEmbedding.__init__-343"><span class="linenos">343</span></a><span class="sd">            (&#39;decoupled&#39;, &#39;scaled&#39;, &#39;homogeneous&#39;, &#39;homogeneous_scaled&#39;, or &#39;homogeneous_legacy&#39;)  </span>
+</span><span id="FSWEmbedding.__init__-343"><a href="#FSWEmbedding.__init__-343"><span class="linenos">343</span></a><span class="sd">            (&#39;decoupled&#39;, &#39;scaled&#39;, &#39;homogeneous&#39;, &#39;homogeneous_scaled&#39;, or &#39;homogeneous_legacy&#39;)</span>
 </span><span id="FSWEmbedding.__init__-344"><a href="#FSWEmbedding.__init__-344"><span class="linenos">344</span></a><span class="sd">            See also: `TotalMassEncodingMethod`</span>
 </span><span id="FSWEmbedding.__init__-345"><a href="#FSWEmbedding.__init__-345"><span class="linenos">345</span></a><span class="sd">        total_mass_encoding_scale : float, default=1.0</span>
 </span><span id="FSWEmbedding.__init__-346"><a href="#FSWEmbedding.__init__-346"><span class="linenos">346</span></a><span class="sd">            Scaling factor to apply to the total mass encoding. The encoded total mass is multiplied by this factor.</span>
@@ -2151,7 +2151,7 @@ Transformation applied to the total mass before embedding ('identity', 'sqrt', o
 See also: <code><a href="#TotalMassEncodingTransformation">TotalMassEncodingTransformation</a></code></li>
 <li><strong>total_mass_encoding_method</strong> (str or TotalMassEncodingMethod, default='decoupled'):
 Strategy for combining the transformed total mass with the core embedding
-('decoupled', 'scaled', 'homogeneous', 'homogeneous_scaled', or 'homogeneous_legacy')<br />
+('decoupled', 'scaled', 'homogeneous', 'homogeneous_scaled', or 'homogeneous_legacy')
 See also: <code><a href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a></code></li>
 <li><strong>total_mass_encoding_scale</strong> (float, default=1.0):
 Scaling factor to apply to the total mass encoding. The encoded total mass is multiplied by this factor.
@@ -2172,7 +2172,7 @@ Initialization scheme for frequencies:
 <li>'random': frequencies are drawn independently from the distribution $\mathcal{D_{\xi}}$, defined in
 [Amir and Dym, ICLR 2025], Section 3.</li>
 <li>'even': frequencies are spaced evenly according to their distribution $\mathcal{D_{\xi}}$, with spaces
-inversely proportional to the density.
+inversely proportional to the density.<br />
 See also: <code><a href="#FrequencyInitMethod">FrequencyInitMethod</a></code></li>
 </ul></li>
 <li><strong>minimize_slice_coherence</strong> (bool, default=False):
