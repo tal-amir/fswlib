@@ -268,7 +268,7 @@ class FrequencyInitMethod(EnumWithResolve):
 
 class FSWEmbedding(nn.Module):
     r"""
-    Fourier Sliced-Wasserstein (FSW) embedding layer.
+    Fourier Sliced-Wasserstein (FSW) embedding module.
 
     Maps input multisets (or discrete measures) in
     $\mathbb{R}^{d_\text{in}}$ to fixed-length vectors in
@@ -277,12 +277,14 @@ class FSWEmbedding(nn.Module):
 
     Features
     --------
+
     • Works with arbitrary batch dimensions.
     • **Graph mode**: efficient message-aggregation, including sparse adjacency support.
     • Supports full autograd/gradient back-propagation on CPU or CUDA.
 
     See Also
     --------
+
     FSWEmbedding.__init__ : Constructor parameters.
     FSWEmbedding.forward : Input/output tensor shapes and options.
     """
