@@ -15,7 +15,7 @@ This package provides an implementation of the **Fourier Sliced-Wasserstein (FSW
 - **NumPy** ≥ 1.24.4 (released June 2023)  
   
 The core package has been tested on **Linux** and **Windows**.  
-It may also run on **macOS (CPU only)**, though this has not been verified.  
+It may also run on **macOS**, though this has not been verified.  
 
 
 ---

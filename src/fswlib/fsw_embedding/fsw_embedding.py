@@ -221,8 +221,9 @@ class TotalMassEncodingMethod(EnumWithResolve):
 
     Notes
     -----
-    In practice, $\\mu\\left(\\Omega\\right)$ in the above expressions is replaced by $f \\left( \\mu\\left(\\Omega\\right) \\right)$,
-    where $f$ is the function defined by `TotalMassEncodingFunction`.
+    In practice, $\\mu\\left(\\Omega\\right)$ in the above expressions is replaced by $\\alpha \\cdot f \\left( \\mu\\left(\\Omega\\right) \\right)$,
+    where $f$ is the function defined by `TotalMassEncodingFunction` and $\\alpha$ is a scale factor given in `total_mass_encoding_scale`.
+    Additionally, $\\lVert E^{\\textup{FSW}}_{m-1}\\left(\\mu_{\\rho}\\right) \\rVert$ is multiplied by a normalizing factor $\\sqrt{m-1}^{-1}$.
 
     Reference
     ---------
@@ -292,6 +293,7 @@ class FSWEmbedding(nn.Module):
                  encode_total_mass: bool = False,
                  total_mass_encoding_transformation: str | TotalMassEncodingTransformation = 'identity',
                  total_mass_encoding_method: str | TotalMassEncodingMethod = 'decoupled',
+                 total_mass_encoding_scale: float = 1.0,
                  total_mass_padding_thresh: float | int = 1.0,
                  learnable_slices: bool = False,
                  learnable_frequencies: bool = False,
@@ -327,6 +329,8 @@ class FSWEmbedding(nn.Module):
             Transformation applied to the total mass before embedding ('identity', 'sqrt', 'log', or enum).
         total_mass_encoding_method : str or TotalMassEncodingMethod, default='decoupled'
             Strategy for combining the transformed total mass with the core embedding.
+        total_mass_encoding_scale : float, default=1.0
+            Scaling factor for encoding the total mass. The encoded total mass is multiplied by this factor.
         total_mass_padding_thresh : float or int, default=1.0
             Inputs with total mass below this threshold are padded at the origin to reach it.
         learnable_slices : bool, default=False
@@ -391,6 +395,9 @@ class FSWEmbedding(nn.Module):
 
         self._total_mass_encoding_method = TotalMassEncodingMethod.resolve(total_mass_encoding_method)
         del total_mass_encoding_method
+
+        self._total_mass_encoding_scale = total_mass_encoding_scale
+        del total_mass_encoding_scale
 
         self._total_mass_encoding_transformation = TotalMassEncodingTransformation.resolve(total_mass_encoding_transformation)
         del total_mass_encoding_transformation
@@ -703,6 +710,11 @@ class FSWEmbedding(nn.Module):
     def total_mass_encoding_method(self) -> TotalMassEncodingMethod:
         """Strategy used to incorporate total mass into the final embedding vector."""
         return self._total_mass_encoding_method
+
+    @property
+    def total_mass_encoding_scale(self) -> float:
+        """The encoded total mass is scaled by this factor."""
+        return self._total_mass_encoding_scale
 
     @property
     def total_mass_padding_thresh(self) -> float:
@@ -1257,20 +1269,22 @@ class FSWEmbedding(nn.Module):
         if self._encode_total_mass:
             match self._total_mass_encoding_transformation:
                 case TotalMassEncodingTransformation.IDENTITY:
-                    total_mass = W_sum
+                    encoded_total_mass = W_sum
                 case TotalMassEncodingTransformation.SQRT:
                     # x/(sqrt(x+1)+1) is a numerically-safe formulation of sqrt(1+x)-1
                     # note that we don't use sqrt(1+x) since we need the function to vanish at x=0,
                     # and we don't use sqrt(x) since we need it to have a gradient at x=0.
-                    total_mass = 2*( W_sum / ( torch.sqrt(W_sum + 1) + 1) )
+                    encoded_total_mass = 2*( W_sum / ( torch.sqrt(W_sum + 1) + 1) )
                 case TotalMassEncodingTransformation.LOG:
-                    total_mass = torch.log1p(W_sum)
+                    encoded_total_mass = torch.log1p(W_sum)
                 case _:
                     raise RuntimeError(f"Unsupported encoding function: {self._total_mass_encoding_transformation}")
-            
+
+            encoded_total_mass *= self._total_mass_encoding_scale
+
             del W_sum
 
-            assert isinstance(total_mass, torch.Tensor) # to silence PyCharm
+            assert isinstance(encoded_total_mass, torch.Tensor) # to silence PyCharm
 
             needs_emb_norm = (self._total_mass_encoding_method in
                               {TotalMassEncodingMethod.HOMOGENEOUS,
@@ -1284,17 +1298,17 @@ class FSWEmbedding(nn.Module):
 
             match self._total_mass_encoding_method:
                 case TotalMassEncodingMethod.DECOUPLED:
-                    X_emb = torch.cat( (total_mass, X_emb), dim=-1)
+                    X_emb = torch.cat( (encoded_total_mass, X_emb), dim=-1)
                 case TotalMassEncodingMethod.SCALED:
-                    X_emb = torch.cat( (total_mass, total_mass*X_emb), dim=-1)
+                    X_emb = torch.cat( (encoded_total_mass, encoded_total_mass*X_emb), dim=-1)
                 case TotalMassEncodingMethod.HOMOGENEOUS:
-                    X_emb = torch.cat( (total_mass * X_emb_norm, X_emb), dim=-1)
+                    X_emb = torch.cat( (encoded_total_mass * X_emb_norm, X_emb), dim=-1)
                 case TotalMassEncodingMethod.HOMOGENEOUS_SCALED:
                     assert isinstance(X_emb_norm, torch.Tensor) # to silence PyCharm
-                    X_emb = torch.cat( (X_emb_norm, total_mass*X_emb), dim=-1)
+                    X_emb = torch.cat( (X_emb_norm, encoded_total_mass*X_emb), dim=-1)
                 case TotalMassEncodingMethod.HOMOGENEOUS_LEGACY:
-                    X_emb = torch.cat((FSWEmbedding._total_mass_homogeneous_legacy_encoding_part1(total_mass) * X_emb_norm,
-                                       FSWEmbedding._total_mass_homogeneous_legacy_encoding_part2(total_mass) * X_emb), dim=-1)
+                    X_emb = torch.cat((FSWEmbedding._total_mass_homogeneous_legacy_encoding_part1(encoded_total_mass) * X_emb_norm,
+                                       FSWEmbedding._total_mass_homogeneous_legacy_encoding_part2(encoded_total_mass) * X_emb), dim=-1)
                 case _:  # fallback
                     raise RuntimeError(f"Unsupported encoding method: {self._total_mass_encoding_method}")
 

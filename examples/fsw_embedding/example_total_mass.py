@@ -13,16 +13,17 @@ m = 5    # Embedding output dimension
 # the total mass (i.e. sum of weights).
 embed_total_mass_invariant = FSWEmbedding(d_in=d, d_out=m, device=device, dtype=dtype)
 embed_total_mass_aware =     FSWEmbedding(d_in=d, d_out=m, encode_total_mass=True,
-                                          total_mass_encoding_method='homogeneous_legacy',
+                                          total_mass_encoding_method='decoupled',
                                           total_mass_encoding_transformation='identity',
+                                          total_mass_encoding_scale=1.0,
                                           device=device, dtype=dtype)
-config2 = {
-    "d_in":d, "d_out":m, "encode_total_mass":True,
-                                          "total_mass_encoding_method":'homogeneous_scaled',
-                                          "total_mass_encoding_transformation":'identity',
-                                          "device":device, "dtype":dtype
-}
-embed_total_mass_aware = FSWEmbedding.from_config(config2)
+# config2 = {
+#     "d_in":d, "d_out":m, "encode_total_mass":True,
+#                                           "total_mass_encoding_method":'homogeneous_scaled',
+#                                           "total_mass_encoding_transformation":'identity',
+#                                           "device":device, "dtype":dtype
+# }
+# embed_total_mass_aware = FSWEmbedding.from_config(config2)
 
 # Two multisets with identical proportions but different cardinalities
 X = torch.rand(3, d, device=device, dtype=dtype)
@@ -56,6 +57,7 @@ print(f"Without total mass encoding:  {diff_invariant:.2e}")
 print(f'Ratio invariant: {ratio_invariant}')
 print(f'Ratio aware: {ratio_aware}')
 
+print(f'Total-mass component in aware embedding: X1: {X1_emb_aware[0].item()} X2: {X2_emb_aware[0].item()}')
 # Output:
 
 # Two different-size multisets with identical element proportions:
