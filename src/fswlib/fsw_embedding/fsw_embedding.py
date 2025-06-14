@@ -340,12 +340,11 @@ class FSWEmbedding(nn.Module):
         encode_total_mass : bool, default=False
             Whether to incorporate the input multiset size (or, more generally, the *total mass* of the input measure)
             into the embedding output.
-        total_mass_encoding_transformation : str or TotalMassEncodingTransformation, default='identity'
-            Transformation applied to the total mass before embedding ('identity', 'sqrt', or 'log').
-            See also: `TotalMassEncodingTransformation`
-        total_mass_encoding_method : str or TotalMassEncodingMethod, default='decoupled'
-            Strategy for combining the total mass with the core embedding
-            ('decoupled', 'scaled', 'homogeneous', 'homogeneous_scaled', or 'homogeneous_legacy')
+        total_mass_encoding_transformation : {'identity', 'sqrt', 'log'} or TotalMassEncodingFunction, default='identity'
+            Transformation applied to the total mass *before* embedding.
+            See also: `TotalMassEncodingFunction`
+        total_mass_encoding_method : {'decoupled', 'scaled', 'homogeneous', 'homogeneous_scaled', 'homogeneous_legacy'} or TotalMassEncodingMethod, default='decoupled'
+            Strategy for combining the total mass with the core embedding.
             See also: `TotalMassEncodingMethod`
         total_mass_encoding_scale : float, default=1.0
             The encoded total mass is multiplied by this scaling factor.
@@ -368,7 +367,7 @@ class FSWEmbedding(nn.Module):
                         inversely proportional to the density.
             See also: `FrequencyInitMethod`
         minimize_slice_coherence : bool, default=False
-            If True, minimizes the _mutual coherence_ between slices for a more uniform spread on the unit sphere.
+            If True, minimizes the *mutual coherence* between slices for a more uniform spread on the unit sphere.
             If False, slice vectors are drawn uniformly at random from the unit sphere.
         enable_bias : bool, default=True
             If True, adds a learnable bias vector to the output embedding. When enabled, the bias is initialized
