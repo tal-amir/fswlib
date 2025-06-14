@@ -277,9 +277,9 @@ class FSWEmbedding(nn.Module):
 
     Features
     --------
-    • **Batched inputs**: eupports arbitrary number of batch dimensions.
-    • **Graph mode**: efficient message-aggregation, including sparse adjacency support.
-    • **Differentiability**: Full autograd/gradient support.
+    - **Batched inputs**: eupports arbitrary number of batch dimensions.
+    - **Graph mode**: efficient message-aggregation, including sparse adjacency support.
+    - **Differentiability**: Full autograd/gradient support.
 
     See Also
     --------

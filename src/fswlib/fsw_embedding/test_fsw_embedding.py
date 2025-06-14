@@ -161,7 +161,7 @@ def main():
     print()
 
 
-    embed = FSWEmbedding(d, d_out=15, collapse_output_axes =False, device=device, dtype=dtype)
+    embed = FSWEmbedding(d, d_out=15, flatten_cartesian_axes =False, device=device, dtype=dtype)
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 1)  ))
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 2)  ))
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 3)  ))
@@ -170,7 +170,7 @@ def main():
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 15)  ))
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 16)  ))
 
-    embed = FSWEmbedding(d, num_slices=15, num_frequencies=37, collapse_output_axes =False, device=device, dtype=dtype)
+    embed = FSWEmbedding(d, num_slices=15, num_frequencies=37, flatten_cartesian_axes =False, device=device, dtype=dtype)
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 1)  ))
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 2)  ))
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 3)  ))
@@ -179,7 +179,7 @@ def main():
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 15)  ))
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 16)  ))
 
-    embed = FSWEmbedding(d, num_slices=15, num_frequencies=37, collapse_output_axes =True, device=device, dtype=dtype)
+    embed = FSWEmbedding(d, num_slices=15, num_frequencies=37, flatten_cartesian_axes =True, device=device, dtype=dtype)
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 1)  ))
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 2)  ))
     print('Serialization err: ', relerr( embed(X1,W1), embed(X1,W1, max_parallel_slices = 3)  ))
@@ -218,7 +218,7 @@ def main():
     #Wx.requires_grad = True
 
     embed = FSWEmbedding(d, d_out=m, num_slices=num_slices, num_frequencies=num_frequencies, device=device, dtype=dtype)
-    #embed = FSWEmbedding(d, num_slices=15, num_frequencies=7, collapse_output_axes =False, device=device, dtype=dtype)
+    #embed = FSWEmbedding(d, num_slices=15, num_frequencies=7, flatten_cartesian_axes =False, device=device, dtype=dtype)
 
     Xx = X.unsqueeze(dim=-3).expand( tuple(Wx.shape) + (X.shape[-1],))
 
