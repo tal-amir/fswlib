@@ -332,13 +332,13 @@ class FSWEmbedding(nn.Module):
             When provided, activates `cartesian_mode`, and `d_out` should be left None.
             See also: `flatten_cartesian_axes`
         flatten_cartesian_axes : bool, default=False
-            If True, flattens the slice and frequency dimensions into a single output axis. Only relevant if
-            `num_slices` and `num_frequencies` are provided.
+            If True, flattens the slice and frequency dimensions into a single output axis.
+            Only relevant if `num_slices` and `num_frequencies` are provided.
         d_edge : int, default=0
             Dimension of edge feature vectors. Used only for graph inputs.
             See the `graph_mode` argument of `FSWEmbedding.forward` for details.
         encode_total_mass : bool, default=False
-            Whether to incorporate the input multiset size (or, more generally, the _total mass_ of the input measure)
+            Whether to incorporate the input multiset size (or, more generally, the *total mass* of the input measure)
             into the embedding output.
         total_mass_encoding_transformation : str or TotalMassEncodingTransformation, default='identity'
             Transformation applied to the total mass before embedding ('identity', 'sqrt', or 'log').
@@ -710,7 +710,7 @@ class FSWEmbedding(nn.Module):
         """If True, the embedding is computed for each (slice, frequency) pair in the Cartesian product of slices
         and frequencies.
         In Cartesian mode, the embeding dimension is `d_out` = `num_slices × num_frequencies`.
-        Cartesian mode is activated by providing `num_slices` and `num_frequencies` to `FSWEmbedding.__init__`
+        Cartesian mode is activated by providing `num_slices` and `num_frequencies` to `FSWEmbedding.__init__`bool
         See also: `flatten_cartesian_axes`"""
         return self._cartesian_mode
 
