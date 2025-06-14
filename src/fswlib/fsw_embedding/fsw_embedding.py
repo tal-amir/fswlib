@@ -342,27 +342,27 @@ class FSWEmbedding(nn.Module):
             Whether to incorporate the input multiset size (or, more generally, the *total mass* of the input measure)
             into the embedding output.  
             (See `total_mass_encoding_transformation`, `total_mass_encoding_method`, `total_mass_encoding_scale`)
-        total_mass_encoding_transformation : {'identity', 'sqrt', 'log'} or TotalMassEncodingTransformation, default='identity'
+        total_mass_encoding_transformation : {'identity', 'sqrt', 'log'} or `TotalMassEncodingTransformation`, default='identity'
             Transformation applied to the total mass before encoding in the embedding output.  
             Only applicable if `encode_total_mass`=True.  
-            (See `TotalMassEncodingTransformation`)
-        total_mass_encoding_method : {'decoupled', 'scaled', 'homogeneous', 'homogeneous_scaled', 'homogeneous_legacy'} or TotalMassEncodingMethod, default='decoupled'
+            (See `TotalMassEncodingTransformation` for details)
+        total_mass_encoding_method : {'decoupled', 'scaled', 'homogeneous', 'homogeneous_scaled', 'homogeneous_legacy'} or `TotalMassEncodingMethod`, default='decoupled'
             Strategy for incorporating the total mass encoding into the embedding output.  
             Only applicable if `encode_total_mass`=True.  
-            (See `TotalMassEncodingMethod`)
+            (See `TotalMassEncodingMethod` for details)
         total_mass_encoding_scale : float, default=1.0
             The encoded total mass is multiplied by this scaling factor.  
             Only applicable if `encode_total_mass`=True.  
             (See `TotalMassEncodingMethod`)
         total_mass_padding_thresh : float or int, default=1.0
             Inputs with total mass below this threshold are padded with the zero vector to reach it; see
-            in [Amir and Dym, ICLR 2025], Appendix A.1.  
+            [Amir and Dym, ICLR 2025], Appendix A.1.  
             (See `TotalMassEncodingMethod`)
         learnable_slices : bool, default=False
             If True, slice vectors are learnable parameters.  
         learnable_frequencies : bool, default=False
             If True, frequency values are learnable parameters.
-        frequency_init : float, str, tuple of float, or FrequencyInitMethod, default='random'
+        frequency_init : float, str, tuple of float, or `FrequencyInitMethod`, default='random'
             Initialization scheme for frequencies:
               - A float: sets all frequencies to the same value.
               - A tuple `(low, high)` of floats: sets evenly spaced values in that interval.

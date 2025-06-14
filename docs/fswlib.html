@@ -559,27 +559,27 @@ EMail: <a href="mailto:talamir@technion.ac.il">talamir@technion.ac.il</a></p>
 </span><span id="FSWEmbedding-343"><a href="#FSWEmbedding-343"><span class="linenos"> 343</span></a><span class="sd">            Whether to incorporate the input multiset size (or, more generally, the *total mass* of the input measure)</span>
 </span><span id="FSWEmbedding-344"><a href="#FSWEmbedding-344"><span class="linenos"> 344</span></a><span class="sd">            into the embedding output.  </span>
 </span><span id="FSWEmbedding-345"><a href="#FSWEmbedding-345"><span class="linenos"> 345</span></a><span class="sd">            (See `total_mass_encoding_transformation`, `total_mass_encoding_method`, `total_mass_encoding_scale`)</span>
-</span><span id="FSWEmbedding-346"><a href="#FSWEmbedding-346"><span class="linenos"> 346</span></a><span class="sd">        total_mass_encoding_transformation : {&#39;identity&#39;, &#39;sqrt&#39;, &#39;log&#39;} or TotalMassEncodingTransformation, default=&#39;identity&#39;</span>
+</span><span id="FSWEmbedding-346"><a href="#FSWEmbedding-346"><span class="linenos"> 346</span></a><span class="sd">        total_mass_encoding_transformation : {&#39;identity&#39;, &#39;sqrt&#39;, &#39;log&#39;} or `TotalMassEncodingTransformation`, default=&#39;identity&#39;</span>
 </span><span id="FSWEmbedding-347"><a href="#FSWEmbedding-347"><span class="linenos"> 347</span></a><span class="sd">            Transformation applied to the total mass before encoding in the embedding output.  </span>
 </span><span id="FSWEmbedding-348"><a href="#FSWEmbedding-348"><span class="linenos"> 348</span></a><span class="sd">            Only applicable if `encode_total_mass`=True.  </span>
-</span><span id="FSWEmbedding-349"><a href="#FSWEmbedding-349"><span class="linenos"> 349</span></a><span class="sd">            (See `TotalMassEncodingTransformation`)</span>
-</span><span id="FSWEmbedding-350"><a href="#FSWEmbedding-350"><span class="linenos"> 350</span></a><span class="sd">        total_mass_encoding_method : {&#39;decoupled&#39;, &#39;scaled&#39;, &#39;homogeneous&#39;, &#39;homogeneous_scaled&#39;, &#39;homogeneous_legacy&#39;} or TotalMassEncodingMethod, default=&#39;decoupled&#39;</span>
+</span><span id="FSWEmbedding-349"><a href="#FSWEmbedding-349"><span class="linenos"> 349</span></a><span class="sd">            (See `TotalMassEncodingTransformation` for details)</span>
+</span><span id="FSWEmbedding-350"><a href="#FSWEmbedding-350"><span class="linenos"> 350</span></a><span class="sd">        total_mass_encoding_method : {&#39;decoupled&#39;, &#39;scaled&#39;, &#39;homogeneous&#39;, &#39;homogeneous_scaled&#39;, &#39;homogeneous_legacy&#39;} or `TotalMassEncodingMethod`, default=&#39;decoupled&#39;</span>
 </span><span id="FSWEmbedding-351"><a href="#FSWEmbedding-351"><span class="linenos"> 351</span></a><span class="sd">            Strategy for incorporating the total mass encoding into the embedding output.  </span>
 </span><span id="FSWEmbedding-352"><a href="#FSWEmbedding-352"><span class="linenos"> 352</span></a><span class="sd">            Only applicable if `encode_total_mass`=True.  </span>
-</span><span id="FSWEmbedding-353"><a href="#FSWEmbedding-353"><span class="linenos"> 353</span></a><span class="sd">            (See `TotalMassEncodingMethod`)</span>
+</span><span id="FSWEmbedding-353"><a href="#FSWEmbedding-353"><span class="linenos"> 353</span></a><span class="sd">            (See `TotalMassEncodingMethod` for details)</span>
 </span><span id="FSWEmbedding-354"><a href="#FSWEmbedding-354"><span class="linenos"> 354</span></a><span class="sd">        total_mass_encoding_scale : float, default=1.0</span>
 </span><span id="FSWEmbedding-355"><a href="#FSWEmbedding-355"><span class="linenos"> 355</span></a><span class="sd">            The encoded total mass is multiplied by this scaling factor.  </span>
 </span><span id="FSWEmbedding-356"><a href="#FSWEmbedding-356"><span class="linenos"> 356</span></a><span class="sd">            Only applicable if `encode_total_mass`=True.  </span>
 </span><span id="FSWEmbedding-357"><a href="#FSWEmbedding-357"><span class="linenos"> 357</span></a><span class="sd">            (See `TotalMassEncodingMethod`)</span>
 </span><span id="FSWEmbedding-358"><a href="#FSWEmbedding-358"><span class="linenos"> 358</span></a><span class="sd">        total_mass_padding_thresh : float or int, default=1.0</span>
 </span><span id="FSWEmbedding-359"><a href="#FSWEmbedding-359"><span class="linenos"> 359</span></a><span class="sd">            Inputs with total mass below this threshold are padded with the zero vector to reach it; see</span>
-</span><span id="FSWEmbedding-360"><a href="#FSWEmbedding-360"><span class="linenos"> 360</span></a><span class="sd">            in [Amir and Dym, ICLR 2025], Appendix A.1.  </span>
+</span><span id="FSWEmbedding-360"><a href="#FSWEmbedding-360"><span class="linenos"> 360</span></a><span class="sd">            [Amir and Dym, ICLR 2025], Appendix A.1.  </span>
 </span><span id="FSWEmbedding-361"><a href="#FSWEmbedding-361"><span class="linenos"> 361</span></a><span class="sd">            (See `TotalMassEncodingMethod`)</span>
 </span><span id="FSWEmbedding-362"><a href="#FSWEmbedding-362"><span class="linenos"> 362</span></a><span class="sd">        learnable_slices : bool, default=False</span>
 </span><span id="FSWEmbedding-363"><a href="#FSWEmbedding-363"><span class="linenos"> 363</span></a><span class="sd">            If True, slice vectors are learnable parameters.  </span>
 </span><span id="FSWEmbedding-364"><a href="#FSWEmbedding-364"><span class="linenos"> 364</span></a><span class="sd">        learnable_frequencies : bool, default=False</span>
 </span><span id="FSWEmbedding-365"><a href="#FSWEmbedding-365"><span class="linenos"> 365</span></a><span class="sd">            If True, frequency values are learnable parameters.</span>
-</span><span id="FSWEmbedding-366"><a href="#FSWEmbedding-366"><span class="linenos"> 366</span></a><span class="sd">        frequency_init : float, str, tuple of float, or FrequencyInitMethod, default=&#39;random&#39;</span>
+</span><span id="FSWEmbedding-366"><a href="#FSWEmbedding-366"><span class="linenos"> 366</span></a><span class="sd">        frequency_init : float, str, tuple of float, or `FrequencyInitMethod`, default=&#39;random&#39;</span>
 </span><span id="FSWEmbedding-367"><a href="#FSWEmbedding-367"><span class="linenos"> 367</span></a><span class="sd">            Initialization scheme for frequencies:</span>
 </span><span id="FSWEmbedding-368"><a href="#FSWEmbedding-368"><span class="linenos"> 368</span></a><span class="sd">              - A float: sets all frequencies to the same value.</span>
 </span><span id="FSWEmbedding-369"><a href="#FSWEmbedding-369"><span class="linenos"> 369</span></a><span class="sd">              - A tuple `(low, high)` of floats: sets evenly spaced values in that interval.</span>
@@ -1932,27 +1932,27 @@ embedding as described in [Amir &amp; Dym, ICLR 2025].</p>
 </span><span id="FSWEmbedding.__init__-343"><a href="#FSWEmbedding.__init__-343"><span class="linenos">343</span></a><span class="sd">            Whether to incorporate the input multiset size (or, more generally, the *total mass* of the input measure)</span>
 </span><span id="FSWEmbedding.__init__-344"><a href="#FSWEmbedding.__init__-344"><span class="linenos">344</span></a><span class="sd">            into the embedding output.  </span>
 </span><span id="FSWEmbedding.__init__-345"><a href="#FSWEmbedding.__init__-345"><span class="linenos">345</span></a><span class="sd">            (See `total_mass_encoding_transformation`, `total_mass_encoding_method`, `total_mass_encoding_scale`)</span>
-</span><span id="FSWEmbedding.__init__-346"><a href="#FSWEmbedding.__init__-346"><span class="linenos">346</span></a><span class="sd">        total_mass_encoding_transformation : {&#39;identity&#39;, &#39;sqrt&#39;, &#39;log&#39;} or TotalMassEncodingTransformation, default=&#39;identity&#39;</span>
+</span><span id="FSWEmbedding.__init__-346"><a href="#FSWEmbedding.__init__-346"><span class="linenos">346</span></a><span class="sd">        total_mass_encoding_transformation : {&#39;identity&#39;, &#39;sqrt&#39;, &#39;log&#39;} or `TotalMassEncodingTransformation`, default=&#39;identity&#39;</span>
 </span><span id="FSWEmbedding.__init__-347"><a href="#FSWEmbedding.__init__-347"><span class="linenos">347</span></a><span class="sd">            Transformation applied to the total mass before encoding in the embedding output.  </span>
 </span><span id="FSWEmbedding.__init__-348"><a href="#FSWEmbedding.__init__-348"><span class="linenos">348</span></a><span class="sd">            Only applicable if `encode_total_mass`=True.  </span>
-</span><span id="FSWEmbedding.__init__-349"><a href="#FSWEmbedding.__init__-349"><span class="linenos">349</span></a><span class="sd">            (See `TotalMassEncodingTransformation`)</span>
-</span><span id="FSWEmbedding.__init__-350"><a href="#FSWEmbedding.__init__-350"><span class="linenos">350</span></a><span class="sd">        total_mass_encoding_method : {&#39;decoupled&#39;, &#39;scaled&#39;, &#39;homogeneous&#39;, &#39;homogeneous_scaled&#39;, &#39;homogeneous_legacy&#39;} or TotalMassEncodingMethod, default=&#39;decoupled&#39;</span>
+</span><span id="FSWEmbedding.__init__-349"><a href="#FSWEmbedding.__init__-349"><span class="linenos">349</span></a><span class="sd">            (See `TotalMassEncodingTransformation` for details)</span>
+</span><span id="FSWEmbedding.__init__-350"><a href="#FSWEmbedding.__init__-350"><span class="linenos">350</span></a><span class="sd">        total_mass_encoding_method : {&#39;decoupled&#39;, &#39;scaled&#39;, &#39;homogeneous&#39;, &#39;homogeneous_scaled&#39;, &#39;homogeneous_legacy&#39;} or `TotalMassEncodingMethod`, default=&#39;decoupled&#39;</span>
 </span><span id="FSWEmbedding.__init__-351"><a href="#FSWEmbedding.__init__-351"><span class="linenos">351</span></a><span class="sd">            Strategy for incorporating the total mass encoding into the embedding output.  </span>
 </span><span id="FSWEmbedding.__init__-352"><a href="#FSWEmbedding.__init__-352"><span class="linenos">352</span></a><span class="sd">            Only applicable if `encode_total_mass`=True.  </span>
-</span><span id="FSWEmbedding.__init__-353"><a href="#FSWEmbedding.__init__-353"><span class="linenos">353</span></a><span class="sd">            (See `TotalMassEncodingMethod`)</span>
+</span><span id="FSWEmbedding.__init__-353"><a href="#FSWEmbedding.__init__-353"><span class="linenos">353</span></a><span class="sd">            (See `TotalMassEncodingMethod` for details)</span>
 </span><span id="FSWEmbedding.__init__-354"><a href="#FSWEmbedding.__init__-354"><span class="linenos">354</span></a><span class="sd">        total_mass_encoding_scale : float, default=1.0</span>
 </span><span id="FSWEmbedding.__init__-355"><a href="#FSWEmbedding.__init__-355"><span class="linenos">355</span></a><span class="sd">            The encoded total mass is multiplied by this scaling factor.  </span>
 </span><span id="FSWEmbedding.__init__-356"><a href="#FSWEmbedding.__init__-356"><span class="linenos">356</span></a><span class="sd">            Only applicable if `encode_total_mass`=True.  </span>
 </span><span id="FSWEmbedding.__init__-357"><a href="#FSWEmbedding.__init__-357"><span class="linenos">357</span></a><span class="sd">            (See `TotalMassEncodingMethod`)</span>
 </span><span id="FSWEmbedding.__init__-358"><a href="#FSWEmbedding.__init__-358"><span class="linenos">358</span></a><span class="sd">        total_mass_padding_thresh : float or int, default=1.0</span>
 </span><span id="FSWEmbedding.__init__-359"><a href="#FSWEmbedding.__init__-359"><span class="linenos">359</span></a><span class="sd">            Inputs with total mass below this threshold are padded with the zero vector to reach it; see</span>
-</span><span id="FSWEmbedding.__init__-360"><a href="#FSWEmbedding.__init__-360"><span class="linenos">360</span></a><span class="sd">            in [Amir and Dym, ICLR 2025], Appendix A.1.  </span>
+</span><span id="FSWEmbedding.__init__-360"><a href="#FSWEmbedding.__init__-360"><span class="linenos">360</span></a><span class="sd">            [Amir and Dym, ICLR 2025], Appendix A.1.  </span>
 </span><span id="FSWEmbedding.__init__-361"><a href="#FSWEmbedding.__init__-361"><span class="linenos">361</span></a><span class="sd">            (See `TotalMassEncodingMethod`)</span>
 </span><span id="FSWEmbedding.__init__-362"><a href="#FSWEmbedding.__init__-362"><span class="linenos">362</span></a><span class="sd">        learnable_slices : bool, default=False</span>
 </span><span id="FSWEmbedding.__init__-363"><a href="#FSWEmbedding.__init__-363"><span class="linenos">363</span></a><span class="sd">            If True, slice vectors are learnable parameters.  </span>
 </span><span id="FSWEmbedding.__init__-364"><a href="#FSWEmbedding.__init__-364"><span class="linenos">364</span></a><span class="sd">        learnable_frequencies : bool, default=False</span>
 </span><span id="FSWEmbedding.__init__-365"><a href="#FSWEmbedding.__init__-365"><span class="linenos">365</span></a><span class="sd">            If True, frequency values are learnable parameters.</span>
-</span><span id="FSWEmbedding.__init__-366"><a href="#FSWEmbedding.__init__-366"><span class="linenos">366</span></a><span class="sd">        frequency_init : float, str, tuple of float, or FrequencyInitMethod, default=&#39;random&#39;</span>
+</span><span id="FSWEmbedding.__init__-366"><a href="#FSWEmbedding.__init__-366"><span class="linenos">366</span></a><span class="sd">        frequency_init : float, str, tuple of float, or `FrequencyInitMethod`, default=&#39;random&#39;</span>
 </span><span id="FSWEmbedding.__init__-367"><a href="#FSWEmbedding.__init__-367"><span class="linenos">367</span></a><span class="sd">            Initialization scheme for frequencies:</span>
 </span><span id="FSWEmbedding.__init__-368"><a href="#FSWEmbedding.__init__-368"><span class="linenos">368</span></a><span class="sd">              - A float: sets all frequencies to the same value.</span>
 </span><span id="FSWEmbedding.__init__-369"><a href="#FSWEmbedding.__init__-369"><span class="linenos">369</span></a><span class="sd">              - A tuple `(low, high)` of floats: sets evenly spaced values in that interval.</span>
@@ -2189,27 +2189,27 @@ Dimension of edge feature vectors. Used only for graph inputs.<br />
 Whether to incorporate the input multiset size (or, more generally, the <em>total mass</em> of the input measure)
 into the embedding output.<br />
 (See <code><a href="#FSWEmbedding.total_mass_encoding_transformation">total_mass_encoding_transformation</a></code>, <code><a href="#FSWEmbedding.total_mass_encoding_method">total_mass_encoding_method</a></code>, <code><a href="#FSWEmbedding.total_mass_encoding_scale">total_mass_encoding_scale</a></code>)</li>
-<li><strong>total_mass_encoding_transformation</strong> ({'identity', 'sqrt', 'log'} or TotalMassEncodingTransformation, default='identity'):
+<li><strong>total_mass_encoding_transformation</strong> ({'identity', 'sqrt', 'log'} or <code><a href="#TotalMassEncodingTransformation">TotalMassEncodingTransformation</a></code>, default='identity'):
 Transformation applied to the total mass before encoding in the embedding output.<br />
 Only applicable if <code><a href="#FSWEmbedding.encode_total_mass">encode_total_mass</a></code>=True.<br />
-(See <code><a href="#TotalMassEncodingTransformation">TotalMassEncodingTransformation</a></code>)</li>
-<li><strong>total_mass_encoding_method</strong> ({'decoupled', 'scaled', 'homogeneous', 'homogeneous_scaled', 'homogeneous_legacy'} or TotalMassEncodingMethod, default='decoupled'):
+(See <code><a href="#TotalMassEncodingTransformation">TotalMassEncodingTransformation</a></code> for details)</li>
+<li><strong>total_mass_encoding_method</strong> ({'decoupled', 'scaled', 'homogeneous', 'homogeneous_scaled', 'homogeneous_legacy'} or <code><a href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a></code>, default='decoupled'):
 Strategy for incorporating the total mass encoding into the embedding output.<br />
 Only applicable if <code><a href="#FSWEmbedding.encode_total_mass">encode_total_mass</a></code>=True.<br />
-(See <code><a href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a></code>)</li>
+(See <code><a href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a></code> for details)</li>
 <li><strong>total_mass_encoding_scale</strong> (float, default=1.0):
 The encoded total mass is multiplied by this scaling factor.<br />
 Only applicable if <code><a href="#FSWEmbedding.encode_total_mass">encode_total_mass</a></code>=True.<br />
 (See <code><a href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a></code>)</li>
 <li><strong>total_mass_padding_thresh</strong> (float or int, default=1.0):
 Inputs with total mass below this threshold are padded with the zero vector to reach it; see
-in [Amir and Dym, ICLR 2025], Appendix A.1.<br />
+[Amir and Dym, ICLR 2025], Appendix A.1.<br />
 (See <code><a href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a></code>)</li>
 <li><strong>learnable_slices</strong> (bool, default=False):
 If True, slice vectors are learnable parameters.</li>
 <li><strong>learnable_frequencies</strong> (bool, default=False):
 If True, frequency values are learnable parameters.</li>
-<li><strong>frequency_init</strong> (float, str, tuple of float, or FrequencyInitMethod, default='random'):
+<li><strong>frequency_init</strong> (float, str, tuple of float, or <code><a href="#FrequencyInitMethod">FrequencyInitMethod</a></code>, default='random'):
 Initialization scheme for frequencies:
 <ul>
 <li>A float: sets all frequencies to the same value.</li>
