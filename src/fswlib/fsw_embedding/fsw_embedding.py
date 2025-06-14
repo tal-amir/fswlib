@@ -336,7 +336,7 @@ class FSWEmbedding(nn.Module):
             `num_slices` and `num_frequencies` are provided.
         d_edge : int, default=0
             Dimension of edge feature vectors. Used only for graph inputs.
-            See the `graph_mode` argument of [`FSWEmbedding.forward`](#FSWEmbedding.forward) for details.
+            See the `graph_mode` argument of `FSWEmbedding.forward` for details.
         encode_total_mass : bool, default=False
             Whether to incorporate the input multiset size (or, more generally, the _total mass_ of the input measure)
             into the embedding output.
