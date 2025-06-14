@@ -327,11 +327,11 @@ class FSWEmbedding(nn.Module):
         num_slices : int; optional
             Number of slices.  
             When provided, activates `cartesian_mode`, and `d_out` should not be specified.  
-            (See `flatten_cartesian_axes`)
+            (See `flatten_cartesian_axes`.)
         num_frequencies : int; optional
             Number of frequencies per slice.  
             When provided, activates `cartesian_mode`, and `d_out` should not be specified.  
-            (See `flatten_cartesian_axes`)
+            (See `flatten_cartesian_axes`.)
         flatten_cartesian_axes : bool, default=False
             If True, flattens the slice and frequency dimensions into a single output axis.  
             Only relevant if `num_slices` and `num_frequencies` are provided.
@@ -341,23 +341,23 @@ class FSWEmbedding(nn.Module):
         encode_total_mass : bool, default=False
             Whether to incorporate the input multiset size (or, more generally, the *total mass* of the input measure)
             into the embedding output.  
-            (See `total_mass_encoding_transformation`, `total_mass_encoding_method`, `total_mass_encoding_scale`)
+            (See `total_mass_encoding_transformation`, `total_mass_encoding_method`, `total_mass_encoding_scale`.)
         total_mass_encoding_transformation : {'identity', 'sqrt', 'log'} or `TotalMassEncodingTransformation`, default='identity'
             Transformation applied to the total mass before encoding in the embedding output.  
             Only applicable if `encode_total_mass`=True.  
-            (See `TotalMassEncodingTransformation` for details)
+            (See `TotalMassEncodingTransformation` for details.)
         total_mass_encoding_method : {'decoupled', 'scaled', 'homogeneous', 'homogeneous_scaled', 'homogeneous_legacy'} or `TotalMassEncodingMethod`, default='decoupled'
             Strategy for incorporating the total mass encoding into the embedding output.  
             Only applicable if `encode_total_mass`=True.  
-            (See `TotalMassEncodingMethod` for details)
+            (See `TotalMassEncodingMethod` for details.)
         total_mass_encoding_scale : float, default=1.0
-            The encoded total mass is multiplied by this scaling factor.  
+            Scaling factor by which to multiply the encoded total mass before incorporating into the embedding.  
             Only applicable if `encode_total_mass`=True.  
-            (See `TotalMassEncodingMethod`)
+            (See `TotalMassEncodingMethod` for details.)
         total_mass_padding_thresh : float or int, default=1.0
-            Inputs with total mass below this threshold are padded with the zero vector to reach it; see
+            Inputs with total mass below this threshold are padded with the zero vector to reach it, as described in
             [Amir and Dym, ICLR 2025], Appendix A.1.  
-            (See `TotalMassEncodingMethod`)
+            (See `TotalMassEncodingMethod`.)
         learnable_slices : bool, default=False
             If True, slice vectors are learnable parameters.  
         learnable_frequencies : bool, default=False
@@ -370,7 +370,7 @@ class FSWEmbedding(nn.Module):
                           [Amir and Dym, ICLR 2025], Section 3.
               - 'even': frequencies are spaced evenly according to their distribution $\mathcal{D_{\xi}}$, with spaces
                         inversely proportional to the density.  
-            (See `FrequencyInitMethod`)
+            (See `FrequencyInitMethod`.)
         minimize_slice_coherence : bool, default=False
             If True, minimizes the *mutual coherence* between slices for a more uniform spread on the unit sphere.  
             If False, slice vectors are drawn uniformly at random from the unit sphere.
