@@ -389,6 +389,10 @@ class FSWEmbedding(nn.Module):
         report_on_coherence_minimization : bool, default=False
             If True, prints special diagnostics during slice coherence minimization.
 
+        Notes
+        -----
+        If Cartesian mode is activated and `encode_total_mass` is True, `flatten_cartesian_axes` must be True.
+
         See Also
         --------
         FrequencyInitMethod :
