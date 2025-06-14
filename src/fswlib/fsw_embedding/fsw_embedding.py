@@ -319,7 +319,8 @@ class FSWEmbedding(nn.Module):
         Parameters
         ----------
         d_in : int
-            Input *feature dimension*, i.e. the dimension of the input multiset elements or, more generally, the support points of the input measure.
+            The dimension of input multiset elements or, more generally, measure support points.  
+            Coresponds to $d$ in $\mathcal{S}_{\leq N}\left(\mathbb{R}^d\right)$, $\mathcal{P}_{\leq N}\left(\mathbb{R}^d\right)$, or $\mathcal{M}_{\leq N}\left(\mathbb{R}^d\right)$ in our paper. 
         d_out : int; optional
             Desired embedding dimension.  
             If not set, both `num_slices` and `num_frequencies` must be explicitly provided.
