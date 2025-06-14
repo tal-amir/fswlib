@@ -340,15 +340,19 @@ class FSWEmbedding(nn.Module):
             See the `graph_mode` argument of `FSWEmbedding.forward` for details.
         encode_total_mass : bool; default=False
             Whether to incorporate the input multiset size (or, more generally, the *total mass* of the input measure)
-            into the embedding output.
+            into the embedding output.  
+            See also: `total_mass_encoding_transformation`, `total_mass_encoding_method`, `total_mass_encoding_scale`
         total_mass_encoding_transformation : {'identity', 'sqrt', 'log'} or TotalMassEncodingTransformation; default='identity'
             Transformation applied to the total mass before encoding in the embedding output.  
-            See also: `TotalMassEncodingTransformation`, `total_mass_encoding_method`
+            Only applicable if `encode_total_mass`=True.  
+            See also: `TotalMassEncodingTransformation`
         total_mass_encoding_method : {'decoupled', 'scaled', 'homogeneous', 'homogeneous_scaled', 'homogeneous_legacy'} or TotalMassEncodingMethod; default='decoupled'
-            Strategy for combining the total mass with the core embedding.  
-            See also: `TotalMassEncodingMethod`, `total_mass_encoding_transformation`
+            Strategy for incorporating the total mass encoding into the embedding output.  
+            Only applicable if `encode_total_mass`=True.  
+            See also: `TotalMassEncodingMethod`
         total_mass_encoding_scale : float; default=1.0
             The encoded total mass is multiplied by this scaling factor.  
+            Only applicable if `encode_total_mass`=True.  
             See also: `TotalMassEncodingMethod`
         total_mass_padding_thresh : float or int; default=1.0
             Inputs with total mass below this threshold are padded with the zero vector to reach it; see
