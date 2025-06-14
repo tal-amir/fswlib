@@ -319,19 +319,19 @@ class FSWEmbedding(nn.Module):
         Parameters
         ----------
         d_in : int
-            Dimension of input multiset elements or, more generally, measure support points.
-        d_out : int, optional
+            Input *feature dimension*, i.e. the dimension of the input multiset elements or, more generally, the support points of the input measure.
+        d_out : int; optional
             Desired embedding dimension.  
             If not set, both `num_slices` and `num_frequencies` must be explicitly provided.
-        num_slices : int, optional
+        num_slices : int; optional
             Number of slices.  
             When provided, activates `cartesian_mode`, and `d_out` should be left None.  
             See also: `flatten_cartesian_axes`
-        num_frequencies : int, optional
+        num_frequencies : int; optional
             Number of frequencies per slice.  
             When provided, activates `cartesian_mode`, and `d_out` should be left None.  
             See also: `flatten_cartesian_axes`
-        flatten_cartesian_axes : bool, default=False
+        flatten_cartesian_axes : bool; default=False
             If True, flattens the slice and frequency dimensions into a single output axis.  
             Only relevant if `num_slices` and `num_frequencies` are provided.
         d_edge : int, default=0
