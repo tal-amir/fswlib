@@ -341,9 +341,9 @@ class FSWEmbedding(nn.Module):
         encode_total_mass : bool; default=False
             Whether to incorporate the input multiset size (or, more generally, the *total mass* of the input measure)
             into the embedding output.
-        total_mass_encoding_transformation : {'identity', 'sqrt', 'log'} or TotalMassEncodingFunction; default='identity'
+        total_mass_encoding_transformation : {'identity', 'sqrt', 'log'} or TotalMassEncodingTransformation; default='identity'
             Transformation applied to the total mass *before* embedding.  
-            See also: `TotalMassEncodingFunction`
+            See also: `TotalMassEncodingTransformation`
         total_mass_encoding_method : {'decoupled', 'scaled', 'homogeneous', 'homogeneous_scaled', 'homogeneous_legacy'} or TotalMassEncodingMethod; default='decoupled'
             Strategy for combining the total mass with the core embedding.  
             See also: `TotalMassEncodingMethod`
