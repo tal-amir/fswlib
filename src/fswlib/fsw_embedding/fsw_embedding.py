@@ -295,7 +295,7 @@ class FSWEmbedding(nn.Module):
                  d_out: int | None = None,
                  num_slices: int | None = None,
                  num_frequencies: int | None = None,
-                 collapse_output_axes : bool = False,
+                 flatten_cartesian_axes : bool = False,
                  d_edge: int = 0,
                  encode_total_mass: bool = False,
                  total_mass_encoding_transformation: str | TotalMassEncodingTransformation = 'identity',
@@ -321,17 +321,22 @@ class FSWEmbedding(nn.Module):
         d_in : int
             Dimension of input multiset elements or, more generally, measure support points.
         d_out : int, optional
-            Desired embedding dimension. If not set, both `num_slices` and
-            `num_frequencies` must be provided.
+            Desired embedding dimension.
+            If not set, both `num_slices` and `num_frequencies` must be explicitly provided.
         num_slices : int, optional
-            Number of slices. Should not be specified if `d_out` is provided.
+            Number of slices.
+            When provided, activates `cartesian_mode`, and `d_out` should be left None.
+            See also: `flatten_cartesian_axes`
         num_frequencies : int, optional
-            Number of frequencies per slice. Should not be specified if `d_out` is provided.
-        collapse_output_axes : bool, default=False
+            Number of frequencies per slice.
+            When provided, activates `cartesian_mode`, and `d_out` should be left None.
+            See also: `flatten_cartesian_axes`
+        flatten_cartesian_axes : bool, default=False
             If True, flattens the slice and frequency dimensions into a single output axis. Only relevant if
             `num_slices` and `num_frequencies` are provided.
         d_edge : int, default=0
             Dimension of edge feature vectors. Used only for graph inputs.
+            See also: `graph_mode`
         encode_total_mass : bool, default=False
             Whether to incorporate the input multiset size (or, more generally, the _total mass_ of the input measure)
             into the embedding output.
@@ -436,21 +441,21 @@ class FSWEmbedding(nn.Module):
 
         if (d_out is not None) and (num_slices is None) and (num_frequencies is None):
             self._cartesian_mode = False
-            self._collapse_output_axes  = False
+            self._flatten_cartesian_axes  = False
             self._d_out = d_out
             self._num_slices = d_out - total_mass_encoding_dim
             self._num_frequencies = d_out - total_mass_encoding_dim
             output_space_name = 'R^%d' % self._d_out
 
         elif (d_out is None) and (num_slices is not None) and (num_frequencies is not None):
-            assert collapse_output_axes  or (not encode_total_mass), 'Cartesian mode with collapse_output_axes =False is not supported when encode_total_mass=True'
+            assert flatten_cartesian_axes  or (not encode_total_mass), 'Cartesian mode with flatten_cartesian_axes =False is not supported when encode_total_mass=True'
 
             self._cartesian_mode = True
-            self._collapse_output_axes  = collapse_output_axes
+            self._flatten_cartesian_axes  = flatten_cartesian_axes
             self._num_slices = num_slices
             self._num_frequencies = num_frequencies
             self._d_out = num_slices * num_frequencies + total_mass_encoding_dim
-            output_space_name = ('R^%d' % self._d_out) if self._collapse_output_axes  else ('R^(%d\u00d7%d)' % (self._num_slices, self._num_frequencies))
+            output_space_name = ('R^%d' % self._d_out) if self._flatten_cartesian_axes  else ('R^(%d\u00d7%d)' % (self._num_slices, self._num_frequencies))
 
         else:
             assert False, "Expected exactly one of (d_out != None) or (num_slices != None and num_frequencies != None)"
@@ -515,7 +520,7 @@ class FSWEmbedding(nn.Module):
         qprintln(report)
         qprintln(report, 'Constructing embedding for sets in %s into %s  ' % (input_space_name, output_space_name))
 
-        if self._cartesian_mode and self._collapse_output_axes :
+        if self._cartesian_mode and self._flatten_cartesian_axes :
             slice_freq_str = 'Using %d slices \u00d7 %d frequencies, collapsed to one %d dimensional axis; ' % (num_slices, num_frequencies, num_slices*num_frequencies)
         elif self._cartesian_mode:
             slice_freq_str = 'Using %d slices \u00d7 %s frequencies; ' % (num_slices, num_frequencies)
@@ -630,7 +635,7 @@ class FSWEmbedding(nn.Module):
         slice_vectors, frequencies, bias = FSWEmbedding._generate_embedding_parameters(d_in=self._d_in + self._d_edge,
                                                                                        num_slices=self._num_slices, num_frequencies=self._num_frequencies,
                                                                                        cartesian_mode=self._cartesian_mode,
-                                                                                       collapse_output_axes =self._collapse_output_axes,
+                                                                                       flatten_cartesian_axes =self._flatten_cartesian_axes,
                                                                                        total_mass_encoding_dim=total_mass_encoding_dim,
                                                                                        frequency_init=self._frequency_init,
                                                                                        minimize_slice_coherence=self._minimize_slice_coherence,
@@ -647,7 +652,7 @@ class FSWEmbedding(nn.Module):
         if self._enable_bias:
             bias = bias.to(dtype=dtype, device=device)
 
-            if self._cartesian_mode and self._collapse_output_axes :
+            if self._cartesian_mode and self._flatten_cartesian_axes :
                 bias = bias.reshape((self._num_slices * self._num_frequencies))
 
             self.bias = nn.Parameter(bias, requires_grad=self._learnable_slices)
@@ -698,13 +703,20 @@ class FSWEmbedding(nn.Module):
 
     @property
     def cartesian_mode(self) -> bool:
-        """Whether Cartesian mode is active (i.e., `d_out`  = `num_slices` × `num_frequencies`)."""
+        """If True, the embedding is computed for each (slice, frequency) pair in the Cartesian product of slices
+        and frequencies.
+        In Cartesian mode, the embeding dimension is `d_out` = `num_slices × num_frequencies`.
+        Cartesian mode is activated by providing `num_slices` and `num_frequencies` to `FSWEmbedding.__init__`
+        See also: `flatten_cartesian_axes`"""
         return self._cartesian_mode
 
     @property
-    def collapse_output_axes(self) -> bool:
-        """Whether the slice and frequency axes are flattened into a single dimension."""
-        return self._collapse_output_axes
+    def flatten_cartesian_axes(self) -> bool:
+        """In Cartesian mode, tells Whether the slice and frequency axes are flattened into a single dimension.
+        If True, each input multiset/distribution corresponds to a two-dimensional output, with the shape (`num_slices`, `num_frequencies`).
+        If False, the otput is shaped `num_slices` × `num_frequencies`.
+        This setting is only relevant if `cartesian_mode` is True."""
+        return self._flatten_cartesian_axes
 
     @property
     def learnable_slices(self) -> bool:
@@ -831,7 +843,7 @@ class FSWEmbedding(nn.Module):
                                        num_slices: int,
                                        num_frequencies: int,
                                        cartesian_mode: bool,
-                                       collapse_output_axes : bool,
+                                       flatten_cartesian_axes : bool,
                                        total_mass_encoding_dim: int,
                                        frequency_init: float | tuple[float,float] | str | FrequencyInitMethod,
                                        minimize_slice_coherence: bool,
@@ -937,9 +949,9 @@ class FSWEmbedding(nn.Module):
             assert not torch.isnan(frequencies).any(), "Found nans in frequencies"
 
         # C. Generate bias vector. Always initialized to zero.
-        if cartesian_mode and not collapse_output_axes :
+        if cartesian_mode and not flatten_cartesian_axes :
             bias_shape = (num_slices, num_frequencies)
-        elif cartesian_mode and collapse_output_axes :
+        elif cartesian_mode and flatten_cartesian_axes :
             bias_shape = (num_slices*num_frequencies + total_mass_encoding_dim,)
         else:
             bias_shape = (num_slices + total_mass_encoding_dim,)
@@ -1008,8 +1020,8 @@ class FSWEmbedding(nn.Module):
         torch.Tensor
             The embedding tensor. Shape depends on the mode:
             - `(d_out,)` or `(..., d_out)` in standard mode.
-            - `(..., num_slices, num_frequencies)` in Cartesian mode if `collapse_output_axes=False`.
-            - `(..., num_slices * num_frequencies)` in Cartesian mode if `collapse_output_axes=True`.
+            - `(..., num_slices, num_frequencies)` in Cartesian mode if `flatten_cartesian_axes=False`.
+            - `(..., num_slices * num_frequencies)` in Cartesian mode if `flatten_cartesian_axes=True`.
 
         Notes
         -----
@@ -1031,8 +1043,8 @@ class FSWEmbedding(nn.Module):
         Cartesian mode:
             If `d_out` is not specified but `num_slices` and `num_frequencies` are, the embedding
             is computed over a Cartesian product. The output shape is:
-                - `(..., num_slices, num_frequencies)` if `collapse_output_axes=False`
-                - `(..., num_slices * num_frequencies)` if `collapse_output_axes=True`
+                - `(..., num_slices, num_frequencies)` if `flatten_cartesian_axes=False`
+                - `(..., num_slices * num_frequencies)` if `flatten_cartesian_axes=True`
 
         Slice serialization:
             If `max_parallel_slices=t` is set, the computation is performed in blocks of size `t`,
@@ -1288,7 +1300,7 @@ class FSWEmbedding(nn.Module):
 
                 assign_at(X_emb, out_curr, output_slice_axis, inds_curr)
 
-        if self._cartesian_mode and self._collapse_output_axes :
+        if self._cartesian_mode and self._flatten_cartesian_axes :
             X_emb = torch.flatten(X_emb, start_dim=element_axis, end_dim=element_axis+1)
 
         if self._encode_total_mass:
