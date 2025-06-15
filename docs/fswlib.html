@@ -612,10 +612,10 @@ EMail: <a href="mailto:talamir@technion.ac.il">talamir@technion.ac.il</a></p>
 </span><span id="FSWEmbedding-398"><a href="#FSWEmbedding-398"><span class="linenos"> 398</span></a><span class="sd">        ----------</span>
 </span><span id="FSWEmbedding-399"><a href="#FSWEmbedding-399"><span class="linenos"> 399</span></a><span class="sd">        slice_vectors : torch.nn.Parameter</span>
 </span><span id="FSWEmbedding-400"><a href="#FSWEmbedding-400"><span class="linenos"> 400</span></a><span class="sd">            Tensor containing the slice/projection vectors.  </span>
-</span><span id="FSWEmbedding-401"><a href="#FSWEmbedding-401"><span class="linenos"> 401</span></a><span class="sd">            Shape ``(num_slices, d_in)`` or, when `d_edge` is specified, ``(num_slices, d_in + d_edge)``.</span>
+</span><span id="FSWEmbedding-401"><a href="#FSWEmbedding-401"><span class="linenos"> 401</span></a><span class="sd">            Shape ``(`num_slices`, `d_in`)`` or, when `d_edge` is specified, ``(`num_slices`, `d_in` + `d_edge`)``.</span>
 </span><span id="FSWEmbedding-402"><a href="#FSWEmbedding-402"><span class="linenos"> 402</span></a><span class="sd">        frequencies : torch.nn.Parameter</span>
-</span><span id="FSWEmbedding-403"><a href="#FSWEmbedding-403"><span class="linenos"> 403</span></a><span class="sd">            Frequency values associated with each slice. Shape</span>
-</span><span id="FSWEmbedding-404"><a href="#FSWEmbedding-404"><span class="linenos"> 404</span></a><span class="sd">            ``(num_slices, num_frequencies)``.  ``None`` until initialised.</span>
+</span><span id="FSWEmbedding-403"><a href="#FSWEmbedding-403"><span class="linenos"> 403</span></a><span class="sd">            Tensor containing the frequency values.  </span>
+</span><span id="FSWEmbedding-404"><a href="#FSWEmbedding-404"><span class="linenos"> 404</span></a><span class="sd">            Shape ``(`num_frequencies`)``.</span>
 </span><span id="FSWEmbedding-405"><a href="#FSWEmbedding-405"><span class="linenos"> 405</span></a><span class="sd">        bias : torch.nn.Parameter or None</span>
 </span><span id="FSWEmbedding-406"><a href="#FSWEmbedding-406"><span class="linenos"> 406</span></a><span class="sd">            Optional learnable bias added to the final embedding</span>
 </span><span id="FSWEmbedding-407"><a href="#FSWEmbedding-407"><span class="linenos"> 407</span></a><span class="sd">            (shape ``(d_out,)`` or the flattened Cartesian size).  Present</span>
@@ -2000,10 +2000,10 @@ embedding as described in [FSW25].</p>
 </span><span id="FSWEmbedding.__init__-398"><a href="#FSWEmbedding.__init__-398"><span class="linenos">398</span></a><span class="sd">        ----------</span>
 </span><span id="FSWEmbedding.__init__-399"><a href="#FSWEmbedding.__init__-399"><span class="linenos">399</span></a><span class="sd">        slice_vectors : torch.nn.Parameter</span>
 </span><span id="FSWEmbedding.__init__-400"><a href="#FSWEmbedding.__init__-400"><span class="linenos">400</span></a><span class="sd">            Tensor containing the slice/projection vectors.  </span>
-</span><span id="FSWEmbedding.__init__-401"><a href="#FSWEmbedding.__init__-401"><span class="linenos">401</span></a><span class="sd">            Shape ``(num_slices, d_in)`` or, when `d_edge` is specified, ``(num_slices, d_in + d_edge)``.</span>
+</span><span id="FSWEmbedding.__init__-401"><a href="#FSWEmbedding.__init__-401"><span class="linenos">401</span></a><span class="sd">            Shape ``(`num_slices`, `d_in`)`` or, when `d_edge` is specified, ``(`num_slices`, `d_in` + `d_edge`)``.</span>
 </span><span id="FSWEmbedding.__init__-402"><a href="#FSWEmbedding.__init__-402"><span class="linenos">402</span></a><span class="sd">        frequencies : torch.nn.Parameter</span>
-</span><span id="FSWEmbedding.__init__-403"><a href="#FSWEmbedding.__init__-403"><span class="linenos">403</span></a><span class="sd">            Frequency values associated with each slice. Shape</span>
-</span><span id="FSWEmbedding.__init__-404"><a href="#FSWEmbedding.__init__-404"><span class="linenos">404</span></a><span class="sd">            ``(num_slices, num_frequencies)``.  ``None`` until initialised.</span>
+</span><span id="FSWEmbedding.__init__-403"><a href="#FSWEmbedding.__init__-403"><span class="linenos">403</span></a><span class="sd">            Tensor containing the frequency values.  </span>
+</span><span id="FSWEmbedding.__init__-404"><a href="#FSWEmbedding.__init__-404"><span class="linenos">404</span></a><span class="sd">            Shape ``(`num_frequencies`)``.</span>
 </span><span id="FSWEmbedding.__init__-405"><a href="#FSWEmbedding.__init__-405"><span class="linenos">405</span></a><span class="sd">        bias : torch.nn.Parameter or None</span>
 </span><span id="FSWEmbedding.__init__-406"><a href="#FSWEmbedding.__init__-406"><span class="linenos">406</span></a><span class="sd">            Optional learnable bias added to the final embedding</span>
 </span><span id="FSWEmbedding.__init__-407"><a href="#FSWEmbedding.__init__-407"><span class="linenos">407</span></a><span class="sd">            (shape ``(d_out,)`` or the flattened Cartesian size).  Present</span>
@@ -2274,10 +2274,10 @@ If True, prints special diagnostics during slice coherence minimization.</li>
 <ul>
 <li><strong>slice_vectors</strong> (torch.nn.Parameter):
 Tensor containing the slice/projection vectors.<br />
-Shape <code>(num_slices, d_in)</code> or, when <code>d_edge</code> is specified, <code>(num_slices, d_in + d_edge)</code>.</li>
+Shape <code>(`num_slices`, `d_in`)</code> or, when <code>d_edge</code> is specified, <code>(`num_slices`, `d_in` + `d_edge`)</code>.</li>
 <li><strong>frequencies</strong> (torch.nn.Parameter):
-Frequency values associated with each slice. Shape
-<code>(num_slices, num_frequencies)</code>.  <code>None</code> until initialised.</li>
+Tensor containing the frequency values.<br />
+Shape <code>(`num_frequencies`)</code>.</li>
 <li><strong>bias</strong> (torch.nn.Parameter or None):
 Optional learnable bias added to the final embedding
 (shape <code>(d_out,)</code> or the flattened Cartesian size).  Present
