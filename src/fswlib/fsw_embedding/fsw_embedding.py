@@ -8,7 +8,7 @@ Authors:
     Tal Amir, Nadav Dym
     Technion – Israel Institute of Technology
 
-This code is based on the paper:
+This code is based on the paper [1]:
     "Fourier Sliced-Wasserstein Embedding for Multisets and Measures"
     Tal Amir, Nadav Dym
     International Conference on Learning Representations (ICLR), 2025
@@ -273,7 +273,7 @@ class FSWEmbedding(nn.Module):
     Maps input multisets (or, more generally, discrete measures) in
     $\mathbb{R}^{d_\text{in}}$ to fixed-length vectors in
     $\mathbb{R}^{d_\text{out}}$ via the Fourier Sliced-Wasserstein
-    embedding as described in [Amir & Dym, ICLR 2025].
+    embedding as described in [1].
 
     Features
     --------
@@ -356,7 +356,7 @@ class FSWEmbedding(nn.Module):
             (See `TotalMassEncodingMethod` for details.)
         total_mass_padding_thresh : float or int, default=1.0
             Inputs with total mass below this threshold are padded with the zero vector to reach it, as described in
-            [Amir and Dym, ICLR 2025], Appendix A.1.  
+            [1], Appendix A.1.
             (See `TotalMassEncodingMethod`.)
         learnable_slices : bool, default=False
             If True, slice vectors are learnable parameters.  
@@ -367,7 +367,7 @@ class FSWEmbedding(nn.Module):
               - A float: sets all frequencies to the same value.
               - A tuple `(low, high)` of floats: sets evenly spaced values in that interval.
               - 'random': frequencies are drawn independently from the distribution $\mathcal{D_{\xi}}$, defined in
-                          [Amir and Dym, ICLR 2025], Section 3.
+                          [1], Section 3.
               - 'even': frequencies are spaced evenly according to their distribution $\mathcal{D_{\xi}}$, with spaces
                         inversely proportional to the density.  
             (See `FrequencyInitMethod`.)

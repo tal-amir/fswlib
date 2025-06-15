@@ -1,6 +1,6 @@
 # src/fswlib/__init__.py
 """
-.. include:: ../../dev/README_PyPI.md
+.. include:: ../../README.md
 """
 
 from .fsw_embedding.fsw_embedding import (FSWEmbedding,
