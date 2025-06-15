@@ -1,10 +1,8 @@
 # fswlib: A PyTorch Library for the Fourier Sliced-Wasserstein (FSW) Embedding
 
-This package provides an implementation of the **Fourier Sliced-Wasserstein (FSW) embedding**, introduced in our [ICLR 2025 paper][1].
+This package provides an implementation of the **Fourier Sliced-Wasserstein (FSW) embedding**, introduced in our [ICLR 2025 paper] \[1\].
 
-...
-
-[1]: https://iclr.cc/virtual/2025/poster/30562 "Fourier Sliced-Wasserstein Embedding for Multisets and Measures, Tal Amir & Nadav Dym, ICLR 2025"
+\[1\]: Tal Amir & Nadav Dym. "Fourier Sliced-Wasserstein Embedding for Multisets and Measures." *International Conference of Learning Representations*, 2025. URL: https://iclr.cc/virtual/2025/poster/30562
 ---
 
 ## 📦 Requirements
