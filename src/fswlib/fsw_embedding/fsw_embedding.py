@@ -198,7 +198,7 @@ class TotalMassEncodingMethod(EnumWithResolve):
     DECOUPLED : str
         The total mass is appended as a separate component to the embedding vector,
         which is computed from the normalized input measure, as in Equation (18)
-        in our paper:
+        in [FSW25]:
         $$ \\hat{E}^{\\textup{FSW}}_{m}\\left(\\mu\\right) = \\left[ \\mu\\left(\\Omega\\right), \\;  E^{\\textup{FSW}}_{m-1}\\left(\\mu_{\\rho}\\right) \\right] $$
 
     SCALED : str
@@ -251,7 +251,7 @@ class FrequencyInitMethod(EnumWithResolve):
     ----------
     RANDOM : str
         Frequencies are sampled independently at random from the distribution
-        D_ξ, as defined in Section 3 of our paper.
+        D_ξ, as defined in Section 3 of [FSW25].
     EVEN : str
         Frequencies are spaced deterministically for efficient coverage of the frequency domain,
         with spacing inversely proportional to the density function f_ξ.
@@ -320,15 +320,15 @@ class FSWEmbedding(nn.Module):
         ----------
         d_in : int
             The dimension of input multiset elements or, more generally, measure support points.  
-            Coresponds to $d$ in $\mathcal{S}_{\leq N}\left(\mathbb{R}^d\right)$, $\mathcal{P}_{\leq N}\left(\mathbb{R}^d\right)$, or $\mathcal{M}_{\leq N}\left(\mathbb{R}^d\right)$ in our paper. 
-        d_out : int; optional
+            Coresponds to $d$ in $\mathcal{S}_{\leq N}\left(\mathbb{R}^d\right)$, $\mathcal{P}_{\leq N}\left(\mathbb{R}^d\right)$, or $\mathcal{M}_{\leq N}\left(\mathbb{R}^d\right)$ in [FSW25].
+        d_out : int, optional
             Desired embedding dimension.  
             If not set, both `num_slices` and `num_frequencies` must be explicitly provided.
-        num_slices : int; optional
+        num_slices : int, optional
             Number of slices.  
             When provided, activates `cartesian_mode`, and `d_out` should not be specified.  
             (See `flatten_cartesian_axes`.)
-        num_frequencies : int; optional
+        num_frequencies : int, optional
             Number of frequencies per slice.  
             When provided, activates `cartesian_mode`, and `d_out` should not be specified.  
             (See `flatten_cartesian_axes`.)
@@ -356,10 +356,10 @@ class FSWEmbedding(nn.Module):
             (See `TotalMassEncodingMethod` for details.)
         total_mass_padding_thresh : float or int, default=1.0
             Inputs with total mass below this threshold are padded with the zero vector to reach it, as described in
-            [FSW25], Appendix A.1.
+            [FSW25], Appendix A.1.  
             (See `TotalMassEncodingMethod`.)
         learnable_slices : bool, default=False
-            If True, slice vectors are learnable parameters.  
+            If True, slice vectors are learnable parameters.
         learnable_frequencies : bool, default=False
             If True, frequency values are learnable parameters.
         frequency_init : float, str, tuple of float, or `FrequencyInitMethod`, default='random'
@@ -384,7 +384,7 @@ class FSWEmbedding(nn.Module):
             Data type of input and output tensors (e.g., torch.float32).
             If not provided, the default dtype defined in Torch is used.
         use_custom_cuda_extension_if_available : bool or None, optional
-            Whether to use the custom CUDA kernel if present.
+            Whether to use the custom CUDA kernel if present.  
             Default: Linux: True, all other systems: False
         fail_if_cuda_extension_load_fails : bool, default=False
             Whether to raise a runtime error (rather than a warning) if the CUDA extension failes to load.
@@ -393,9 +393,22 @@ class FSWEmbedding(nn.Module):
         report_on_coherence_minimization : bool, default=False
             If True, prints special diagnostics during slice coherence minimization.
 
+        Attributes
+        ----------
+        slice_vectors : torch.nn.Parameter
+            Tensor containing the slice/projection vectors.  
+            Shape ``(num_slices, d_in)`` or, when `d_edge` is specified, ``(num_slices, d_in + d_edge)``.
+        frequencies : torch.nn.Parameter
+            Frequency values associated with each slice. Shape
+            ``(num_slices, num_frequencies)``.  ``None`` until initialised.
+        bias : torch.nn.Parameter or None
+            Optional learnable bias added to the final embedding
+            (shape ``(d_out,)`` or the flattened Cartesian size).  Present
+            only when ``enable_bias=True``; otherwise set to ``None``.
+
         Notes
         -----
-        If Cartesian mode is activated and `encode_total_mass` is True, `flatten_cartesian_axes` must be True.
+        If Cartesian mode is activated (i.e. `num_slices` and `num_frequencies` are provided) and `encode_total_mass`=True, `flatten_cartesian_axes` must be True.
 
         See Also
         --------
