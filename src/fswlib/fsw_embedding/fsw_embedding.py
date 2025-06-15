@@ -397,10 +397,10 @@ class FSWEmbedding(nn.Module):
         ----------
         slice_vectors : torch.nn.Parameter
             Tensor containing the slice/projection vectors.  
-            Shape ``(num_slices, d_in)`` or, when `d_edge` is specified, ``(num_slices, d_in + d_edge)``.
+            Shape ``(`num_slices`, `d_in`)`` or, when `d_edge` is specified, ``(`num_slices`, `d_in` + `d_edge`)``.
         frequencies : torch.nn.Parameter
-            Frequency values associated with each slice. Shape
-            ``(num_slices, num_frequencies)``.  ``None`` until initialised.
+            Tensor containing the frequency values.  
+            Shape ``(`num_frequencies`)``.
         bias : torch.nn.Parameter or None
             Optional learnable bias added to the final embedding
             (shape ``(d_out,)`` or the flattened Cartesian size).  Present
