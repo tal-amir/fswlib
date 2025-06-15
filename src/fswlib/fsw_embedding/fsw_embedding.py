@@ -265,6 +265,16 @@ class FrequencyInitMethod(EnumWithResolve):
     EVEN = "even"
 
 
+__pdoc__ = {
+    # Hide the auto-stub for these public parameters
+    'FSWEmbedding.slice_vectors':   False,
+    'FSWEmbedding.frequencies':     False,
+    'FSWEmbedding.bias':            False,
+
+    # Example: keep a property but supply a shorter description
+    # 'FSWEmbedding.cartesian_mode': "Returns True when d_out is inferred as num_slices × num_frequencies.",
+}
+
 
 class FSWEmbedding(nn.Module):
     r"""
