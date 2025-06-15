@@ -232,7 +232,7 @@ Part of the <code><a href="../../fswlib.html">fswlib</a></code> package: <a href
     Tal Amir, Nadav Dym
     Technion – Israel Institute of Technology</p>
 
-<p>This code is based on the paper [1]:
+<p>This code is based on the paper [FSW25]:
     "Fourier Sliced-Wasserstein Embedding for Multisets and Measures"
     Tal Amir, Nadav Dym
     International Conference on Learning Representations (ICLR), 2025</p>
@@ -258,7 +258,7 @@ Part of the <code><a href="../../fswlib.html">fswlib</a></code> package: <a href
 </span><span id="L-8"><a href="#L-8"><span class="linenos">   8</span></a><span class="sd">    Tal Amir, Nadav Dym</span>
 </span><span id="L-9"><a href="#L-9"><span class="linenos">   9</span></a><span class="sd">    Technion – Israel Institute of Technology</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos">  10</span></a>
-</span><span id="L-11"><a href="#L-11"><span class="linenos">  11</span></a><span class="sd">This code is based on the paper [1]:</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos">  11</span></a><span class="sd">This code is based on the paper [FSW25]:</span>
 </span><span id="L-12"><a href="#L-12"><span class="linenos">  12</span></a><span class="sd">    &quot;Fourier Sliced-Wasserstein Embedding for Multisets and Measures&quot;</span>
 </span><span id="L-13"><a href="#L-13"><span class="linenos">  13</span></a><span class="sd">    Tal Amir, Nadav Dym</span>
 </span><span id="L-14"><a href="#L-14"><span class="linenos">  14</span></a><span class="sd">    International Conference on Learning Representations (ICLR), 2025</span>
@@ -523,7 +523,7 @@ Part of the <code><a href="../../fswlib.html">fswlib</a></code> package: <a href
 </span><span id="L-273"><a href="#L-273"><span class="linenos"> 273</span></a><span class="sd">    Maps input multisets (or, more generally, discrete measures) in</span>
 </span><span id="L-274"><a href="#L-274"><span class="linenos"> 274</span></a><span class="sd">    $\mathbb{R}^{d_\text{in}}$ to fixed-length vectors in</span>
 </span><span id="L-275"><a href="#L-275"><span class="linenos"> 275</span></a><span class="sd">    $\mathbb{R}^{d_\text{out}}$ via the Fourier Sliced-Wasserstein</span>
-</span><span id="L-276"><a href="#L-276"><span class="linenos"> 276</span></a><span class="sd">    embedding as described in [1].</span>
+</span><span id="L-276"><a href="#L-276"><span class="linenos"> 276</span></a><span class="sd">    embedding as described in [FSW25].</span>
 </span><span id="L-277"><a href="#L-277"><span class="linenos"> 277</span></a>
 </span><span id="L-278"><a href="#L-278"><span class="linenos"> 278</span></a><span class="sd">    Features</span>
 </span><span id="L-279"><a href="#L-279"><span class="linenos"> 279</span></a><span class="sd">    --------</span>
@@ -606,7 +606,7 @@ Part of the <code><a href="../../fswlib.html">fswlib</a></code> package: <a href
 </span><span id="L-356"><a href="#L-356"><span class="linenos"> 356</span></a><span class="sd">            (See `TotalMassEncodingMethod` for details.)</span>
 </span><span id="L-357"><a href="#L-357"><span class="linenos"> 357</span></a><span class="sd">        total_mass_padding_thresh : float or int, default=1.0</span>
 </span><span id="L-358"><a href="#L-358"><span class="linenos"> 358</span></a><span class="sd">            Inputs with total mass below this threshold are padded with the zero vector to reach it, as described in</span>
-</span><span id="L-359"><a href="#L-359"><span class="linenos"> 359</span></a><span class="sd">            [1], Appendix A.1.</span>
+</span><span id="L-359"><a href="#L-359"><span class="linenos"> 359</span></a><span class="sd">            [FSW25], Appendix A.1.</span>
 </span><span id="L-360"><a href="#L-360"><span class="linenos"> 360</span></a><span class="sd">            (See `TotalMassEncodingMethod`.)</span>
 </span><span id="L-361"><a href="#L-361"><span class="linenos"> 361</span></a><span class="sd">        learnable_slices : bool, default=False</span>
 </span><span id="L-362"><a href="#L-362"><span class="linenos"> 362</span></a><span class="sd">            If True, slice vectors are learnable parameters.  </span>
@@ -617,7 +617,7 @@ Part of the <code><a href="../../fswlib.html">fswlib</a></code> package: <a href
 </span><span id="L-367"><a href="#L-367"><span class="linenos"> 367</span></a><span class="sd">              - A float: sets all frequencies to the same value.</span>
 </span><span id="L-368"><a href="#L-368"><span class="linenos"> 368</span></a><span class="sd">              - A tuple `(low, high)` of floats: sets evenly spaced values in that interval.</span>
 </span><span id="L-369"><a href="#L-369"><span class="linenos"> 369</span></a><span class="sd">              - &#39;random&#39;: frequencies are drawn independently from the distribution $\mathcal{D_{\xi}}$, defined in</span>
-</span><span id="L-370"><a href="#L-370"><span class="linenos"> 370</span></a><span class="sd">                          [1], Section 3.</span>
+</span><span id="L-370"><a href="#L-370"><span class="linenos"> 370</span></a><span class="sd">                          [FSW25], Section 3.</span>
 </span><span id="L-371"><a href="#L-371"><span class="linenos"> 371</span></a><span class="sd">              - &#39;even&#39;: frequencies are spaced evenly according to their distribution $\mathcal{D_{\xi}}$, with spaces</span>
 </span><span id="L-372"><a href="#L-372"><span class="linenos"> 372</span></a><span class="sd">                        inversely proportional to the density.  </span>
 </span><span id="L-373"><a href="#L-373"><span class="linenos"> 373</span></a><span class="sd">            (See `FrequencyInitMethod`.)</span>
@@ -4214,7 +4214,7 @@ Part of the <code><a href="../../fswlib.html">fswlib</a></code> package: <a href
 </span><span id="FSWEmbedding-274"><a href="#FSWEmbedding-274"><span class="linenos"> 274</span></a><span class="sd">    Maps input multisets (or, more generally, discrete measures) in</span>
 </span><span id="FSWEmbedding-275"><a href="#FSWEmbedding-275"><span class="linenos"> 275</span></a><span class="sd">    $\mathbb{R}^{d_\text{in}}$ to fixed-length vectors in</span>
 </span><span id="FSWEmbedding-276"><a href="#FSWEmbedding-276"><span class="linenos"> 276</span></a><span class="sd">    $\mathbb{R}^{d_\text{out}}$ via the Fourier Sliced-Wasserstein</span>
-</span><span id="FSWEmbedding-277"><a href="#FSWEmbedding-277"><span class="linenos"> 277</span></a><span class="sd">    embedding as described in [1].</span>
+</span><span id="FSWEmbedding-277"><a href="#FSWEmbedding-277"><span class="linenos"> 277</span></a><span class="sd">    embedding as described in [FSW25].</span>
 </span><span id="FSWEmbedding-278"><a href="#FSWEmbedding-278"><span class="linenos"> 278</span></a>
 </span><span id="FSWEmbedding-279"><a href="#FSWEmbedding-279"><span class="linenos"> 279</span></a><span class="sd">    Features</span>
 </span><span id="FSWEmbedding-280"><a href="#FSWEmbedding-280"><span class="linenos"> 280</span></a><span class="sd">    --------</span>
@@ -4297,7 +4297,7 @@ Part of the <code><a href="../../fswlib.html">fswlib</a></code> package: <a href
 </span><span id="FSWEmbedding-357"><a href="#FSWEmbedding-357"><span class="linenos"> 357</span></a><span class="sd">            (See `TotalMassEncodingMethod` for details.)</span>
 </span><span id="FSWEmbedding-358"><a href="#FSWEmbedding-358"><span class="linenos"> 358</span></a><span class="sd">        total_mass_padding_thresh : float or int, default=1.0</span>
 </span><span id="FSWEmbedding-359"><a href="#FSWEmbedding-359"><span class="linenos"> 359</span></a><span class="sd">            Inputs with total mass below this threshold are padded with the zero vector to reach it, as described in</span>
-</span><span id="FSWEmbedding-360"><a href="#FSWEmbedding-360"><span class="linenos"> 360</span></a><span class="sd">            [1], Appendix A.1.</span>
+</span><span id="FSWEmbedding-360"><a href="#FSWEmbedding-360"><span class="linenos"> 360</span></a><span class="sd">            [FSW25], Appendix A.1.</span>
 </span><span id="FSWEmbedding-361"><a href="#FSWEmbedding-361"><span class="linenos"> 361</span></a><span class="sd">            (See `TotalMassEncodingMethod`.)</span>
 </span><span id="FSWEmbedding-362"><a href="#FSWEmbedding-362"><span class="linenos"> 362</span></a><span class="sd">        learnable_slices : bool, default=False</span>
 </span><span id="FSWEmbedding-363"><a href="#FSWEmbedding-363"><span class="linenos"> 363</span></a><span class="sd">            If True, slice vectors are learnable parameters.  </span>
@@ -4308,7 +4308,7 @@ Part of the <code><a href="../../fswlib.html">fswlib</a></code> package: <a href
 </span><span id="FSWEmbedding-368"><a href="#FSWEmbedding-368"><span class="linenos"> 368</span></a><span class="sd">              - A float: sets all frequencies to the same value.</span>
 </span><span id="FSWEmbedding-369"><a href="#FSWEmbedding-369"><span class="linenos"> 369</span></a><span class="sd">              - A tuple `(low, high)` of floats: sets evenly spaced values in that interval.</span>
 </span><span id="FSWEmbedding-370"><a href="#FSWEmbedding-370"><span class="linenos"> 370</span></a><span class="sd">              - &#39;random&#39;: frequencies are drawn independently from the distribution $\mathcal{D_{\xi}}$, defined in</span>
-</span><span id="FSWEmbedding-371"><a href="#FSWEmbedding-371"><span class="linenos"> 371</span></a><span class="sd">                          [1], Section 3.</span>
+</span><span id="FSWEmbedding-371"><a href="#FSWEmbedding-371"><span class="linenos"> 371</span></a><span class="sd">                          [FSW25], Section 3.</span>
 </span><span id="FSWEmbedding-372"><a href="#FSWEmbedding-372"><span class="linenos"> 372</span></a><span class="sd">              - &#39;even&#39;: frequencies are spaced evenly according to their distribution $\mathcal{D_{\xi}}$, with spaces</span>
 </span><span id="FSWEmbedding-373"><a href="#FSWEmbedding-373"><span class="linenos"> 373</span></a><span class="sd">                        inversely proportional to the density.  </span>
 </span><span id="FSWEmbedding-374"><a href="#FSWEmbedding-374"><span class="linenos"> 374</span></a><span class="sd">            (See `FrequencyInitMethod`.)</span>
@@ -5579,7 +5579,7 @@ Part of the <code><a href="../../fswlib.html">fswlib</a></code> package: <a href
 <p>Maps input multisets (or, more generally, discrete measures) in
 $\mathbb{R}^{d_\text{in}}$ to fixed-length vectors in
 $\mathbb{R}^{d_\text{out}}$ via the Fourier Sliced-Wasserstein
-embedding as described in [1].</p>
+embedding as described in [FSW25].</p>
 
 <h6 id="features">Features</h6>
 
@@ -5672,7 +5672,7 @@ embedding as described in [1].</p>
 </span><span id="FSWEmbedding.__init__-357"><a href="#FSWEmbedding.__init__-357"><span class="linenos">357</span></a><span class="sd">            (See `TotalMassEncodingMethod` for details.)</span>
 </span><span id="FSWEmbedding.__init__-358"><a href="#FSWEmbedding.__init__-358"><span class="linenos">358</span></a><span class="sd">        total_mass_padding_thresh : float or int, default=1.0</span>
 </span><span id="FSWEmbedding.__init__-359"><a href="#FSWEmbedding.__init__-359"><span class="linenos">359</span></a><span class="sd">            Inputs with total mass below this threshold are padded with the zero vector to reach it, as described in</span>
-</span><span id="FSWEmbedding.__init__-360"><a href="#FSWEmbedding.__init__-360"><span class="linenos">360</span></a><span class="sd">            [1], Appendix A.1.</span>
+</span><span id="FSWEmbedding.__init__-360"><a href="#FSWEmbedding.__init__-360"><span class="linenos">360</span></a><span class="sd">            [FSW25], Appendix A.1.</span>
 </span><span id="FSWEmbedding.__init__-361"><a href="#FSWEmbedding.__init__-361"><span class="linenos">361</span></a><span class="sd">            (See `TotalMassEncodingMethod`.)</span>
 </span><span id="FSWEmbedding.__init__-362"><a href="#FSWEmbedding.__init__-362"><span class="linenos">362</span></a><span class="sd">        learnable_slices : bool, default=False</span>
 </span><span id="FSWEmbedding.__init__-363"><a href="#FSWEmbedding.__init__-363"><span class="linenos">363</span></a><span class="sd">            If True, slice vectors are learnable parameters.  </span>
@@ -5683,7 +5683,7 @@ embedding as described in [1].</p>
 </span><span id="FSWEmbedding.__init__-368"><a href="#FSWEmbedding.__init__-368"><span class="linenos">368</span></a><span class="sd">              - A float: sets all frequencies to the same value.</span>
 </span><span id="FSWEmbedding.__init__-369"><a href="#FSWEmbedding.__init__-369"><span class="linenos">369</span></a><span class="sd">              - A tuple `(low, high)` of floats: sets evenly spaced values in that interval.</span>
 </span><span id="FSWEmbedding.__init__-370"><a href="#FSWEmbedding.__init__-370"><span class="linenos">370</span></a><span class="sd">              - &#39;random&#39;: frequencies are drawn independently from the distribution $\mathcal{D_{\xi}}$, defined in</span>
-</span><span id="FSWEmbedding.__init__-371"><a href="#FSWEmbedding.__init__-371"><span class="linenos">371</span></a><span class="sd">                          [1], Section 3.</span>
+</span><span id="FSWEmbedding.__init__-371"><a href="#FSWEmbedding.__init__-371"><span class="linenos">371</span></a><span class="sd">                          [FSW25], Section 3.</span>
 </span><span id="FSWEmbedding.__init__-372"><a href="#FSWEmbedding.__init__-372"><span class="linenos">372</span></a><span class="sd">              - &#39;even&#39;: frequencies are spaced evenly according to their distribution $\mathcal{D_{\xi}}$, with spaces</span>
 </span><span id="FSWEmbedding.__init__-373"><a href="#FSWEmbedding.__init__-373"><span class="linenos">373</span></a><span class="sd">                        inversely proportional to the density.  </span>
 </span><span id="FSWEmbedding.__init__-374"><a href="#FSWEmbedding.__init__-374"><span class="linenos">374</span></a><span class="sd">            (See `FrequencyInitMethod`.)</span>
@@ -5929,7 +5929,7 @@ Only applicable if <code><a href="#FSWEmbedding.encode_total_mass">encode_total_
 (See <code><a href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a></code> for details.)</li>
 <li><strong>total_mass_padding_thresh</strong> (float or int, default=1.0):
 Inputs with total mass below this threshold are padded with the zero vector to reach it, as described in
-[1], Appendix A.1.
+[FSW25], Appendix A.1.
 (See <code><a href="#TotalMassEncodingMethod">TotalMassEncodingMethod</a></code>.)</li>
 <li><strong>learnable_slices</strong> (bool, default=False):
 If True, slice vectors are learnable parameters.</li>
@@ -5941,7 +5941,7 @@ Initialization scheme for frequencies:
 <li>A float: sets all frequencies to the same value.</li>
 <li>A tuple <code>(low, high)</code> of floats: sets evenly spaced values in that interval.</li>
 <li>'random': frequencies are drawn independently from the distribution $\mathcal{D_{\xi}}$, defined in
-[1], Section 3.</li>
+[FSW25], Section 3.</li>
 <li>'even': frequencies are spaced evenly according to their distribution $\mathcal{D_{\xi}}$, with spaces
 inversely proportional to the density.<br />
 (See <code><a href="#FrequencyInitMethod">FrequencyInitMethod</a></code>.)</li>
