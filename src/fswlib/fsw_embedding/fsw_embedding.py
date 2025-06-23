@@ -265,16 +265,6 @@ class FrequencyInitMethod(EnumWithResolve):
     EVEN = "even"
 
 
-__pdoc__ = {
-    # Hide the auto-stub for these public parameters
-    'FSWEmbedding.slice_vectors':   False,
-    'FSWEmbedding.frequencies':     False,
-    'FSWEmbedding.bias':            False,
-
-    # Example: keep a property but supply a shorter description
-    # 'FSWEmbedding.cartesian_mode': "Returns True when d_out is inferred as num_slices × num_frequencies.",
-}
-
 
 class FSWEmbedding(nn.Module):
     r"""
@@ -347,7 +337,7 @@ class FSWEmbedding(nn.Module):
             Only relevant if `num_slices` and `num_frequencies` are provided.
         d_edge : int, default=0
             Dimension of edge feature vectors. Used only for graph inputs.  
-            (See the `graph_mode` argument of `FSWEmbedding.forward` for details.)
+            (See the `graph_mode` and `X_edge` arguments of `FSWEmbedding.forward` for details.)
         encode_total_mass : bool, default=False
             Whether to incorporate the input multiset size (or, more generally, the *total mass* of the input measure)
             into the embedding output.  
@@ -369,9 +359,12 @@ class FSWEmbedding(nn.Module):
             [FSW25], Appendix A.1.  
             (See `TotalMassEncodingMethod`.)
         learnable_slices : bool, default=False
-            If True, slice vectors are learnable parameters.
+            If True, slice vectors are learnable parameters.  
+            Applies also to the bias vector when `enable_bias`=True.  
+            (See `set_learnable_slices`)
         learnable_frequencies : bool, default=False
-            If True, frequency values are learnable parameters.
+            If True, frequency values are learnable parameters.  
+            (See `set_learnable_frequencies`)
         frequency_init : float, str, tuple of float, or `FrequencyInitMethod`, default='random'
             Initialization scheme for frequencies:
               - A float: sets all frequencies to the same value.
@@ -385,8 +378,8 @@ class FSWEmbedding(nn.Module):
             If True, minimizes the *mutual coherence* between slices for a more uniform spread on the unit sphere.  
             If False, slice vectors are drawn uniformly at random from the unit sphere.
         enable_bias : bool, default=True
-            If True, adds a learnable bias vector to the output embedding. When enabled, the bias is initialized
-            to zero.  
+            If True, adds a bias vector to the output embedding. When enabled, the bias is initialized to zero.  
+            (See `leanable_slices`.)
         device : torch.device, int, str, or None, optional
             The torch device on which to allocate tensors (e.g., 'cpu', 'cuda', or an index).  
             If not provided, the default device defined in Torch is used.
@@ -417,7 +410,7 @@ class FSWEmbedding(nn.Module):
 
         Notes
         -----
-        If Cartesian mode is activated (i.e. `num_slices` and `num_frequencies` are provided) and `encode_total_mass`=True, `flatten_cartesian_axes` must be True.
+        If Cartesian mode is activated (i.e. `num_slices` and `num_frequencies` are provided) and `encode_total_mass`=True, then `flatten_cartesian_axes` must be True.
 
         See Also
         --------
@@ -430,7 +423,7 @@ class FSWEmbedding(nn.Module):
         """
         slice_vectors: torch.Tensor
         frequencies: torch.Tensor
-        bias: torch.Tensor | None
+        bias: None | torch.Tensor
         
         super().__init__()
 
@@ -594,14 +587,14 @@ class FSWEmbedding(nn.Module):
         self.reset_parameters()
 
     @classmethod
-    def from_config(cls, config: dict) -> "FSWEmbedding":
+    def from_config(cls, config: dict[str, Any]) -> "FSWEmbedding":
         """
         Construct an FSWEmbedding instance from a configuration dictionary.
 
         Parameters
         ----------
-        config : dict
-            Dictionary of keyword arguments matching the `__init__` parameters.
+        config : dict[str, Any]
+            {name: value} mapping of input arguments accepted by `FSWEmbedding.__init__`.
 
         Returns
         -------
@@ -622,12 +615,54 @@ class FSWEmbedding(nn.Module):
             raise TypeError(f"Unexpected config keys: {invalid_keys}")
         return cls(**config)
 
-    # Resets the model parameters (slice vectors and frequencies) and updates the model settings.
     def reset_parameters(self,
                          frequency_init: float | tuple[float,float] | str | FrequencyInitMethod | None = None,
                          minimize_slice_coherence: bool | None = None,
                          report: bool | None = None,
-                         report_on_coherence_minimization: bool | None = None):
+                         report_on_coherence_minimization: bool | None = None) -> "FSWEmbedding":
+        """
+        Regenerate slice vectors, frequencies, and (when enabled) bias, while
+        optionally overriding selected configuration options.
+    
+        This method is called once during construction, and can be called at any
+        time to re-initialise the embedding.
+       
+        Parameters
+        ----------
+        frequency_init : float | (float, float) | str | FrequencyInitMethod, optional
+            Overrides the frequency-initialisation scheme used when generating
+            the new parameters.  If *None*, the value set at construction time
+            is reused.  
+            (See `FrequencyInitMethod`)
+        minimize_slice_coherence : bool, optional
+            Overrides the flag that determines whether slice directions are
+            optimised to minimise mutual coherence.  
+            *None* means “keep the current setting”.
+        report : bool, optional
+            If given, toggles the `report` flag of the module
+        report_on_coherence_minimization : bool, optional
+            If given, toggles `report_on_coherence_minimization`
+    
+        Returns
+        -------
+        FSWEmbedding
+            The module itself (for call chaining).
+    
+        Notes
+        -----
+        All tensors are first generated in ``float64`` on the selected
+        ``device`` and then cast to the module's current ``dtype``.
+        ``slice_vectors`` and ``frequencies`` are always recreated; ``bias``
+        is rebuilt only when ``enable_bias`` is ``True``.
+    
+        Calling `reset_parameters` during training **does not** affect any
+        optimizer state that may already reference the old parameters—the
+        optimizer must be re-initialized or updated manually if needed.
+        
+        See Also
+        --------
+        FSWEmbedding.__init__ : Constructor and configuration options.
+        """
 
         # Apply user updates for these parameters
         self._frequency_init = ifnone(frequency_init, self._frequency_init)
@@ -699,25 +734,55 @@ class FSWEmbedding(nn.Module):
 
 
 
-    def to(self, *args, **kwargs):
-        """Moves the module to the specified device or dtype.
-
-        Example:
-
-            module.to(torch.float32)
-            module.to(device='cuda')
-
-        See also: torch.nn.Module.to()
+    def to(self, *args, **kwargs) -> "FSWEmbedding":
         """
+        Move this module (and its parameters/buffers) to a new device and/or dtype.
+
+        Mirrors the signature of `torch.nn.Module.to`, but returns self for chaining
+        and adds explicit dtype validation.
+
+        Parameters
+        ----------
+        *args
+            Positional arguments forwarded to :meth:`torch.nn.Module.to`. May include:
+            - `dtype` (as a torch.dtype)  
+            - `device` (as a string, torch.device, or device index)
+        **kwargs
+            Keyword arguments forwarded to :meth:`torch.nn.Module.to`. Common keys:
+            - `dtype` (torch.dtype)  
+            - `device` (str, torch.device, or int)  
+            - `non_blocking` (bool)  
+            - `memory_format` (torch.memory_format)
+
+        Returns
+        -------
+        self : FSWEmbedding
+            Returns the module itself after moving it (for call chaining).
+
+        Raises
+        ------
+        TypeError
+            If a provided `dtype` is not an instance of `torch.dtype`.
+        ValueError
+            If a provided `dtype` is not a real floating-point dtype.
+
+        See Also
+        --------
+        torch.nn.Module.to : Original PyTorch method for moving modules.
+        """
+        # Validate dtype in kwargs
         if 'dtype' in kwargs:
-            arg = kwargs['dtype']
+            dtype_arg = kwargs["dtype"]
+            if not isinstance(dtype_arg, torch.dtype):
+                raise TypeError(f"to(): expected a torch.dtype for 'dtype', got {type(dtype_arg).__name__}")
+            if (not dtype_arg.is_floating_point) or dtype_arg.is_complex:
+                raise ValueError(f"to(): dtype must be a real floating-point type, got {dtype_arg}")
 
-            assert isinstance(arg, torch.dtype), 'invalid input type %s at argument ''dtype''' % type(arg)
-            assert arg.is_floating_point and not arg.is_complex, 'dtype must be real floating-point; instead got dtype=%s' % arg
-
+        # Validate any dtype passed positionally
         for arg in args:
             if isinstance(arg, torch.dtype):
-                assert arg.is_floating_point and not arg.is_complex, 'dtype must be real floating-point; instead got dtype=%s' % arg
+                if not arg.is_floating_point or arg.is_complex:
+                    raise ValueError(f"to(): dtype must be a real floating-point type, got {arg}")
 
         super().to(*args, **kwargs)
 
@@ -731,21 +796,20 @@ class FSWEmbedding(nn.Module):
 
     @property
     def num_frequencies(self) -> int:
-        """Number of frequencies used in the embedding. In Cartesian mode, this is the number of frequencies per slice."""
+        """Number of frequencies used in the embedding."""  
         return self._num_frequencies
 
     @property
     def cartesian_mode(self) -> bool:
         """If True, the embedding is computed for each (slice, frequency) pair in the Cartesian product of slices
-        and frequencies.
-        In Cartesian mode, the embeding dimension is `d_out` = `num_slices × num_frequencies`.
-        Cartesian mode is activated by providing `num_slices` and `num_frequencies` to `FSWEmbedding.__init__`bool
-        See also: `flatten_cartesian_axes`"""
+        and frequencies.  
+        Cartesian mode is activated by providing `num_slices` and `num_frequencies` instead of `d_out` to `FSWEmbedding.__init__`.  
+        (See `flatten_cartesian_axes`)"""
         return self._cartesian_mode
 
     @property
     def flatten_cartesian_axes(self) -> bool:
-        """In Cartesian mode, tells Whether the slice and frequency axes are flattened into a single dimension.
+        """In Cartesian mode, tells whether the slice and frequency axes in the embedding output are flattened into a single dimension.
         If True, each input multiset/distribution corresponds to a two-dimensional output, with the shape (`num_slices`, `num_frequencies`).
         If False, the otput is shaped `num_slices` × `num_frequencies`.
         This setting is only relevant if `cartesian_mode` is True."""
@@ -753,17 +817,19 @@ class FSWEmbedding(nn.Module):
 
     @property
     def learnable_slices(self) -> bool:
-        """Whether slice directions are learnable parameters."""
+        """Whether slice vectors (and bias, when enabled) are learnable or fixed parameters.  
+        (See `set_learnable_slices`)"""
         return self._learnable_slices
 
     @property
     def learnable_frequencies(self) -> bool:
-        """Whether frequency values are learnable parameters."""
+        """Whether frequency values are learnable or fixed parameters.  
+        (See `set_learnable_frequencies`)"""
         return self._learnable_frequencies
 
     @property
     def enable_bias(self) -> bool:
-        """Whether a learnable bias vector is added to the output embedding."""
+        """Whether a bias vector is added to the output embedding."""
         return self._enable_bias
 
     @property
@@ -794,81 +860,90 @@ class FSWEmbedding(nn.Module):
 
     @property
     def d_in(self) -> int:
-        """int: Ambient dimension of the input elements.
-
-        Returns
-        -------
-        int
-            The input dimensionality of the multiset elements (i.e., the last dimension of the input tensors).
-
-        Notes
-        -----
-        This value is set at initialization and determines the expected feature dimension of input points.
-
-        See Also
-        --------
-        __init__ : The `d_in` argument specifies this value at initialization.
-        """
+        """int: Expected ambient dimension of the input multiset elements / measure support points."""
         return self._d_in
 
 
     @property
+    def d_edge(self) -> int:
+        """int: Expected dimension input edge-feature vectors."""
+        return self._d_edge
+
+
+    @property
     def d_out(self) -> int:
-        """int: Dimensionality of the embedding output.
-
-        Returns
-        -------
-        int
-            The dimension of the vector produced by the embedding for each multiset or distribution.
-
-        Notes
-        -----
-        This value is set at initialization and governs the size of the embedding output.
-
-        See Also
-        --------
-        __init__ : The `d_out` argument specifies this value at initialization.
-        """
+        """int: Dimension of the embedding output."""
         return self._d_out
 
     @property
-    def device(self):
-        """torch.device: The device on which the module's parameters and buffers are stored.
-
-        Returns
-        -------
-        torch.device
-            The PyTorch device (`'cpu'`, `'cuda'`, etc.) where the embedding computations will take place.
-
-        Notes
-        -----
-        This behaves like the `device` property in standard PyTorch modules.
-
-        See Also
-        --------
-        __init__ : The `device` can be specified at initialization.
-        """
+    def device(self) -> torch.device:
+        """torch.device: The device on which the module's parameters and buffers are stored."""
         return self.slice_vectors.device
 
 
     @property
-    def dtype(self):
-        """torch.dtype: The default data type used by the module.
+    def dtype(self) -> torch.dtype:
+        """torch.dtype: The input data type expected by the module."""
+        return self.slice_vectors.dtype
+
+
+    def set_learnable_slices(self, learnable: bool) -> "FSWEmbedding":
+        """
+        Enable or disable gradient updates for the slice vectors. Does not change the slice-vector values.  
+        When `enable_bias`=True, applies also to the bias vector.
+
+        Parameters
+        ----------
+        learnable : bool
+            If True, slice vectors will have gradients enabled (and can be trained/fine-tuned).
+            If False, gradients for slice vectors are disabled (frozen).
 
         Returns
         -------
-        torch.dtype
-            The data type (`torch.float32`, `torch.float64`, etc.) of the module’s parameters and buffers.
-
-        Notes
-        -----
-        This behaves like the `dtype` property in standard PyTorch modules.
+        self : FSWEmbedding
+            Allows method chaining.
 
         See Also
         --------
-        __init__ : The `dtype` can be specified at initialization.
+        set_learnable_frequencies : Similarly toggle gradient updates for frequency values.
         """
-        return self.slice_vectors.dtype
+        if not isinstance(learnable, bool):
+            raise TypeError(f"Expected bool, got {type(learnable).__name__}")
+
+        self.slice_vectors.requires_grad_(learnable)
+        self._learnable_slices = bool(learnable)
+        
+        if self.enable_bias:
+            self.bias.requires_grad_(learnable)
+
+        return self
+
+
+    def set_learnable_frequencies(self, learnable: bool) -> "FSWEmbedding":
+        """
+        Enable or disable gradient updates for the frequencies. Does not change the frequency values.
+
+        Parameters
+        ----------
+        learnable : bool
+            If True, frequency values will have gradients enabled (and can be trained/fine-tuned).
+            If False, gradients for frequencies are disabled (frozen).
+
+        Returns
+        -------
+        self : FSWEmbedding
+            Allows method chaining.
+
+        See Also
+        --------
+        set_learnable_slices : Similarly toggle gradient updates for slice vectors (and bias, when enabled).
+        """
+        if not isinstance(learnable, bool):
+            raise TypeError(f"Expected bool, got {type(learnable).__name__}")
+
+        self.frequencies.requires_grad_(learnable)
+        self._learnable_frequencies = bool(learnable)
+        return self
 
 
     @staticmethod
@@ -1025,22 +1100,25 @@ class FSWEmbedding(nn.Module):
                 X_edge: None | torch.Tensor = None,
                 graph_mode: bool = False,
                 max_parallel_slices: int | None = None):
-        """
+        r"""
         Compute the FSW embedding of an input multiset, measure, or graph.
 
-        This method maps input sets of vectors (optionally weighted) to vectors in ℝ^{d_out}
-        using the Fourier Sliced-Wasserstein (FSW) embedding. It supports batched inputs and
-        graph-based neighbor aggregation, with possibly sparse weight/adjacency matrices.
+        This method maps weighted sets of vectors to vectors in $\mathbb{R}^{d_{\textup{out}}}$
+        using the Fourier Sliced-Wasserstein (FSW) embedding. It supports batched as well as graph-structured inputs, with possibly sparse weight/adjacency matrices.
+        
+        Note that if `FSWEmbedding` was initialized with `encode_total_mass`=False (default), the embedding always normalizes the input weights to sum up to 1. Thus, two multisets of identical element proportions are considered identical, i.e. X={a,b,c} is yields the same output as X={a,a,b,c,c,c}, and the empty multiset is not permitted as an input.
 
         Parameters
         ----------
         X : torch.Tensor
-            Input tensor of shape `(n, d_in)` or `(..., n, d_in)` for batched input.
+            Input tensor of shape `(n, d_in)` or `(..., n, d_in)` for batched input, where `n is any nonnegative integer, and `...` is any number of batch dimensions.
         W : torch.Tensor or {'unit', 'uniform'}, default='unit'
-            Weights tensor of shape `(n,)` or `(..., n)` corresponding to point importance.
-            If set to `'unit'` or `'uniform'`, uniform weights of `1/n` are assumed.
+            Weight tensor of shape `(n,)` or `(..., n)`, containing non-negative weights assigned to the input points.  
+            If set to `'uniform'`, uniform weights of $\frac{1}{n}$ are assumed.  
+            If set to `'unit'`, unit weights $1$ or uniform weights $\frac{1}{n}$ are assumed, depending on whether `encode_total_mass` is True or False respectively.
         X_edge : torch.Tensor, optional
-            Optional edge feature tensor. Required if `d_edge > 0` was set at initialization.
+            Optional tensor containing edge feature vectors. Required if `d_edge > 0` was set at initialization.  
+            (See `d_edge` argument of `FSWEmbedding.forward`)
         graph_mode : bool, default=False
             If True, interprets `W` as an adjacency matrix and computes a neighbor-aggregated
             embedding.
@@ -1068,9 +1146,9 @@ class FSWEmbedding(nn.Module):
             and `W` of shape `(..., n)`, the output shape is `(..., d_out)`.
 
         Graph mode:
-            When `graph_mode=True`, `W` must be of shape `(..., n_recipients, n)` and `X` of
-            shape `(..., n, d_in)` or broadcastable to that. The output will be
-            `(..., n_recipients, d_out)`, where each vector represents a weighted embedding of
+            When `graph_mode`=True, `W` must be of shape `(..., n_recipients, n)`, with `n_recipients` being any nonnegative integer, and `X` of
+            shape `(..., n, d_in)`.  
+            The output will be `(..., n_recipients, d_out)`, where each vector represents a weighted embedding of
             neighboring nodes. This avoids expanding `X` across `n_recipients` explicitly.
 
         Cartesian mode:
